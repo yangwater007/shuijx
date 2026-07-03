@@ -1,12 +1,10 @@
-/** 业务层 — AI 对话 Hook（MCP 工具调用 + DeepSeek 流式） */
+/** 业务层 — AI 对话 Hook（数据注入 + DeepSeek 流式分析） */
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { streamDeepSeekChat, fetchCailianNews, fetchKaipanla, fetchBoardLadderForContext } from "@data/repository/ai";
-import { getDeepSeekToolDefinitions, callMCPTool } from "@data/repository/mcp";
+import { streamDeepSeekChat, fetchCailianNews, fetchKaipanla, fetchBoardLadderForContext, fetchMarketOverview, fetchHotSectors, fetchStockRank } from "@data/repository/ai";
 import AIService from "@service/ai/AIService";
 import type { ChatMessage, AnalysisFramework, AIModel, NewsItem, KaipanlaItem } from "@infra/types/ai";
 import { BUILTIN_FRAMEWORKS } from "@infra/types/ai";
-import { DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL } from "@infra/config";
 
 export default function useAIChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -15,8 +13,6 @@ export default function useAIChat() {
   const [frameworks, setFrameworks] = useState<AnalysisFramework[]>(BUILTIN_FRAMEWORKS);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [hotStocks, setHotStocks] = useState<KaipanlaItem[]>([]);
-  const [mcpTools, setMcpTools] = useState<unknown[]>([]);
-  const [mcpReady, setMcpReady] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const enabledFrameworks = useMemo(
@@ -24,7 +20,6 @@ export default function useAIChat() {
     [frameworks]
   );
 
-  // 初始加载
   useEffect(() => {
     void (async () => {
       const [newsData, hotData] = await Promise.all([
@@ -34,17 +29,6 @@ export default function useAIChat() {
       setNews(newsData);
       setHotStocks(hotData);
     })();
-    // 加载 MCP 工具定义
-    void (async () => {
-      try {
-        const tools = await getDeepSeekToolDefinitions();
-        setMcpTools(tools);
-        setMcpReady(true);
-      } catch {
-        // MCP 不可用时仍可使用纯对话模式
-        setMcpReady(false);
-      }
-    })();
   }, []);
 
   const toggleFramework = useCallback((id: string) => {
@@ -53,59 +37,23 @@ export default function useAIChat() {
     );
   }, []);
 
-  /** 第一步：非流式调用 DeepSeek，检测是否需要工具调用 */
-  const checkToolCalls = useCallback(
-    async (
-      apiMessages: Array<{ role: string; content: string }>,
-      signal?: AbortSignal
-    ): Promise<{
-      finishReason: string;
-      content: string | null;
-      toolCalls: Array<{ id: string; function: { name: string; arguments: string } }> | null;
-    }> => {
-      const resp = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages: apiMessages,
-          tools: mcpTools.length > 0 ? mcpTools : undefined,
-          tool_choice: mcpTools.length > 0 ? "auto" : undefined,
-          temperature: 0.3,
-          max_tokens: 2048,
-        }),
-        signal,
-      });
+  /** 获取实时市场数据上下文 */
+  const fetchMarketContext = useCallback(async (): Promise<string> => {
+    const results = await Promise.allSettled([
+      fetchBoardLadderForContext(),
+      fetchMarketOverview(),
+      fetchHotSectors(),
+      fetchStockRank("gainers", 10),
+    ]);
 
-      if (!resp.ok) {
-        const errBody = await resp.text().catch(() => "");
-        throw new Error(`API ${resp.status}: ${errBody.slice(0, 200)}`);
-      }
+    const parts: string[] = [];
+    if (results[0].status === "fulfilled" && results[0].value) parts.push(results[0].value);
+    if (results[1].status === "fulfilled" && results[1].value) parts.push(results[1].value);
+    if (results[2].status === "fulfilled" && results[2].value) parts.push(results[2].value);
+    if (results[3].status === "fulfilled" && results[3].value) parts.push(results[3].value);
 
-      const json = await resp.json() as {
-        choices: Array<{
-          finish_reason: string;
-          message: {
-            content: string | null;
-            tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }>;
-          };
-        }>;
-      };
-
-      const choice = json.choices[0];
-      if (!choice) throw new Error("无响应");
-
-      return {
-        finishReason: choice.finish_reason,
-        content: choice.message.content,
-        toolCalls: choice.message.tool_calls ?? null,
-      };
-    },
-    [model, mcpTools]
-  );
+    return parts.join("\n\n");
+  }, []);
 
   /** 发送消息 */
   const sendMessage = useCallback(
@@ -122,21 +70,8 @@ export default function useAIChat() {
       abortRef.current = controller;
 
       try {
-        // 预取实时市场数据（确保 AI 拿到当前数据）
-        let marketCtx = "";
-        try {
-          const [overviewResult, ladderResult] = await Promise.allSettled([
-            callMCPTool("market_overview", {}),
-            callMCPTool("limit_up_ladder", {}),
-          ]);
-          if (overviewResult.status === "fulfilled") marketCtx += overviewResult.value.content + "\n";
-          if (ladderResult.status === "fulfilled") marketCtx += ladderResult.value.content + "\n";
-        } catch { /* MCP 预取失败，回退到 API */ }
-
-        // 如果 MCP 预取失败，回退到 REST API
-        if (!marketCtx) {
-          marketCtx = await fetchBoardLadderForContext();
-        }
+        // 获取最新市场数据
+        const marketCtx = await fetchMarketContext();
         const newsCtx = AIService.formatNewsContext(
           news as Array<{ content?: string; brief?: string }>
         );
@@ -149,128 +84,6 @@ export default function useAIChat() {
         const currentMsgs = [...messages, userMsg];
         const apiMessages = AIService.toAPIMessages(currentMsgs, systemPrompt);
 
-        // 🔧 第一步：检测是否需要工具调用
-        const hasTools = mcpReady && mcpTools.length > 0;
-        if (hasTools) {
-          const checkResult = await checkToolCalls(apiMessages, controller.signal);
-
-          if (checkResult.toolCalls && checkResult.toolCalls.length > 0) {
-            // 有工具调用：创建工具调用消息
-            const toolCallsWithType = checkResult.toolCalls.map(tc => ({ ...tc, type: "function" as const }));
-const toolCallMsg = AIService.createToolCallMessage(toolCallsWithType);
-            
-            // 更新消息列表：替换 AI 占位为工具调用消息
-            setMessages((prev) => {
-              const updated = [...prev];
-              updated[updated.length - 1] = {
-                ...toolCallMsg,
-                isToolRunning: true,
-              };
-              return updated;
-            });
-
-            // 执行工具调用
-            const toolResults: ChatMessage[] = [];
-            for (const tc of checkResult.toolCalls) {
-              try {
-                const args = JSON.parse(tc.function.arguments) as Record<string, unknown>;
-                const result = await callMCPTool(tc.function.name, args);
-                toolResults.push(
-                  AIService.createToolResultMessage(tc.id, tc.function.name, result.content)
-                );
-              } catch (err) {
-                toolResults.push(
-                  AIService.createToolResultMessage(
-                    tc.id,
-                    tc.function.name,
-                    `工具调用失败: ${err instanceof Error ? err.message : String(err)}`
-                  )
-                );
-              }
-            }
-
-            // 刷新消息列表，追加工具结果
-            setMessages((prev) => {
-              const updated = [...prev];
-              const last = updated[updated.length - 1];
-              if (last && last.isToolRunning) {
-                updated[updated.length - 1] = { ...last, isToolRunning: false };
-              }
-              return [...updated, ...toolResults];
-            });
-
-            // 🔧 第二步：流式调用 DeepSeek 获取最终回答
-            const finalAssistantMsg = AIService.createAssistantPlaceholder();
-            setMessages((prev) => [...prev, finalAssistantMsg]);
-
-            const allMsgs = [...currentMsgs, toolCallMsg, ...toolResults];
-            const finalApiMessages = AIService.toAPIMessages(allMsgs, systemPrompt);
-
-            let fullContent = "";
-            await streamDeepSeekChat(finalApiMessages, {
-                onToken: (token) => {
-                  fullContent += token;
-                  setMessages((prev) => {
-                    const updated = [...prev];
-                    const last = updated[updated.length - 1];
-                    if (last && last.role === "assistant" && last.isStreaming) {
-                      updated[updated.length - 1] = { ...last, content: fullContent };
-                    }
-                    return updated;
-                  });
-                },
-                onDone: () => {
-                  setMessages((prev) => {
-                    const updated = [...prev];
-                    const last = updated[updated.length - 1];
-                    if (last && last.role === "assistant") {
-                      updated[updated.length - 1] = {
-                        ...last,
-                        isStreaming: false,
-                        timestamp: Date.now(), } as ChatMessage;
-                    }
-                    return updated;
-                  });
-                  setIsStreaming(false);
-                },
-                onError: (err) => {
-                  setMessages((prev) => {
-                    const updated = [...prev];
-                    const last = updated[updated.length - 1];
-                    if (last && last.role === "assistant") {
-                      updated[updated.length - 1] = {
-                        ...last,
-                        content: `错误: ${err.message}`,
-                        isStreaming: false,
-                        isError: true,
-                        timestamp: Date.now(), } as ChatMessage;
-                    }
-                    return updated;
-                  });
-                  setIsStreaming(false);
-                },
-              },
-              controller.signal);
-            return;
-          }
-
-          // 有文本内容：直接显示（如简单问候）
-          if (checkResult.content) {
-            setMessages((prev) => {
-              const updated = [...prev];
-              updated[updated.length - 1] = {
-                ...updated[updated.length - 1],
-                content: checkResult.content ?? "",
-                isStreaming: false,
-                timestamp: Date.now(), } as ChatMessage;
-              return updated;
-            });
-            setIsStreaming(false);
-            return;
-          }
-        }
-
-        // 🔧 无工具调用或 MCP 不可用：直接流式对话
         let fullContent = "";
         await streamDeepSeekChat(
           apiMessages,
@@ -291,52 +104,43 @@ const toolCallMsg = AIService.createToolCallMessage(toolCallsWithType);
                 const updated = [...prev];
                 const last = updated[updated.length - 1];
                 if (last && last.role === "assistant") {
-                  updated[updated.length - 1] = {
-                    ...last,
-                    isStreaming: false,
-                    timestamp: Date.now(), } as ChatMessage;
+                  updated[updated.length - 1] = { ...last, isStreaming: false, timestamp: Date.now() };
                 }
                 return updated;
               });
               setIsStreaming(false);
+              abortRef.current = null;
             },
             onError: (err) => {
               setMessages((prev) => {
                 const updated = [...prev];
                 const last = updated[updated.length - 1];
                 if (last && last.role === "assistant") {
-                  updated[updated.length - 1] = {
-                    ...last,
-                    content: `错误: ${err.message}`,
-                    isStreaming: false,
-                    isError: true,
-                    timestamp: Date.now(), } as ChatMessage;
+                  updated[updated.length - 1] = { ...last, content: `错误: ${err.message}`, isStreaming: false, isError: true, timestamp: Date.now() };
                 }
                 return updated;
               });
               setIsStreaming(false);
+              abortRef.current = null;
             },
           },
-          controller.signal);
+          controller.signal,
+          model
+        );
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
         setMessages((prev) => {
           const updated = [...prev];
           const last = updated[updated.length - 1];
           if (last && last.role === "assistant") {
-            updated[updated.length - 1] = {
-              ...last,
-              content: `错误: ${err instanceof Error ? err.message : String(err)}`,
-              isStreaming: false,
-              isError: true,
-              timestamp: Date.now(), } as ChatMessage;
+            updated[updated.length - 1] = { ...last, content: `错误: ${err instanceof Error ? err.message : String(err)}`, isStreaming: false, isError: true, timestamp: Date.now() };
           }
           return updated;
         });
         setIsStreaming(false);
       }
     },
-    [messages, isStreaming, model, enabledFrameworks, news, mcpReady, mcpTools, checkToolCalls]
+    [messages, isStreaming, model, enabledFrameworks, news, fetchMarketContext]
   );
 
   const stopStreaming = useCallback(() => {
@@ -368,7 +172,6 @@ const toolCallMsg = AIService.createToolCallMessage(toolCallsWithType);
     toggleFramework,
     news,
     hotStocks,
-    mcpReady,
     sendMessage,
     stopStreaming,
     clearMessages,

@@ -112,8 +112,7 @@ const AIAnalysis: FC = () => {
   const {
     messages, isStreaming, model, setModel,
     frameworks, toggleFramework,
-    news, hotStocks, mcpReady,
-    sendMessage, stopStreaming, clearMessages,
+    news, hotStocks, sendMessage, stopStreaming, clearMessages,
   } = useAIChat();
 
   const [input, setInput] = useState("");
@@ -156,16 +155,7 @@ const AIAnalysis: FC = () => {
         <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${C.border}` }}>
           <div className="flex items-center gap-3">
             <h1 className="text-base font-bold" style={{ color: C.text }}>AI 智能分析</h1>
-            {/* MCP 状态 */}
-            <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
-              style={{
-                backgroundColor: mcpReady ? `${C.green}15` : `${C.dim}15`,
-                color: mcpReady ? C.green : C.dim,
-              }}>
-              <span className={`h-1.5 w-1.5 rounded-full ${mcpReady ? "animate-pulse" : ""}`}
-                style={{ backgroundColor: mcpReady ? C.green : C.dim }} />
-              {mcpReady ? "MCP 已连接 (67工具)" : "MCP 连接中..."}
-            </span>
+
           </div>
 
           <div className="flex items-center gap-2">
