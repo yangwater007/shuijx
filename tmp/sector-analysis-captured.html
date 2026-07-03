@@ -1,0 +1,1321 @@
+<!DOCTYPE html><html lang="en"><head>
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>quicktiny</title>
+  <style type="text/css" data-vite-dev-id="D:/quicktiny/src/index.css">/*! tailwindcss v4.3.1 | MIT License | https://tailwindcss.com */
+@layer properties;
+@layer theme, base, components, utilities;
+@layer theme {
+  :root, :host {
+    --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+      "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+      "Courier New", monospace;
+    --color-red-400: oklch(70.4% 0.191 22.216);
+    --color-red-500: oklch(63.7% 0.237 25.331);
+    --color-blue-500: oklch(62.3% 0.214 259.815);
+    --color-slate-200: oklch(92.9% 0.013 255.508);
+    --color-slate-300: oklch(86.9% 0.022 252.894);
+    --color-slate-400: oklch(70.4% 0.04 256.788);
+    --color-slate-500: oklch(55.4% 0.046 257.417);
+    --color-slate-600: oklch(44.6% 0.043 257.281);
+    --color-slate-700: oklch(37.2% 0.044 257.287);
+    --color-slate-800: oklch(27.9% 0.041 260.031);
+    --color-white: #fff;
+    --spacing: 0.25rem;
+    --container-2xl: 42rem;
+    --text-xs: 0.75rem;
+    --text-xs--line-height: calc(1 / 0.75);
+    --text-sm: 0.875rem;
+    --text-sm--line-height: calc(1.25 / 0.875);
+    --text-base: 1rem;
+    --text-base--line-height: calc(1.5 / 1);
+    --text-lg: 1.125rem;
+    --text-lg--line-height: calc(1.75 / 1.125);
+    --text-xl: 1.25rem;
+    --text-xl--line-height: calc(1.75 / 1.25);
+    --text-2xl: 1.5rem;
+    --text-2xl--line-height: calc(2 / 1.5);
+    --text-4xl: 2.25rem;
+    --text-4xl--line-height: calc(2.5 / 2.25);
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-bold: 700;
+    --leading-relaxed: 1.625;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+    --radius-2xl: 1rem;
+    --default-transition-duration: 150ms;
+    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    --default-font-family: var(--font-sans);
+    --default-mono-font-family: var(--font-mono);
+  }
+}
+@layer base {
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
+  html, :host {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    tab-size: 4;
+    font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+    font-feature-settings: var(--default-font-feature-settings, normal);
+    font-variation-settings: var(--default-font-variation-settings, normal);
+    -webkit-tap-highlight-color: transparent;
+  }
+  hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+  abbr:where([title]) {
+    -webkit-text-decoration: underline dotted;
+    text-decoration: underline dotted;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  a {
+    color: inherit;
+    -webkit-text-decoration: inherit;
+    text-decoration: inherit;
+  }
+  b, strong {
+    font-weight: bolder;
+  }
+  code, kbd, samp, pre {
+    font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+    font-feature-settings: var(--default-mono-font-feature-settings, normal);
+    font-variation-settings: var(--default-mono-font-variation-settings, normal);
+    font-size: 1em;
+  }
+  small {
+    font-size: 80%;
+  }
+  sub, sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  sub {
+    bottom: -0.25em;
+  }
+  sup {
+    top: -0.5em;
+  }
+  table {
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
+  }
+  :-moz-focusring {
+    outline: auto;
+  }
+  progress {
+    vertical-align: baseline;
+  }
+  summary {
+    display: list-item;
+  }
+  ol, ul, menu {
+    list-style: none;
+  }
+  img, svg, video, canvas, audio, iframe, embed, object {
+    display: block;
+    vertical-align: middle;
+  }
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+  button, input, select, optgroup, textarea, ::file-selector-button {
+    font: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    border-radius: 0;
+    background-color: transparent;
+    opacity: 1;
+  }
+  :where(select:is([multiple], [size])) optgroup {
+    font-weight: bolder;
+  }
+  :where(select:is([multiple], [size])) optgroup option {
+    padding-inline-start: 20px;
+  }
+  ::file-selector-button {
+    margin-inline-end: 4px;
+  }
+  ::placeholder {
+    opacity: 1;
+  }
+  @supports (not (-webkit-appearance: -apple-pay-button))  or (contain-intrinsic-size: 1px) {
+    ::placeholder {
+      color: currentcolor;
+      @supports (color: color-mix(in lab, red, red)) {
+        color: color-mix(in oklab, currentcolor 50%, transparent);
+      }
+    }
+  }
+  textarea {
+    resize: vertical;
+  }
+  ::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+  ::-webkit-date-and-time-value {
+    min-height: 1lh;
+    text-align: inherit;
+  }
+  ::-webkit-datetime-edit {
+    display: inline-flex;
+  }
+  ::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+  ::-webkit-datetime-edit, ::-webkit-datetime-edit-year-field, ::-webkit-datetime-edit-month-field, ::-webkit-datetime-edit-day-field, ::-webkit-datetime-edit-hour-field, ::-webkit-datetime-edit-minute-field, ::-webkit-datetime-edit-second-field, ::-webkit-datetime-edit-millisecond-field, ::-webkit-datetime-edit-meridiem-field {
+    padding-block: 0;
+  }
+  ::-webkit-calendar-picker-indicator {
+    line-height: 1;
+  }
+  :-moz-ui-invalid {
+    box-shadow: none;
+  }
+  button, input:where([type="button"], [type="reset"], [type="submit"]), ::file-selector-button {
+    appearance: button;
+  }
+  ::-webkit-inner-spin-button, ::-webkit-outer-spin-button {
+    height: auto;
+  }
+  [hidden]:where(:not([hidden="until-found"])) {
+    display: none !important;
+  }
+}
+@layer utilities {
+  .visible {
+    visibility: visible;
+  }
+  .absolute {
+    position: absolute;
+  }
+  .fixed {
+    position: fixed;
+  }
+  .relative {
+    position: relative;
+  }
+  .inset-0 {
+    inset: 0;
+  }
+  .top-2 {
+    top: calc(var(--spacing) * 2);
+  }
+  .top-full {
+    top: 100%;
+  }
+  .left-0 {
+    left: 0;
+  }
+  .left-2 {
+    left: calc(var(--spacing) * 2);
+  }
+  .z-20 {
+    z-index: 20;
+  }
+  .z-50 {
+    z-index: 50;
+  }
+  .container {
+    width: 100%;
+    @media (width >= 40rem) {
+      max-width: 40rem;
+    }
+    @media (width >= 48rem) {
+      max-width: 48rem;
+    }
+    @media (width >= 64rem) {
+      max-width: 64rem;
+    }
+    @media (width >= 80rem) {
+      max-width: 80rem;
+    }
+    @media (width >= 96rem) {
+      max-width: 96rem;
+    }
+  }
+  .mx-4 {
+    margin-inline: calc(var(--spacing) * 4);
+  }
+  .mt-0\.5 {
+    margin-top: calc(var(--spacing) * 0.5);
+  }
+  .mt-1 {
+    margin-top: var(--spacing);
+  }
+  .mt-2 {
+    margin-top: calc(var(--spacing) * 2);
+  }
+  .mt-3 {
+    margin-top: calc(var(--spacing) * 3);
+  }
+  .mt-4 {
+    margin-top: calc(var(--spacing) * 4);
+  }
+  .mt-6 {
+    margin-top: calc(var(--spacing) * 6);
+  }
+  .mb-0\.5 {
+    margin-bottom: calc(var(--spacing) * 0.5);
+  }
+  .mb-1 {
+    margin-bottom: var(--spacing);
+  }
+  .mb-2 {
+    margin-bottom: calc(var(--spacing) * 2);
+  }
+  .mb-3 {
+    margin-bottom: calc(var(--spacing) * 3);
+  }
+  .mb-4 {
+    margin-bottom: calc(var(--spacing) * 4);
+  }
+  .mb-5 {
+    margin-bottom: calc(var(--spacing) * 5);
+  }
+  .mb-6 {
+    margin-bottom: calc(var(--spacing) * 6);
+  }
+  .ml-0\.5 {
+    margin-left: calc(var(--spacing) * 0.5);
+  }
+  .ml-1 {
+    margin-left: var(--spacing);
+  }
+  .ml-1\.5 {
+    margin-left: calc(var(--spacing) * 1.5);
+  }
+  .ml-2 {
+    margin-left: calc(var(--spacing) * 2);
+  }
+  .ml-3 {
+    margin-left: calc(var(--spacing) * 3);
+  }
+  .ml-auto {
+    margin-left: auto;
+  }
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .block {
+    display: block;
+  }
+  .contents {
+    display: contents;
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .hidden {
+    display: none;
+  }
+  .inline-block {
+    display: inline-block;
+  }
+  .inline-flex {
+    display: inline-flex;
+  }
+  .table {
+    display: table;
+  }
+  .h-1\.5 {
+    height: calc(var(--spacing) * 1.5);
+  }
+  .h-2 {
+    height: calc(var(--spacing) * 2);
+  }
+  .h-2\.5 {
+    height: calc(var(--spacing) * 2.5);
+  }
+  .h-5 {
+    height: calc(var(--spacing) * 5);
+  }
+  .h-6 {
+    height: calc(var(--spacing) * 6);
+  }
+  .h-7 {
+    height: calc(var(--spacing) * 7);
+  }
+  .h-8 {
+    height: calc(var(--spacing) * 8);
+  }
+  .h-9 {
+    height: calc(var(--spacing) * 9);
+  }
+  .h-40 {
+    height: calc(var(--spacing) * 40);
+  }
+  .h-64 {
+    height: calc(var(--spacing) * 64);
+  }
+  .h-80 {
+    height: calc(var(--spacing) * 80);
+  }
+  .h-\[calc\(100vh-80px\)\] {
+    height: calc(100vh - 80px);
+  }
+  .h-full {
+    height: 100%;
+  }
+  .h-screen {
+    height: 100vh;
+  }
+  .max-h-32 {
+    max-height: calc(var(--spacing) * 32);
+  }
+  .max-h-\[80vh\] {
+    max-height: 80vh;
+  }
+  .max-h-\[90vh\] {
+    max-height: 90vh;
+  }
+  .min-h-\[40px\] {
+    min-height: 40px;
+  }
+  .w-2 {
+    width: calc(var(--spacing) * 2);
+  }
+  .w-2\.5 {
+    width: calc(var(--spacing) * 2.5);
+  }
+  .w-6 {
+    width: calc(var(--spacing) * 6);
+  }
+  .w-7 {
+    width: calc(var(--spacing) * 7);
+  }
+  .w-8 {
+    width: calc(var(--spacing) * 8);
+  }
+  .w-9 {
+    width: calc(var(--spacing) * 9);
+  }
+  .w-16 {
+    width: calc(var(--spacing) * 16);
+  }
+  .w-20 {
+    width: calc(var(--spacing) * 20);
+  }
+  .w-24 {
+    width: calc(var(--spacing) * 24);
+  }
+  .w-44 {
+    width: calc(var(--spacing) * 44);
+  }
+  .w-64 {
+    width: calc(var(--spacing) * 64);
+  }
+  .w-\[72px\] {
+    width: 72px;
+  }
+  .w-\[156px\] {
+    width: 156px;
+  }
+  .w-\[172px\] {
+    width: 172px;
+  }
+  .w-\[176px\] {
+    width: 176px;
+  }
+  .w-\[220px\] {
+    width: 220px;
+  }
+  .w-full {
+    width: 100%;
+  }
+  .w-px {
+    width: 1px;
+  }
+  .max-w-2xl {
+    max-width: var(--container-2xl);
+  }
+  .max-w-\[80\%\] {
+    max-width: 80%;
+  }
+  .max-w-\[200px\] {
+    max-width: 200px;
+  }
+  .max-w-\[780px\] {
+    max-width: 780px;
+  }
+  .min-w-0 {
+    min-width: 0;
+  }
+  .flex-1 {
+    flex: 1;
+  }
+  .shrink-0 {
+    flex-shrink: 0;
+  }
+  .transform {
+    transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
+  }
+  .cursor-default {
+    cursor: default;
+  }
+  .cursor-pointer {
+    cursor: pointer;
+  }
+  .resize {
+    resize: both;
+  }
+  .resize-none {
+    resize: none;
+  }
+  .grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  .grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .flex-col {
+    flex-direction: column;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .items-end {
+    align-items: flex-end;
+  }
+  .items-start {
+    align-items: flex-start;
+  }
+  .justify-between {
+    justify-content: space-between;
+  }
+  .justify-center {
+    justify-content: center;
+  }
+  .justify-end {
+    justify-content: flex-end;
+  }
+  .justify-start {
+    justify-content: flex-start;
+  }
+  .gap-0\.5 {
+    gap: calc(var(--spacing) * 0.5);
+  }
+  .gap-1 {
+    gap: var(--spacing);
+  }
+  .gap-1\.5 {
+    gap: calc(var(--spacing) * 1.5);
+  }
+  .gap-2 {
+    gap: calc(var(--spacing) * 2);
+  }
+  .gap-2\.5 {
+    gap: calc(var(--spacing) * 2.5);
+  }
+  .gap-3 {
+    gap: calc(var(--spacing) * 3);
+  }
+  .gap-4 {
+    gap: calc(var(--spacing) * 4);
+  }
+  .gap-6 {
+    gap: calc(var(--spacing) * 6);
+  }
+  .space-y-0\.5 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 0.5) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 0.5) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .space-y-1 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(var(--spacing) * var(--tw-space-y-reverse));
+      margin-block-end: calc(var(--spacing) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .space-y-1\.5 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 1.5) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 1.5) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .space-y-2 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .space-y-4 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .space-y-6 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 6) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 6) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .overflow-hidden {
+    overflow: hidden;
+  }
+  .overflow-x-auto {
+    overflow-x: auto;
+  }
+  .overflow-y-auto {
+    overflow-y: auto;
+  }
+  .rounded {
+    border-radius: 0.25rem;
+  }
+  .rounded-2xl {
+    border-radius: var(--radius-2xl);
+  }
+  .rounded-full {
+    border-radius: calc(infinity * 1px);
+  }
+  .rounded-lg {
+    border-radius: var(--radius-lg);
+  }
+  .rounded-md {
+    border-radius: var(--radius-md);
+  }
+  .rounded-sm {
+    border-radius: var(--radius-sm);
+  }
+  .rounded-xl {
+    border-radius: var(--radius-xl);
+  }
+  .border {
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+  }
+  .border-0 {
+    border-style: var(--tw-border-style);
+    border-width: 0px;
+  }
+  .border-2 {
+    border-style: var(--tw-border-style);
+    border-width: 2px;
+  }
+  .border-t {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 1px;
+  }
+  .border-r {
+    border-right-style: var(--tw-border-style);
+    border-right-width: 1px;
+  }
+  .border-b {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
+  }
+  .border-b-2 {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 2px;
+  }
+  .border-dashed {
+    --tw-border-style: dashed;
+    border-style: dashed;
+  }
+  .bg-red-500\/10 {
+    background-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-red-500) 10%, transparent);
+    }
+  }
+  .bg-red-500\/20 {
+    background-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 20%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-red-500) 20%, transparent);
+    }
+  }
+  .bg-transparent {
+    background-color: transparent;
+  }
+  .p-1\.5 {
+    padding: calc(var(--spacing) * 1.5);
+  }
+  .p-2 {
+    padding: calc(var(--spacing) * 2);
+  }
+  .p-2\.5 {
+    padding: calc(var(--spacing) * 2.5);
+  }
+  .p-3 {
+    padding: calc(var(--spacing) * 3);
+  }
+  .p-4 {
+    padding: calc(var(--spacing) * 4);
+  }
+  .p-6 {
+    padding: calc(var(--spacing) * 6);
+  }
+  .px-1 {
+    padding-inline: var(--spacing);
+  }
+  .px-1\.5 {
+    padding-inline: calc(var(--spacing) * 1.5);
+  }
+  .px-2 {
+    padding-inline: calc(var(--spacing) * 2);
+  }
+  .px-2\.5 {
+    padding-inline: calc(var(--spacing) * 2.5);
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing) * 3);
+  }
+  .px-4 {
+    padding-inline: calc(var(--spacing) * 4);
+  }
+  .px-5 {
+    padding-inline: calc(var(--spacing) * 5);
+  }
+  .px-6 {
+    padding-inline: calc(var(--spacing) * 6);
+  }
+  .py-0\.5 {
+    padding-block: calc(var(--spacing) * 0.5);
+  }
+  .py-1 {
+    padding-block: var(--spacing);
+  }
+  .py-1\.5 {
+    padding-block: calc(var(--spacing) * 1.5);
+  }
+  .py-2 {
+    padding-block: calc(var(--spacing) * 2);
+  }
+  .py-2\.5 {
+    padding-block: calc(var(--spacing) * 2.5);
+  }
+  .py-3 {
+    padding-block: calc(var(--spacing) * 3);
+  }
+  .py-4 {
+    padding-block: calc(var(--spacing) * 4);
+  }
+  .py-5 {
+    padding-block: calc(var(--spacing) * 5);
+  }
+  .py-8 {
+    padding-block: calc(var(--spacing) * 8);
+  }
+  .py-12 {
+    padding-block: calc(var(--spacing) * 12);
+  }
+  .py-px {
+    padding-block: 1px;
+  }
+  .pt-2 {
+    padding-top: calc(var(--spacing) * 2);
+  }
+  .pt-3 {
+    padding-top: calc(var(--spacing) * 3);
+  }
+  .pr-2 {
+    padding-right: calc(var(--spacing) * 2);
+  }
+  .pb-2 {
+    padding-bottom: calc(var(--spacing) * 2);
+  }
+  .text-center {
+    text-align: center;
+  }
+  .text-left {
+    text-align: left;
+  }
+  .text-right {
+    text-align: right;
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+  .text-2xl {
+    font-size: var(--text-2xl);
+    line-height: var(--tw-leading, var(--text-2xl--line-height));
+  }
+  .text-4xl {
+    font-size: var(--text-4xl);
+    line-height: var(--tw-leading, var(--text-4xl--line-height));
+  }
+  .text-base {
+    font-size: var(--text-base);
+    line-height: var(--tw-leading, var(--text-base--line-height));
+  }
+  .text-lg {
+    font-size: var(--text-lg);
+    line-height: var(--tw-leading, var(--text-lg--line-height));
+  }
+  .text-sm {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
+  .text-xl {
+    font-size: var(--text-xl);
+    line-height: var(--tw-leading, var(--text-xl--line-height));
+  }
+  .text-xs {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+  .text-\[10px\] {
+    font-size: 10px;
+  }
+  .text-\[11px\] {
+    font-size: 11px;
+  }
+  .text-\[13px\] {
+    font-size: 13px;
+  }
+  .leading-relaxed {
+    --tw-leading: var(--leading-relaxed);
+    line-height: var(--leading-relaxed);
+  }
+  .font-bold {
+    --tw-font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-bold);
+  }
+  .font-medium {
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+  .font-normal {
+    --tw-font-weight: var(--font-weight-normal);
+    font-weight: var(--font-weight-normal);
+  }
+  .whitespace-pre-wrap {
+    white-space: pre-wrap;
+  }
+  .text-red-400 {
+    color: var(--color-red-400);
+  }
+  .text-slate-200 {
+    color: var(--color-slate-200);
+  }
+  .text-slate-300 {
+    color: var(--color-slate-300);
+  }
+  .text-slate-400 {
+    color: var(--color-slate-400);
+  }
+  .text-slate-500 {
+    color: var(--color-slate-500);
+  }
+  .text-slate-600 {
+    color: var(--color-slate-600);
+  }
+  .text-slate-700 {
+    color: var(--color-slate-700);
+  }
+  .text-white {
+    color: var(--color-white);
+  }
+  .uppercase {
+    text-transform: uppercase;
+  }
+  .underline {
+    text-decoration-line: underline;
+  }
+  .opacity-60 {
+    opacity: 60%;
+  }
+  .opacity-70 {
+    opacity: 70%;
+  }
+  .shadow {
+    --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .shadow-2xl {
+    --tw-shadow: 0 25px 50px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .shadow-lg {
+    --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .filter {
+    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+  }
+  .transition-all {
+    transition-property: all;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .transition-colors {
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .duration-500 {
+    --tw-duration: 500ms;
+    transition-duration: 500ms;
+  }
+  .outline-none {
+    --tw-outline-style: none;
+    outline-style: none;
+  }
+  .placeholder\:text-slate-600 {
+    &::placeholder {
+      color: var(--color-slate-600);
+    }
+  }
+  .hover\:-translate-y-0\.5 {
+    &:hover {
+      @media (hover: hover) {
+        --tw-translate-y: calc(var(--spacing) * -0.5);
+        translate: var(--tw-translate-x) var(--tw-translate-y);
+      }
+    }
+  }
+  .hover\:bg-slate-800 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-slate-800);
+      }
+    }
+  }
+  .hover\:bg-white\/5 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: color-mix(in srgb, #fff 5%, transparent);
+        @supports (color: color-mix(in lab, red, red)) {
+          background-color: color-mix(in oklab, var(--color-white) 5%, transparent);
+        }
+      }
+    }
+  }
+  .hover\:bg-white\/10 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: color-mix(in srgb, #fff 10%, transparent);
+        @supports (color: color-mix(in lab, red, red)) {
+          background-color: color-mix(in oklab, var(--color-white) 10%, transparent);
+        }
+      }
+    }
+  }
+  .hover\:bg-white\/\[0\.04\] {
+    &:hover {
+      @media (hover: hover) {
+        background-color: color-mix(in srgb, #fff 4%, transparent);
+        @supports (color: color-mix(in lab, red, red)) {
+          background-color: color-mix(in oklab, var(--color-white) 4%, transparent);
+        }
+      }
+    }
+  }
+  .hover\:text-slate-200 {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-slate-200);
+      }
+    }
+  }
+  .hover\:text-slate-300 {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-slate-300);
+      }
+    }
+  }
+  .hover\:text-white {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-white);
+      }
+    }
+  }
+  .hover\:opacity-80 {
+    &:hover {
+      @media (hover: hover) {
+        opacity: 80%;
+      }
+    }
+  }
+  .focus\:ring-1 {
+    &:focus {
+      --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+  .focus\:ring-blue-500 {
+    &:focus {
+      --tw-ring-color: var(--color-blue-500);
+    }
+  }
+  .focus\:outline-none {
+    &:focus {
+      --tw-outline-style: none;
+      outline-style: none;
+    }
+  }
+  .disabled\:opacity-40 {
+    &:disabled {
+      opacity: 40%;
+    }
+  }
+  .disabled\:opacity-50 {
+    &:disabled {
+      opacity: 50%;
+    }
+  }
+  .sm\:grid-cols-3 {
+    @media (width >= 40rem) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .md\:grid-cols-2 {
+    @media (width >= 48rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .md\:grid-cols-4 {
+    @media (width >= 48rem) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .lg\:col-span-2 {
+    @media (width >= 64rem) {
+      grid-column: span 2 / span 2;
+    }
+  }
+  .lg\:grid-cols-2 {
+    @media (width >= 64rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .lg\:grid-cols-5 {
+    @media (width >= 64rem) {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+  .xl\:w-\[380px\] {
+    @media (width >= 80rem) {
+      width: 380px;
+    }
+  }
+  .xl\:grid-cols-3 {
+    @media (width >= 80rem) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .xl\:grid-cols-6 {
+    @media (width >= 80rem) {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+  }
+  .xl\:flex-row {
+    @media (width >= 80rem) {
+      flex-direction: row;
+    }
+  }
+}
+:root {
+  --stock-up: #ef4444;
+  --stock-down: #22c55e;
+  --stock-flat: #6b7280;
+  --board-bg: #0f172a;
+  --board-card: #1e293b;
+  --board-border: #334155;
+  --sidebar-width: 220px;
+}
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--board-bg);
+  color: #e2e8f0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+#root {
+  min-height: 100vh;
+}
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--board-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--board-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+@property --tw-rotate-x {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-rotate-y {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-rotate-z {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-skew-x {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-skew-y {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-space-y-reverse {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-border-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
+@property --tw-leading {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-font-weight {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-inset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-ring-inset {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-offset-width {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --tw-ring-offset-color {
+  syntax: "*";
+  inherits: false;
+  initial-value: #fff;
+}
+@property --tw-ring-offset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-blur {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-brightness {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-contrast {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-grayscale {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-hue-rotate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-invert {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-opacity {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-saturate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-sepia {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-drop-shadow {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-drop-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-drop-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-drop-shadow-size {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-duration {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-translate-x {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-y {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-z {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@layer properties {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+    *, ::before, ::after, ::backdrop {
+      --tw-rotate-x: initial;
+      --tw-rotate-y: initial;
+      --tw-rotate-z: initial;
+      --tw-skew-x: initial;
+      --tw-skew-y: initial;
+      --tw-space-y-reverse: 0;
+      --tw-border-style: solid;
+      --tw-leading: initial;
+      --tw-font-weight: initial;
+      --tw-shadow: 0 0 #0000;
+      --tw-shadow-color: initial;
+      --tw-shadow-alpha: 100%;
+      --tw-inset-shadow: 0 0 #0000;
+      --tw-inset-shadow-color: initial;
+      --tw-inset-shadow-alpha: 100%;
+      --tw-ring-color: initial;
+      --tw-ring-shadow: 0 0 #0000;
+      --tw-inset-ring-color: initial;
+      --tw-inset-ring-shadow: 0 0 #0000;
+      --tw-ring-inset: initial;
+      --tw-ring-offset-width: 0px;
+      --tw-ring-offset-color: #fff;
+      --tw-ring-offset-shadow: 0 0 #0000;
+      --tw-blur: initial;
+      --tw-brightness: initial;
+      --tw-contrast: initial;
+      --tw-grayscale: initial;
+      --tw-hue-rotate: initial;
+      --tw-invert: initial;
+      --tw-opacity: initial;
+      --tw-saturate: initial;
+      --tw-sepia: initial;
+      --tw-drop-shadow: initial;
+      --tw-drop-shadow-color: initial;
+      --tw-drop-shadow-alpha: 100%;
+      --tw-drop-shadow-size: initial;
+      --tw-duration: initial;
+      --tw-translate-x: 0;
+      --tw-translate-y: 0;
+      --tw-translate-z: 0;
+    }
+  }
+}
+</style></head>
+  <body>
+    <div id="root"><div class="flex h-screen overflow-hidden"><aside class="flex h-full w-[220px] shrink-0 flex-col border-r" style="background-color: var(--board-card); border-color: var(--board-border);"><div class="flex items-center gap-2 px-4 py-5"><span class="text-2xl">🐂</span><div><h1 class="text-base font-bold text-white">Stock Platform</h1><p class="text-xs text-slate-500">短线复盘工具</p></div></div><nav class="flex-1 space-y-1 px-3 py-4"><a class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-slate-200" href="/ladder" data-discover="true"><span class="text-lg">📊</span><span>连板天梯</span></a><a class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-slate-200" href="/hot" data-discover="true"><span class="text-lg">🔥</span><span>热榜</span></a><a aria-current="page" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors bg-red-500/20 text-red-400" href="/sector-analysis" data-discover="true"><span class="text-lg">🔄</span><span>板块轮动</span></a><a class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-slate-200" href="/selector" data-discover="true"><span class="text-lg">🔍</span><span>条件选股</span></a><a class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-slate-200" href="/themes" data-discover="true"><span class="text-lg">📚</span><span>题材库</span></a><a class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-slate-200" href="/charts" data-discover="true"><span class="text-lg">📈</span><span>数据可视化</span></a><a class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-slate-200" href="/ai" data-discover="true"><span class="text-lg">🤖</span><span>AI 分析</span></a></nav><div class="border-t px-4 py-3 text-center text-xs" style="border-color: var(--board-border);"><p class="text-slate-600">数据来源: stock.quicktiny.cn</p><p class="mt-1 text-slate-700">仅供学习参考，不构成投资建议</p></div></aside><main class="flex-1 overflow-y-auto p-6" style="background-color: var(--board-bg);"><div class="space-y-4"><div class="flex items-center gap-2"><h1 class="text-xl font-bold text-white">板块轮动</h1><span class="text-xs text-slate-500">数据更新: 20260626</span></div><div class="flex flex-wrap items-center gap-4 rounded-xl px-5 py-3" style="background-color: var(--board-card);"><div class="flex items-center gap-1.5"><span class="text-xs text-slate-500">数据源</span><button type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors" style="background-color: var(--stock-up); color: rgb(255, 255, 255);">行业</button><button type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors" style="background-color: transparent; color: rgb(148, 163, 184);">概念</button><button type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors" style="background-color: transparent; color: rgb(148, 163, 184);">地区</button></div><div class="h-5 w-px" style="background-color: var(--board-border);"></div><div class="flex items-center gap-1.5"><span class="text-xs text-slate-500">周期</span><button type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors" style="background-color: rgb(59, 130, 246); color: rgb(255, 255, 255);">60日</button><button type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors" style="background-color: transparent; color: rgb(148, 163, 184);">30日</button><button type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors" style="background-color: transparent; color: rgb(148, 163, 184);">20日</button><button type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors" style="background-color: transparent; color: rgb(148, 163, 184);">10日</button><button type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors" style="background-color: transparent; color: rgb(148, 163, 184);">5日</button></div><div class="h-5 w-px" style="background-color: var(--board-border);"></div><div class="flex items-center gap-1.5"><span class="text-xs text-slate-500">强度</span><button type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors" style="background-color: rgb(139, 92, 246); color: rgb(255, 255, 255);">5日强度</button><button type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors" style="background-color: transparent; color: rgb(148, 163, 184);">10日强度</button></div><div class="ml-auto"><button type="button" class="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/10"><span>🔄</span><span>刷新</span></button></div></div><div class="flex flex-col gap-4 xl:flex-row"><div class="flex min-w-0 flex-1 flex-col gap-4"><div class="overflow-hidden rounded-xl" style="background-color: var(--board-card);"><div class="border-b px-5 py-3" style="border-color: var(--board-border);"><h2 class="text-sm font-bold text-slate-300">板块象限分布 · 近60日涨幅 vs 5日涨幅</h2></div><div class="p-2"><div _echarts_instance_="ec_1782639635124" style="height: 460px; width: 100%; user-select: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); position: relative;"><div style="position: relative; width: 1240px; height: 460px; padding: 0px; margin: 0px; border-width: 0px;"><canvas data-zr-dom-id="zr_0.0" width="1240" height="460" style="position: absolute; left: 0px; top: 0px; width: 1240px; height: 460px; user-select: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); padding: 0px; margin: 0px; border-width: 0px;"></canvas></div><div class=""></div></div></div><div class="flex gap-4 border-t px-5 py-2" style="border-color: var(--board-border);"><div class="flex items-center gap-1.5 text-xs text-slate-500"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background-color: rgb(239, 68, 68);"></span><span class="font-medium text-slate-300">领涨</span><span class="text-slate-600">近期强 + 累计强</span></div><div class="flex items-center gap-1.5 text-xs text-slate-500"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background-color: rgb(245, 158, 11);"></span><span class="font-medium text-slate-300">补涨</span><span class="text-slate-600">近期弱 + 累计强</span></div><div class="flex items-center gap-1.5 text-xs text-slate-500"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background-color: rgb(59, 130, 246);"></span><span class="font-medium text-slate-300">滞涨</span><span class="text-slate-600">近期强 + 累计弱</span></div><div class="flex items-center gap-1.5 text-xs text-slate-500"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background-color: rgb(34, 197, 94);"></span><span class="font-medium text-slate-300">领跌</span><span class="text-slate-600">近期弱 + 累计弱</span></div></div></div><div class="overflow-hidden rounded-xl" style="background-color: var(--board-card);"><div class="flex items-center justify-between border-b px-5 py-3" style="border-color: var(--board-border);"><h2 class="text-sm font-bold text-slate-300">板块列表<span class="ml-2 text-xs font-normal text-slate-500">54 个板块</span></h2><input placeholder="搜索板块..." class="rounded-lg border bg-transparent px-3 py-1.5 text-xs text-slate-300 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500" type="text" value="" style="border-color: var(--board-border); width: 180px;"></div><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr style="border-bottom: 2px solid var(--board-border);"><th class="px-3 py-2.5 text-xs font-medium text-slate-500" style="text-align: left; width: auto; min-width: auto;"><button type="button" class="hover:text-slate-300 transition-colors">板块 ↕</button></th><th class="px-3 py-2.5 text-xs font-medium text-slate-500" style="text-align: right; width: 90px; min-width: 90px;"><button type="button" class="hover:text-slate-300 transition-colors">近N日涨幅 ↓</button></th><th class="px-3 py-2.5 text-xs font-medium text-slate-500" style="text-align: right; width: 80px; min-width: 80px;"><button type="button" class="hover:text-slate-300 transition-colors">今日涨跌 ↕</button></th><th class="px-3 py-2.5 text-xs font-medium text-slate-500" style="text-align: right; width: 80px; min-width: 80px;"><button type="button" class="hover:text-slate-300 transition-colors">累计涨幅 ↕</button></th><th class="px-3 py-2.5 text-xs font-medium text-slate-500" style="text-align: right; width: 60px; min-width: 60px;"><button type="button" class="hover:text-slate-300 transition-colors">量比 ↕</button></th><th class="px-3 py-2.5 text-xs font-medium text-slate-500" style="text-align: center; width: 70px; min-width: 70px;">象限</th></tr></thead><tbody><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">电子化学品</span><span class="ml-2 text-xs text-slate-600">29只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+15.02%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+2.08%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+93.79%</td><td class="px-3 py-2.5 text-right text-slate-400">2.11</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(239, 68, 68, 0.133); color: rgb(239, 68, 68);">领涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">半导体</span><span class="ml-2 text-xs text-slate-600">178只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+9.57%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.01%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+99.09%</td><td class="px-3 py-2.5 text-right text-slate-400">1.72</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(239, 68, 68, 0.133); color: rgb(239, 68, 68);">领涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">电子</span><span class="ml-2 text-xs text-slate-600">529只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+9.03%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+1.01%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+86.41%</td><td class="px-3 py-2.5 text-right text-slate-400">1.63</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(239, 68, 68, 0.133); color: rgb(239, 68, 68);">领涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">光学光电子</span><span class="ml-2 text-xs text-slate-600">100只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+7.58%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+2.20%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+58.15%</td><td class="px-3 py-2.5 text-right text-slate-400">1.94</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(239, 68, 68, 0.133); color: rgb(239, 68, 68);">领涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">证券</span><span class="ml-2 text-xs text-slate-600">49只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+7.35%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.45%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+5.28%</td><td class="px-3 py-2.5 text-right text-slate-400">1.98</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(239, 68, 68, 0.133); color: rgb(239, 68, 68);">领涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">建筑材料</span><span class="ml-2 text-xs text-slate-600">80只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+6.84%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.48%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+59.74%</td><td class="px-3 py-2.5 text-right text-slate-400">1.75</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(239, 68, 68, 0.133); color: rgb(239, 68, 68);">领涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">非银金融</span><span class="ml-2 text-xs text-slate-600">77只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+4.69%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.95%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.81%</td><td class="px-3 py-2.5 text-right text-slate-400">1.74</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(59, 130, 246, 0.133); color: rgb(59, 130, 246);">滞涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">石油石化</span><span class="ml-2 text-xs text-slate-600">48只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+1.86%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+1.99%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-12.94%</td><td class="px-3 py-2.5 text-right text-slate-400">0.92</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(59, 130, 246, 0.133); color: rgb(59, 130, 246);">滞涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">机场</span><span class="ml-2 text-xs text-slate-600">5只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+0.81%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-0.33%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-12.72%</td><td class="px-3 py-2.5 text-right text-slate-400">1.05</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(59, 130, 246, 0.133); color: rgb(59, 130, 246);">滞涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">电力设备</span><span class="ml-2 text-xs text-slate-600">96只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+0.77%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+0.54%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-10.53%</td><td class="px-3 py-2.5 text-right text-slate-400">1.09</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(59, 130, 246, 0.133); color: rgb(59, 130, 246);">滞涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">化学制药</span><span class="ml-2 text-xs text-slate-600">152只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+0.53%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-5.67%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-9.54%</td><td class="px-3 py-2.5 text-right text-slate-400">0.86</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(59, 130, 246, 0.133); color: rgb(59, 130, 246);">滞涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">航运港口</span><span class="ml-2 text-xs text-slate-600">40只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+0.50%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.17%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-14.95%</td><td class="px-3 py-2.5 text-right text-slate-400">1.03</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(59, 130, 246, 0.133); color: rgb(59, 130, 246);">滞涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">社会服务</span><span class="ml-2 text-xs text-slate-600">80只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+0.09%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+2.14%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-11.65%</td><td class="px-3 py-2.5 text-right text-slate-400">0.96</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(59, 130, 246, 0.133); color: rgb(59, 130, 246);">滞涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">家用电器</span><span class="ml-2 text-xs text-slate-600">98只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-0.28%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+1.73%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+7.06%</td><td class="px-3 py-2.5 text-right text-slate-400">0.86</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(245, 158, 11, 0.133); color: rgb(245, 158, 11);">补涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">交通运输</span><span class="ml-2 text-xs text-slate-600">136只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-0.35%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.94%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-10.56%</td><td class="px-3 py-2.5 text-right text-slate-400">0.96</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">医药</span><span class="ml-2 text-xs text-slate-600">501只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-0.68%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.08%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-6.90%</td><td class="px-3 py-2.5 text-right text-slate-400">0.92</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">专用设备</span><span class="ml-2 text-xs text-slate-600">200只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-0.68%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-0.62%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+29.88%</td><td class="px-3 py-2.5 text-right text-slate-400">1.21</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(245, 158, 11, 0.133); color: rgb(245, 158, 11);">补涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">基础化工</span><span class="ml-2 text-xs text-slate-600">451只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-0.79%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.76%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+6.70%</td><td class="px-3 py-2.5 text-right text-slate-400">1.37</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(245, 158, 11, 0.133); color: rgb(245, 158, 11);">补涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">铁路公路</span><span class="ml-2 text-xs text-slate-600">41只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-0.87%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-0.71%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-8.67%</td><td class="px-3 py-2.5 text-right text-slate-400">0.74</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">环保</span><span class="ml-2 text-xs text-slate-600">125只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.23%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.37%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.13%</td><td class="px-3 py-2.5 text-right text-slate-400">1.02</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">非金属材料</span><span class="ml-2 text-xs text-slate-600">15只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.40%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.90%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+93.48%</td><td class="px-3 py-2.5 text-right text-slate-400">1.80</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(245, 158, 11, 0.133); color: rgb(245, 158, 11);">补涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">机械设备</span><span class="ml-2 text-xs text-slate-600">596只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.76%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-0.78%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+33.98%</td><td class="px-3 py-2.5 text-right text-slate-400">1.24</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(245, 158, 11, 0.133); color: rgb(245, 158, 11);">补涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">纺服行业</span><span class="ml-2 text-xs text-slate-600">89只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.83%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.15%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.15%</td><td class="px-3 py-2.5 text-right text-slate-400">1.01</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">通用设备</span><span class="ml-2 text-xs text-slate-600">283只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.45%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.33%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+39.45%</td><td class="px-3 py-2.5 text-right text-slate-400">1.21</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(245, 158, 11, 0.133); color: rgb(245, 158, 11);">补涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">公用事业</span><span class="ml-2 text-xs text-slate-600">60只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.81%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.98%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-14.21%</td><td class="px-3 py-2.5 text-right text-slate-400">0.84</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">食品饮料行业</span><span class="ml-2 text-xs text-slate-600">127只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.90%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.83%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-15.92%</td><td class="px-3 py-2.5 text-right text-slate-400">1.01</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">通信</span><span class="ml-2 text-xs text-slate-600">120只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.94%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-7.23%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+36.91%</td><td class="px-3 py-2.5 text-right text-slate-400">1.27</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(245, 158, 11, 0.133); color: rgb(245, 158, 11);">补涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">煤炭采选</span><span class="ml-2 text-xs text-slate-600">39只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.23%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.66%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-20.65%</td><td class="px-3 py-2.5 text-right text-slate-400">0.80</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">房地产</span><span class="ml-2 text-xs text-slate-600">100只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.45%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.23%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-8.77%</td><td class="px-3 py-2.5 text-right text-slate-400">1.03</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">农林牧渔</span><span class="ml-2 text-xs text-slate-600">113只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.77%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-0.99%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-18.43%</td><td class="px-3 py-2.5 text-right text-slate-400">0.85</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">生物制品</span><span class="ml-2 text-xs text-slate-600">61只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.81%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-4.67%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-14.15%</td><td class="px-3 py-2.5 text-right text-slate-400">0.79</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">文化传媒</span><span class="ml-2 text-xs text-slate-600">128只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.82%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.97%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-11.79%</td><td class="px-3 py-2.5 text-right text-slate-400">0.80</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">商贸零售</span><span class="ml-2 text-xs text-slate-600">105只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.87%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.36%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-17.14%</td><td class="px-3 py-2.5 text-right text-slate-400">0.86</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">银行</span><span class="ml-2 text-xs text-slate-600">42只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-4.07%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.82%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-7.17%</td><td class="px-3 py-2.5 text-right text-slate-400">1.06</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">电网设备</span><span class="ml-2 text-xs text-slate-600">161只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-4.16%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.45%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+3.85%</td><td class="px-3 py-2.5 text-right text-slate-400">0.96</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(245, 158, 11, 0.133); color: rgb(245, 158, 11);">补涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">电新行业</span><span class="ml-2 text-xs text-slate-600">435只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-4.29%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.02%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-5.99%</td><td class="px-3 py-2.5 text-right text-slate-400">0.97</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">国防军工</span><span class="ml-2 text-xs text-slate-600">139只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-4.46%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.86%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.08%</td><td class="px-3 py-2.5 text-right text-slate-400">1.20</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">出版</span><span class="ml-2 text-xs text-slate-600">28只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-4.79%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.00%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-10.02%</td><td class="px-3 py-2.5 text-right text-slate-400">0.54</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">多元金融</span><span class="ml-2 text-xs text-slate-600">23只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-4.81%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-5.30%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-21.48%</td><td class="px-3 py-2.5 text-right text-slate-400">0.80</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">钢铁</span><span class="ml-2 text-xs text-slate-600">47只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-5.02%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.62%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-14.83%</td><td class="px-3 py-2.5 text-right text-slate-400">0.91</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">小金属</span><span class="ml-2 text-xs text-slate-600">24只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-5.42%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-5.84%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+37.43%</td><td class="px-3 py-2.5 text-right text-slate-400">1.54</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(245, 158, 11, 0.133); color: rgb(245, 158, 11);">补涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">美容护理</span><span class="ml-2 text-xs text-slate-600">34只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-5.47%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.15%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-10.31%</td><td class="px-3 py-2.5 text-right text-slate-400">0.81</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">汽车整车</span><span class="ml-2 text-xs text-slate-600">40只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-5.50%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-2.71%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-19.48%</td><td class="px-3 py-2.5 text-right text-slate-400">0.97</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">IT服务</span><span class="ml-2 text-xs text-slate-600">130只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-6.13%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-4.44%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-11.67%</td><td class="px-3 py-2.5 text-right text-slate-400">0.87</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">计算机</span><span class="ml-2 text-xs text-slate-600">370只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-6.28%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-6.77%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-8.29%</td><td class="px-3 py-2.5 text-right text-slate-400">1.09</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">交运设备</span><span class="ml-2 text-xs text-slate-600">344只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-6.61%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.14%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-3.74%</td><td class="px-3 py-2.5 text-right text-slate-400">0.91</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">建筑工程</span><span class="ml-2 text-xs text-slate-600">165只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-7.62%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-5.18%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.62%</td><td class="px-3 py-2.5 text-right text-slate-400">1.23</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">轻工制造</span><span class="ml-2 text-xs text-slate-600">186只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-7.64%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-5.23%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-10.99%</td><td class="px-3 py-2.5 text-right text-slate-400">0.86</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">能源金属</span><span class="ml-2 text-xs text-slate-600">13只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-8.33%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-7.13%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-1.07%</td><td class="px-3 py-2.5 text-right text-slate-400">0.90</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">影视院线</span><span class="ml-2 text-xs text-slate-600">22只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-8.48%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-5.13%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-21.97%</td><td class="px-3 py-2.5 text-right text-slate-400">0.78</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">有色金属</span><span class="ml-2 text-xs text-slate-600">153只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-9.18%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-5.50%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+14.07%</td><td class="px-3 py-2.5 text-right text-slate-400">1.25</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(245, 158, 11, 0.133); color: rgb(245, 158, 11);">补涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">电机</span><span class="ml-2 text-xs text-slate-600">26只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-9.87%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-4.65%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-8.66%</td><td class="px-3 py-2.5 text-right text-slate-400">0.74</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">工业金属</span><span class="ml-2 text-xs text-slate-600">61只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-11.42%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-5.47%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-up);">+2.94%</td><td class="px-3 py-2.5 text-right text-slate-400">1.23</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(245, 158, 11, 0.133); color: rgb(245, 158, 11);">补涨</span></td></tr><tr class="cursor-pointer transition-colors hover:bg-white/5" style="border-bottom: 1px solid var(--board-border); background-color: transparent;"><td class="px-3 py-2.5 text-left"><span class="font-medium text-slate-200">贵金属</span><span class="ml-2 text-xs text-slate-600">14只</span></td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-16.81%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-6.25%</td><td class="px-3 py-2.5 text-right font-mono" style="color: var(--stock-down);">-30.70%</td><td class="px-3 py-2.5 text-right text-slate-400">0.77</td><td class="px-3 py-2.5 text-center"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium" style="background-color: rgba(34, 197, 94, 0.133); color: rgb(34, 197, 94);">领跌</span></td></tr></tbody></table></div></div></div><div class="flex w-full shrink-0 flex-col gap-4 xl:w-[380px]"><div class="overflow-hidden rounded-xl" style="background-color: var(--board-card);"><div class="border-b px-5 py-3" style="border-color: var(--board-border);"><h2 class="text-sm font-bold text-slate-300">板块资金流向</h2></div><div class="flex items-center justify-center py-12 text-sm text-slate-600">桑基图开发中 — 显示板块间资金流动</div></div><div class="overflow-hidden rounded-xl" style="background-color: var(--board-card);"><div class="border-b px-5 py-3" style="border-color: var(--board-border);"><h2 class="text-sm font-bold text-slate-300">个股分布</h2></div><div class="flex items-center justify-center py-8 text-sm text-slate-600">点击左侧板块查看个股分布</div></div></div></div></div></main></div></div>
+    <script type="module" src="/src/main.tsx"></script>
+  
+
+</body></html>

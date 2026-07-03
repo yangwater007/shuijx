@@ -1,0 +1,602 @@
+[
+  {
+    "depth": 1,
+    "tag": "div",
+    "cls": "",
+    "id": "root",
+    "childCount": 1,
+    "textPreview": "连板天梯为让你高效非凡而生连板天梯是与AI一起复盘的最佳方式。连板天梯欢迎回来登录开启您的高效复盘之旅记住我忘记密码?登录或者还没有账户? 立即注册隐私政策·免"
+  },
+  {
+    "depth": 2,
+    "tag": "div",
+    "cls": "sc-hwGaul cuxqWM",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "连板天梯为让你高效非凡而生连板天梯是与AI一起复盘的最佳方式。连板天梯欢迎回来登录开启您的高效复盘之旅记住我忘记密码?登录或者还没有账户? 立即注册隐私政策·免"
+  },
+  {
+    "depth": 3,
+    "tag": "div",
+    "cls": "sc-hGSoNW glmYTF",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "连板天梯为让你高效非凡而生连板天梯是与AI一起复盘的最佳方式。连板天梯欢迎回来登录开启您的高效复盘之旅记住我忘记密码?登录或者还没有账户? 立即注册隐私政策·免"
+  },
+  {
+    "depth": 4,
+    "tag": "div",
+    "cls": "auth-container",
+    "id": "",
+    "childCount": 2,
+    "textPreview": "连板天梯为让你高效非凡而生连板天梯是与AI一起复盘的最佳方式。连板天梯欢迎回来登录开启您的高效复盘之旅记住我忘记密码?登录或者还没有账户? 立即注册隐私政策·免"
+  },
+  {
+    "depth": 5,
+    "tag": "div",
+    "cls": "auth-sidebar",
+    "id": "",
+    "childCount": 2,
+    "textPreview": "连板天梯为让你高效非凡而生连板天梯是与AI一起复盘的最佳方式。"
+  },
+  {
+    "depth": 6,
+    "tag": "div",
+    "cls": "auth-sidebar-bg",
+    "id": "",
+    "childCount": 0,
+    "textPreview": ""
+  },
+  {
+    "depth": 6,
+    "tag": "div",
+    "cls": "auth-sidebar-content",
+    "id": "",
+    "childCount": 3,
+    "textPreview": "连板天梯为让你高效非凡而生连板天梯是与AI一起复盘的最佳方式。"
+  },
+  {
+    "depth": 7,
+    "tag": "div",
+    "cls": "auth-brand",
+    "id": "",
+    "childCount": 2,
+    "textPreview": "连板天梯"
+  },
+  {
+    "depth": 8,
+    "tag": "div",
+    "cls": "auth-logo-icon",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 8,
+    "tag": "span",
+    "cls": "auth-brand-text",
+    "id": "",
+    "childCount": 0,
+    "textPreview": "连板天梯"
+  },
+  {
+    "depth": 7,
+    "tag": "div",
+    "cls": "auth-slogan",
+    "id": "",
+    "childCount": 2,
+    "textPreview": "为让你高效非凡而生连板天梯是与AI一起复盘的最佳方式。"
+  },
+  {
+    "depth": 7,
+    "tag": "div",
+    "cls": "auth-decoration",
+    "id": "",
+    "childCount": 2,
+    "textPreview": ""
+  },
+  {
+    "depth": 8,
+    "tag": "div",
+    "cls": "decoration-item item-1",
+    "id": "",
+    "childCount": 0,
+    "textPreview": ""
+  },
+  {
+    "depth": 8,
+    "tag": "div",
+    "cls": "decoration-item item-2",
+    "id": "",
+    "childCount": 0,
+    "textPreview": ""
+  },
+  {
+    "depth": 5,
+    "tag": "div",
+    "cls": "auth-content",
+    "id": "",
+    "childCount": 2,
+    "textPreview": "连板天梯欢迎回来登录开启您的高效复盘之旅记住我忘记密码?登录或者还没有账户? 立即注册隐私政策·免责声明© 2026 连板天梯"
+  },
+  {
+    "depth": 6,
+    "tag": "div",
+    "cls": "auth-content-header-mobile",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "连板天梯"
+  },
+  {
+    "depth": 7,
+    "tag": "div",
+    "cls": "auth-brand-mobile",
+    "id": "",
+    "childCount": 2,
+    "textPreview": "连板天梯"
+  },
+  {
+    "depth": 6,
+    "tag": "div",
+    "cls": "auth-form-container",
+    "id": "",
+    "childCount": 3,
+    "textPreview": "欢迎回来登录开启您的高效复盘之旅记住我忘记密码?登录或者还没有账户? 立即注册隐私政策·免责声明© 2026 连板天梯"
+  },
+  {
+    "depth": 7,
+    "tag": "div",
+    "cls": "auth-header",
+    "id": "",
+    "childCount": 2,
+    "textPreview": "欢迎回来登录开启您的高效复盘之旅"
+  },
+  {
+    "depth": 8,
+    "tag": "h2",
+    "cls": "ant-typography auth-title css-198drv2",
+    "id": "",
+    "childCount": 0,
+    "textPreview": "欢迎回来"
+  },
+  {
+    "depth": 8,
+    "tag": "span",
+    "cls": "ant-typography auth-subtitle css-198drv2",
+    "id": "",
+    "childCount": 0,
+    "textPreview": "登录开启您的高效复盘之旅"
+  },
+  {
+    "depth": 7,
+    "tag": "div",
+    "cls": "",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "记住我忘记密码?登录或者还没有账户? 立即注册"
+  },
+  {
+    "depth": 8,
+    "tag": "form",
+    "cls": "ant-form ant-form-vertical ant-form-large css-198drv2 auth-form",
+    "id": "login_form",
+    "childCount": 6,
+    "textPreview": "记住我忘记密码?登录或者还没有账户? 立即注册"
+  },
+  {
+    "depth": 9,
+    "tag": "div",
+    "cls": "ant-form-item css-198drv2 ant-form-item-vertical",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 10,
+    "tag": "div",
+    "cls": "ant-row ant-form-item-row css-198drv2",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 11,
+    "tag": "div",
+    "cls": "ant-col ant-form-item-control css-198drv2",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 12,
+    "tag": "div",
+    "cls": "ant-form-item-control-input",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 13,
+    "tag": "div",
+    "cls": "ant-form-item-control-input-content",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 14,
+    "tag": "span",
+    "cls": "ant-input-affix-wrapper ant-input-affix-wrapper-lg css-198drv2 ant-input-outlined auth-input",
+    "id": "",
+    "childCount": 2,
+    "textPreview": ""
+  },
+  {
+    "depth": 15,
+    "tag": "span",
+    "cls": "ant-input-prefix",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 16,
+    "tag": "span",
+    "cls": "anticon anticon-mail auth-icon",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 15,
+    "tag": "input",
+    "cls": "ant-input ant-input-lg css-198drv2",
+    "id": "login_form_email",
+    "childCount": 0,
+    "textPreview": ""
+  },
+  {
+    "depth": 9,
+    "tag": "div",
+    "cls": "ant-form-item css-198drv2 ant-form-item-vertical",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 10,
+    "tag": "div",
+    "cls": "ant-row ant-form-item-row css-198drv2",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 11,
+    "tag": "div",
+    "cls": "ant-col ant-form-item-control css-198drv2",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 12,
+    "tag": "div",
+    "cls": "ant-form-item-control-input",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 13,
+    "tag": "div",
+    "cls": "ant-form-item-control-input-content",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 14,
+    "tag": "span",
+    "cls": "ant-input-affix-wrapper ant-input-affix-wrapper-lg css-198drv2 ant-input-outlined ant-input-password",
+    "id": "",
+    "childCount": 3,
+    "textPreview": ""
+  },
+  {
+    "depth": 15,
+    "tag": "span",
+    "cls": "ant-input-prefix",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 16,
+    "tag": "span",
+    "cls": "anticon anticon-lock auth-icon",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 15,
+    "tag": "input",
+    "cls": "ant-input ant-input-lg css-198drv2",
+    "id": "login_form_password",
+    "childCount": 0,
+    "textPreview": ""
+  },
+  {
+    "depth": 15,
+    "tag": "span",
+    "cls": "ant-input-suffix",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 16,
+    "tag": "span",
+    "cls": "anticon anticon-eye-invisible ant-input-password-icon",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 9,
+    "tag": "div",
+    "cls": "ant-form-item css-198drv2 ant-form-item-vertical",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "记住我忘记密码?"
+  },
+  {
+    "depth": 10,
+    "tag": "div",
+    "cls": "ant-row ant-form-item-row css-198drv2",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "记住我忘记密码?"
+  },
+  {
+    "depth": 11,
+    "tag": "div",
+    "cls": "ant-col ant-form-item-control css-198drv2",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "记住我忘记密码?"
+  },
+  {
+    "depth": 12,
+    "tag": "div",
+    "cls": "ant-form-item-control-input",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "记住我忘记密码?"
+  },
+  {
+    "depth": 13,
+    "tag": "div",
+    "cls": "ant-form-item-control-input-content",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "记住我忘记密码?"
+  },
+  {
+    "depth": 14,
+    "tag": "div",
+    "cls": "form-flex-row",
+    "id": "",
+    "childCount": 2,
+    "textPreview": "记住我忘记密码?"
+  },
+  {
+    "depth": 15,
+    "tag": "label",
+    "cls": "ant-checkbox-wrapper ant-checkbox-wrapper-checked ant-checkbox-wrapper-in-form-item css-198drv2",
+    "id": "",
+    "childCount": 2,
+    "textPreview": "记住我"
+  },
+  {
+    "depth": 16,
+    "tag": "span",
+    "cls": "ant-checkbox ant-wave-target css-198drv2 ant-checkbox-checked",
+    "id": "",
+    "childCount": 2,
+    "textPreview": ""
+  },
+  {
+    "depth": 17,
+    "tag": "input",
+    "cls": "ant-checkbox-input",
+    "id": "login_form_remember",
+    "childCount": 0,
+    "textPreview": ""
+  },
+  {
+    "depth": 17,
+    "tag": "span",
+    "cls": "ant-checkbox-inner",
+    "id": "",
+    "childCount": 0,
+    "textPreview": ""
+  },
+  {
+    "depth": 16,
+    "tag": "span",
+    "cls": "ant-checkbox-label",
+    "id": "",
+    "childCount": 0,
+    "textPreview": "记住我"
+  },
+  {
+    "depth": 15,
+    "tag": "a",
+    "cls": "form-link",
+    "id": "",
+    "childCount": 0,
+    "textPreview": "忘记密码?"
+  },
+  {
+    "depth": 9,
+    "tag": "div",
+    "cls": "ant-form-item css-198drv2 ant-form-item-vertical",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "登录"
+  },
+  {
+    "depth": 10,
+    "tag": "div",
+    "cls": "ant-row ant-form-item-row css-198drv2",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "登录"
+  },
+  {
+    "depth": 11,
+    "tag": "div",
+    "cls": "ant-col ant-form-item-control css-198drv2",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "登录"
+  },
+  {
+    "depth": 12,
+    "tag": "div",
+    "cls": "ant-form-item-control-input",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "登录"
+  },
+  {
+    "depth": 13,
+    "tag": "div",
+    "cls": "ant-form-item-control-input-content",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "登录"
+  },
+  {
+    "depth": 14,
+    "tag": "button",
+    "cls": "ant-btn css-198drv2 ant-btn-primary ant-btn-color-primary ant-btn-variant-solid ant-btn-lg auth-butt",
+    "id": "",
+    "childCount": 2,
+    "textPreview": "登录"
+  },
+  {
+    "depth": 15,
+    "tag": "span",
+    "cls": "ant-btn-icon",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 16,
+    "tag": "span",
+    "cls": "anticon anticon-login",
+    "id": "",
+    "childCount": 1,
+    "textPreview": ""
+  },
+  {
+    "depth": 9,
+    "tag": "div",
+    "cls": "ant-divider css-198drv2 ant-divider-horizontal ant-divider-with-text ant-divider-with-text-center",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "或者"
+  },
+  {
+    "depth": 10,
+    "tag": "span",
+    "cls": "ant-divider-inner-text",
+    "id": "",
+    "childCount": 1,
+    "textPreview": "或者"
+  },
+  {
+    "depth": 11,
+    "tag": "span",
+    "cls": "ant-typography ant-typography-secondary css-198drv2",
+    "id": "",
+    "childCount": 0,
+    "textPreview": "或者"
+  },
+  {
+    "depth": 9,
+    "tag": "div",
+    "cls": "auth-footer",
+    "id": "",
+    "childCount": 2,
+    "textPreview": "还没有账户? 立即注册"
+  },
+  {
+    "depth": 10,
+    "tag": "span",
+    "cls": "ant-typography css-198drv2",
+    "id": "",
+    "childCount": 0,
+    "textPreview": "还没有账户?"
+  },
+  {
+    "depth": 10,
+    "tag": "a",
+    "cls": "form-link",
+    "id": "",
+    "childCount": 0,
+    "textPreview": "立即注册"
+  },
+  {
+    "depth": 7,
+    "tag": "div",
+    "cls": "auth-footer-links",
+    "id": "",
+    "childCount": 2,
+    "textPreview": "隐私政策·免责声明© 2026 连板天梯"
+  },
+  {
+    "depth": 8,
+    "tag": "div",
+    "cls": "links",
+    "id": "",
+    "childCount": 3,
+    "textPreview": "隐私政策·免责声明"
+  },
+  {
+    "depth": 9,
+    "tag": "a",
+    "cls": "footer-link",
+    "id": "",
+    "childCount": 0,
+    "textPreview": "隐私政策"
+  },
+  {
+    "depth": 9,
+    "tag": "span",
+    "cls": "divider",
+    "id": "",
+    "childCount": 0,
+    "textPreview": "·"
+  },
+  {
+    "depth": 9,
+    "tag": "a",
+    "cls": "footer-link",
+    "id": "",
+    "childCount": 0,
+    "textPreview": "免责声明"
+  },
+  {
+    "depth": 8,
+    "tag": "span",
+    "cls": "copyright",
+    "id": "",
+    "childCount": 0,
+    "textPreview": "© 2026 连板天梯"
+  }
+]

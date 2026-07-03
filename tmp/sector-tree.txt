@@ -1,0 +1,70 @@
+﻿================================================================================
+  板块轮动 (sector-analysis) — 完整DOM文本树形层级结构
+  基于 https://stock.quicktiny.cn/sector-analysis 真实渲染DOM + JS源码解析
+================================================================================
+
+root                                          :: 一级页面容器（全局布局壳）
++-- AppLayout                                 :: 全局应用布局 [侧边+顶栏+内容]
+    +-- Sidebar (220px fixed)                 :: 左侧导航菜单
+    |   +-- Logo                              :: 品牌标识区
+    |   +-- NavMenu                           :: 主导航菜单 (ant-menu)
+    |   |   +-- [行情信息]                     :: 菜单分组
+    |   |   |   +-- 连板天梯 /stock-ladder
+    |   |   |   +-- 共识复盘 /daily-replay
+    |   |   |   +-- 自选股 /favorites
+    |   |   |   +-- 涨停筛选 /filter
+    |   |   |   +-- 题材中心 /themes
+    |   |   |   +-- >> 板块轮动 /sector-analysis [选中]
+    |   |   |   +-- 短线周期 /data-analysis
+    |   |   |   +-- 可视化分析 /visualization
+    |   |   |   +-- 龙虎榜 /dragon-tiger-board
+    |   |   +-- [智能分析]
+    |   |   +-- [热点资讯]
+    |   |   +-- [工具]
+    |   +-- SidebarFooter
+    |
+    +-- Header                                :: 顶部栏
+    |   +-- HeaderTitle "板块轮动"
+    |   +-- HeaderActions [刷新, 设置]
+    |
+    +-- Content (main)                        :: ====== 主内容区 ======
+        |
+        +-- SectorAnalysisPage                :: 【二级】页面容器
+            |
+            +-- FilterToolbar                 :: 【三级】顶部筛选控件
+            |   +-- SourceSelect              :: 数据源下拉 [行业|概念|地区]
+            |   +-- PeriodSelect              :: 周期下拉 [60日|30日|20日|10日|5日]
+            |   +-- StrengthPeriodSelect      :: 强度周期 [5日|10日]
+            |   +-- ActionGroup               :: [刷新按钮] [设置按钮]
+            |
+            +-- MainLayout (flex row)         :: 【三级】双栏主体
+            |   |
+            |   +-- LeftPanel (flex:1)        :: 【四级】左侧：象限图 + 板块表格
+            |   |   |
+            |   |   +-- QuadrantChart.card    :: 【五级】板块象限散点图
+            |   |   |   +-- Legend            :: 图例: 领涨(红) 滞涨(橙) 补涨(蓝) 领跌(绿)
+            |   |   |   +-- XAxis "近N日涨幅(%) — 强弱"
+            |   |   |   +-- YAxis "M日涨幅(%) — 高低"
+            |   |   |   +-- CenterCross        :: 十字虚线 (分割四象限)
+            |   |   |   +-- ScatterDots        :: 板块散点 (<Bubble> x N)
+            |   |   |
+            |   |   +-- SectorTable.card      :: 【五级】板块数据列表
+            |   |       +-- TableHeader        :: [板块, 近N日涨幅, 成交额, 龙头股, 象限]
+            |   |       +-- TableBody
+            |   |           +-- SectorRow x N  :: [名称图标, 涨幅%红绿, 成交额, 龙头名, 象限标签]
+            |   |
+            |   +-- RightPanel (380px)        :: 【四级】右侧：流向图 + 个股详情
+            |       |
+            |       +-- FlowChart.card        :: 【五级】板块资金 Sankey 流向图
+            |       |   +-- Title "板块资金流向"
+            |       |   +-- SankeyCanvas       :: 来源 → 目标 资金流
+            |       |
+            |       +-- StockQuadrant.card    :: 【五级】选中板块个股象限
+            |           +-- Title "板块名 — 个股分布"
+            |           +-- StockMiniTable     :: [股票, 涨跌幅, 市值, 象限]
+            |           +-- EmptyState         :: "点击板块查看个股分布"
+            |
+            +-- StockOverlay (modal)          :: 【三级】个股浮层弹窗
+                +-- StockHeader [名称, 代码, 涨跌幅]
+                +-- ChartTabs [分时图 | K线 | 资金]
+                +-- InfoSection [概念, 原因, 交易数据]

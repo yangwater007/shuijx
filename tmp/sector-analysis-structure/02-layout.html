@@ -1,0 +1,288 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>板块轮动 — Stock Platform</title>
+  <link rel="stylesheet" href="03-layout.css">
+</head>
+<body class="board-bg">
+
+  <!-- ════════════════════════════════════════════
+       一级：页面容器
+       ════════════════════════════════════════════ -->
+  <div class="page-container">
+
+    <!-- ────────────────────────────────────────
+         二级：页面顶部标题栏
+         ──────────────────────────────────────── -->
+    <header class="page-header">
+      <h1 class="page-title">板块轮动</h1>
+      <span class="date-label">数据更新: 20260626</span>
+    </header>
+
+    <!-- ────────────────────────────────────────
+         二级：筛选工具栏
+         ──────────────────────────────────────── -->
+    <section class="filter-toolbar">
+      <!-- 数据源选择 -->
+      <div class="filter-group">
+        <span class="filter-label">数据源</span>
+        <div class="btn-group">
+          <button class="btn-filter btn-active-red">行业</button>
+          <button class="btn-filter">概念</button>
+          <button class="btn-filter">地区</button>
+        </div>
+      </div>
+
+      <div class="divider-v"></div>
+
+      <!-- 长周期选择 -->
+      <div class="filter-group">
+        <span class="filter-label">周期</span>
+        <div class="btn-group">
+          <button class="btn-filter btn-active-blue">60日</button>
+          <button class="btn-filter">30日</button>
+          <button class="btn-filter">20日</button>
+          <button class="btn-filter">10日</button>
+          <button class="btn-filter">5日</button>
+        </div>
+      </div>
+
+      <div class="divider-v"></div>
+
+      <!-- 强度周期选择 -->
+      <div class="filter-group">
+        <span class="filter-label">强度</span>
+        <div class="btn-group">
+          <button class="btn-filter btn-active-purple">5日强度</button>
+          <button class="btn-filter">10日强度</button>
+        </div>
+      </div>
+
+      <!-- 刷新按钮 -->
+      <button class="btn-refresh">
+        <span class="icon-refresh">🔄</span>
+        <span>刷新</span>
+      </button>
+    </section>
+
+    <!-- ────────────────────────────────────────
+         二级：主内容区（左右双栏）
+         ──────────────────────────────────────── -->
+    <main class="content-area">
+
+      <!-- ═══════════════════════════════════
+           三级：左侧面板
+           ═══════════════════════════════════ -->
+      <div class="left-panel">
+
+        <!-- ──────────────────────────────
+             四级：象限散点图卡片
+             ────────────────────────────── -->
+        <section class="card quadrant-card">
+          <!-- 卡片头部 -->
+          <div class="card-header">
+            <h2 class="card-title">
+              板块象限分布 · 近60日涨幅 vs 5日涨幅
+            </h2>
+          </div>
+          <!-- 卡片主体：ECharts 图表容器 -->
+          <div class="card-body">
+            <div id="quadrant-chart" class="chart-container">
+              <!-- ECharts 渲染在此容器中，包含 -->
+              <!-- scatter[领涨] scatter[补涨] scatter[滞涨] scatter[领跌] -->
+              <!-- markLine x=0, markLine y=0 -->
+            </div>
+          </div>
+          <!-- 卡片底部：图例 -->
+          <div class="card-footer">
+            <div class="legend-item">
+              <span class="legend-dot" style="background:#ef4444"></span>
+              <span class="legend-label">领涨</span>
+              <span class="legend-desc">近期强 + 累计强</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background:#f59e0b"></span>
+              <span class="legend-label">补涨</span>
+              <span class="legend-desc">近期弱 + 累计强</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background:#3b82f6"></span>
+              <span class="legend-label">滞涨</span>
+              <span class="legend-desc">近期强 + 累计弱</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background:#22c55e"></span>
+              <span class="legend-label">领跌</span>
+              <span class="legend-desc">近期弱 + 累计弱</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ──────────────────────────────
+             四级：板块列表卡片
+             ────────────────────────────── -->
+        <section class="card sector-table-card">
+          <!-- 卡片头部 -->
+          <div class="card-header card-header-between">
+            <h2 class="card-title">
+              板块列表
+              <span class="card-count">54 个板块</span>
+            </h2>
+            <input
+              type="text"
+              class="input-search"
+              placeholder="搜索板块..."
+            />
+          </div>
+          <!-- 卡片主体 -->
+          <div class="card-body">
+            <table class="sector-table">
+              <thead>
+                <tr>
+                  <th class="th-left">板块</th>
+                  <th class="th-right sortable">近N日涨幅 ↕</th>
+                  <th class="th-right sortable">今日涨跌 ↕</th>
+                  <th class="th-right sortable">累计涨幅 ↕</th>
+                  <th class="th-right sortable">量比 ↕</th>
+                  <th class="th-center">象限</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 行示例（高强象限） -->
+                <tr class="sector-row">
+                  <td class="td-left">
+                    <span class="sector-name">电子化学品</span>
+                    <span class="sector-count">29只</span>
+                  </td>
+                  <td class="td-right stock-up">+15.02%</td>
+                  <td class="td-right stock-up">+2.08%</td>
+                  <td class="td-right stock-up">+93.79%</td>
+                  <td class="td-right text-muted">2.11</td>
+                  <td class="td-center">
+                    <span class="tag-quadrant tag-red">领涨</span>
+                  </td>
+                </tr>
+                <!-- 行示例（补涨象限） -->
+                <tr class="sector-row">
+                  <td class="td-left">
+                    <span class="sector-name">建筑材料</span>
+                    <span class="sector-count">80只</span>
+                  </td>
+                  <td class="td-right stock-up">+6.84%</td>
+                  <td class="td-right stock-down">-1.48%</td>
+                  <td class="td-right stock-up">+59.74%</td>
+                  <td class="td-right text-muted">1.75</td>
+                  <td class="td-center">
+                    <span class="tag-quadrant tag-orange">补涨</span>
+                  </td>
+                </tr>
+                <!-- 行示例（领跌象限） -->
+                <tr class="sector-row">
+                  <td class="td-left">
+                    <span class="sector-name">贵金属</span>
+                    <span class="sector-count">14只</span>
+                  </td>
+                  <td class="td-right stock-down">-16.81%</td>
+                  <td class="td-right stock-down">-6.25%</td>
+                  <td class="td-right stock-down">-30.70%</td>
+                  <td class="td-right text-muted">0.77</td>
+                  <td class="td-center">
+                    <span class="tag-quadrant tag-green">领跌</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div><!-- /left-panel -->
+
+      <!-- ═══════════════════════════════════
+           三级：右侧面板
+           ═══════════════════════════════════ -->
+      <div class="right-panel">
+
+        <!-- ──────────────────────────────
+             四级：资金流向卡片
+             ────────────────────────────── -->
+        <section class="card fund-flow-card">
+          <div class="card-header">
+            <h2 class="card-title">板块资金流向</h2>
+          </div>
+          <div class="card-body">
+            <div class="placeholder-box">
+              <p>桑基图开发中 — 显示板块间资金流动</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ──────────────────────────────
+             四级：个股象限卡片
+             ────────────────────────────── -->
+        <section class="card stock-quadrant-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              半导体 — 个股分布
+              <span class="card-count">178 只</span>
+            </h2>
+          </div>
+          <div class="card-body">
+            <table class="stock-table">
+              <thead>
+                <tr>
+                  <th class="th-left">股票</th>
+                  <th class="th-right">近N日涨幅</th>
+                  <th class="th-right">今日涨跌</th>
+                  <th class="th-center">象限</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 行示例 -->
+                <tr class="stock-row">
+                  <td class="td-left">
+                    <span class="stock-name">有研硅</span>
+                    <span class="stock-code">688432</span>
+                  </td>
+                  <td class="td-right stock-up">+20.00%</td>
+                  <td class="td-right stock-up">+20.00%</td>
+                  <td class="td-center">
+                    <span class="tag-quadrant tag-red">领涨</span>
+                  </td>
+                </tr>
+                <tr class="stock-row">
+                  <td class="td-left">
+                    <span class="stock-name">康强电子</span>
+                    <span class="stock-code">002119</span>
+                  </td>
+                  <td class="td-right stock-up">+10.01%</td>
+                  <td class="td-right stock-up">+10.01%</td>
+                  <td class="td-center">
+                    <span class="tag-quadrant tag-blue">滞涨</span>
+                  </td>
+                </tr>
+                <tr class="stock-row">
+                  <td class="td-left">
+                    <span class="stock-name">长光华芯</span>
+                    <span class="stock-code">688048</span>
+                  </td>
+                  <td class="td-right stock-down">-10.37%</td>
+                  <td class="td-right stock-down">-10.37%</td>
+                  <td class="td-center">
+                    <span class="tag-quadrant tag-green">领跌</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div><!-- /right-panel -->
+
+    </main>
+
+  </div><!-- /page-container -->
+
+</body>
+</html>

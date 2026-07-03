@@ -1,0 +1,17 @@
+div#root
+  div.sc-hwGaul.cuxqWM
+    div.sc-hGSoNW.glmYTF
+      div.auth-container
+        div.auth-sidebar
+          div.auth-sidebar-bg
+          div.auth-sidebar-content
+            div.auth-brand
+            div.auth-slogan
+            div.auth-decoration
+        div.auth-content
+          div.auth-content-header-mobile
+            div.auth-brand-mobile
+          div.auth-form-container
+            div.auth-header
+            div
+            div.auth-footer-links

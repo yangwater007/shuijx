@@ -1,0 +1,897 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>题材演化可视化 — 连板天梯</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root {
+    --bg-primary: #0b0e14;
+    --bg-card: #131a24;
+    --bg-card-hover: #1a2230;
+    --bg-active: #1e2a3c;
+    --border: #1e2a36;
+    --border-active: #f6b26b;
+    --accent: #f6b26b;
+    --text-primary: #e8edf5;
+    --text-secondary: #9aaec9;
+    --text-muted: #4a6a8a;
+    --gradient-orange: linear-gradient(135deg, #f6b26b, #e8913a);
+    --gradient-blue: linear-gradient(135deg, #4facfe, #00f2fe);
+    --gradient-green: linear-gradient(135deg, #43e97b, #38f9d7);
+    --gradient-purple: linear-gradient(135deg, #a18cd1, #fbc2eb);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ==================== Topbar ==================== */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 100;
+    gap: 16px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+  .brand-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--gradient-orange);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: #fff;
+  }
+  .topbar-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .filter-tag:hover { border-color: #334155; color: var(--text-primary); }
+  .filter-tag.active {
+    border-color: var(--border-active);
+    color: var(--accent);
+    box-shadow: 0 0 8px rgba(246,178,107,0.15);
+  }
+  .filter-tag .amount-badge {
+    background: rgba(246,178,107,0.15);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .btn-upgrade {
+    padding: 7px 18px;
+    border-radius: 20px;
+    background: var(--gradient-orange);
+    color: #fff;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-upgrade:hover { transform: scale(1.03); box-shadow: 0 4px 12px rgba(246,178,107,0.3); }
+  .avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700; color: #fff; cursor: pointer;
+  }
+
+  /* ==================== Main Layout ==================== */
+  .main-wrapper {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ==================== Sidebar ==================== */
+  .sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--bg-card); z-index: 5;
+  }
+  .sidebar-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .sidebar-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(246,178,107,0.12);
+    color: var(--accent);
+  }
+  .theme-list { padding: 8px 0; }
+  .theme-group { }
+  .theme-parent {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .theme-parent:hover { background: var(--bg-card-hover); }
+  .theme-parent .icon { color: var(--accent); font-size: 12px; transition: transform 0.2s; }
+  .theme-parent .icon.open { transform: rotate(90deg); }
+  .theme-children { }
+  .theme-child {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px 8px 46px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+    position: relative;
+  }
+  .theme-child:hover { color: var(--text-primary); background: rgba(255,255,255,0.02); }
+  .theme-child.active {
+    color: var(--accent);
+    background: rgba(246,178,107,0.06);
+    border-left-color: var(--accent);
+  }
+  .theme-child .tag {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-weight: 500;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .tag-dragon { background: rgba(246,178,107,0.15); color: var(--accent); }
+  .tag-follow { background: rgba(79,172,254,0.15); color: #4facfe; }
+  .tag-spread { background: rgba(67,233,123,0.15); color: #43e97b; }
+
+  /* ==================== Content Area ==================== */
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 20px;
+    gap: 20px;
+    position: relative;
+  }
+  .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .chart-title-group { display: flex; align-items: center; gap: 10px; }
+  .chart-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .chart-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: rgba(74,106,138,0.15);
+  }
+  .tab-switch {
+    display: flex;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .tab-btn {
+    padding: 7px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #0b0e14;
+  }
+  .tab-btn:hover:not(.active) { background: var(--bg-card-hover); }
+
+  /* ==================== Flow Diagram ==================== */
+  .flow-container {
+    flex: 1;
+    background: var(--bg-card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 40px 30px 30px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    min-height: 460px;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-shrink: 0;
+  }
+  .flow-node {
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 130px;
+    transition: all 0.25s;
+    position: relative;
+  }
+  .flow-node .node-title { font-size: 14px; margin-bottom: 2px; }
+  .flow-node .node-sub { font-size: 11px; opacity: 0.8; }
+  .node-orange {
+    border: 2px solid rgba(246,178,107,0.5);
+    background: rgba(246,178,107,0.08);
+    color: var(--accent);
+  }
+  .node-blue {
+    border: 2px solid rgba(79,172,254,0.5);
+    background: rgba(79,172,254,0.08);
+    color: #4facfe;
+  }
+  .node-green {
+    border: 2px solid rgba(67,233,123,0.5);
+    background: rgba(67,233,123,0.08);
+    color: #43e97b;
+  }
+  .node-purple {
+    border: 2px solid rgba(161,140,209,0.5);
+    background: rgba(161,140,209,0.08);
+    color: #a18cd1;
+  }
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    gap: 2px;
+  }
+  .flow-arrow i { font-size: 12px; color: var(--accent); opacity: 0.6; }
+  .flow-hint {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ==================== SVG Curves ==================== */
+  .svg-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    opacity: 0.12;
+  }
+
+  /* ==================== Floating Upgrade Card ==================== */
+  .float-upgrade {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    background: rgba(19,26,36,0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(246,178,107,0.4);
+    border-radius: 14px;
+    padding: 18px 22px;
+    z-index: 10;
+    max-width: 260px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .float-upgrade h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .float-upgrade p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.6;
+  }
+  .float-upgrade .btn-upgrade-sm {
+    width: 100%;
+    padding: 9px 16px;
+    border-radius: 10px;
+    background: var(--gradient-orange);
+    color: #fff;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .float-upgrade .btn-upgrade-sm:hover { transform: scale(1.02); box-shadow: 0 4px 12px rgba(246,178,107,0.3); }
+
+  /* ==================== Footer ==================== */
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+  .footer-nav {
+    display: flex;
+    gap: 24px;
+  }
+  .footer-nav a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-nav a.active { color: var(--accent); font-weight: 600; }
+  .footer-nav a:hover { color: var(--text-secondary); }
+  .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-muted);
+  }
+  .badge-pro {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--gradient-orange);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  /* ==================== Animations ==================== */
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(246,178,107,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(246,178,107,0); }
+  }
+  .pulse { animation: pulse-border 0.5s ease-in-out 2; }
+
+  /* ==================== Responsive ==================== */
+  @media (max-width: 1200px) {
+    .sidebar { width: 220px; min-width: 220px; }
+  }
+  @media (max-width: 1024px) {
+    .sidebar { display: none; }
+    .content { padding: 12px; }
+    .topbar { padding: 8px 12px; }
+    .topbar-filters { gap: 4px; }
+    .filter-tag { padding: 5px 10px; font-size: 12px; }
+  }
+  @media (max-width: 768px) {
+    .content { padding: 8px; gap: 12px; }
+    .flow-container { padding: 20px 12px; border-radius: 10px; }
+    .flow-node { min-width: 90px; padding: 8px 12px; font-size: 11px; }
+    .flow-node .node-title { font-size: 12px; }
+    .flow-row { gap: 6px; }
+    .topbar-filters { display: none; }
+    .topbar .brand { font-size: 15px; }
+    .footer-nav { gap: 12px; font-size: 11px; }
+    .float-upgrade { right: 8px; bottom: 8px; max-width: 220px; padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== TOPBAR ========== -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
+    <span>连板天梯</span>
+  </div>
+  <div class="topbar-filters">
+    <div class="filter-tag">
+      <i class="fa-regular fa-calendar"></i>
+      <span>2026-07-02</span>
+    </div>
+    <div class="filter-tag active">
+      <i class="fa-regular fa-clock"></i>
+      <span>5天发酵</span>
+    </div>
+    <div class="filter-tag">
+      <i class="fa-solid fa-coins"></i>
+      <span>题材资金</span>
+      <span class="amount-badge">&gt;20亿</span>
+    </div>
+    <div class="filter-tag" id="refreshBtn">
+      <i class="fa-solid fa-rotate"></i>
+      <span>刷新</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-upgrade" onclick="handleUpgrade()">
+      <i class="fa-solid fa-crown" style="margin-right:4px"></i>升级会员
+    </button>
+    <div class="avatar">李</div>
+  </div>
+</header>
+
+<!-- ========== MAIN: Sidebar + Content ========== -->
+<div class="main-wrapper">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">题材演化</span>
+      <span class="sidebar-badge">树形</span>
+    </div>
+    <div class="theme-list" id="themeList"></div>
+  </aside>
+
+  <!-- ===== CONTENT ===== -->
+  <main class="content" id="contentArea">
+
+    <!-- Chart Header -->
+    <div class="chart-header">
+      <div class="chart-title-group">
+        <span class="chart-title" id="chartMainTitle">题材发酵路径图</span>
+        <span class="chart-subtitle"><i class="fa-solid fa-arrow-right-arrow-left"></i> 桑基图</span>
+      </div>
+      <div class="tab-switch" id="tabSwitch">
+        <button class="tab-btn active" data-tab="path">路径图</button>
+        <button class="tab-btn" data-tab="sankey">桑基图</button>
+      </div>
+    </div>
+
+    <!-- Flow Diagram -->
+    <div class="flow-container" id="flowContainer">
+      <!-- SVG overlay for Sankey curves -->
+      <svg class="svg-overlay" id="svgOverlay" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"></svg>
+
+      <div class="flow-row" id="flowRow1">
+        <div class="flow-node node-orange">
+          <div class="node-title">半导体</div>
+          <div class="node-sub">龙头</div>
+        </div>
+        <div class="flow-arrow">
+          <i class="fa-solid fa-chevron-right"></i>
+          <i class="fa-solid fa-chevron-right"></i>
+          <i class="fa-solid fa-chevron-right"></i>
+        </div>
+        <div class="flow-node node-blue">
+          <div class="node-title">存储</div>
+          <div class="node-sub">跟风</div>
+        </div>
+        <div class="flow-arrow">
+          <i class="fa-solid fa-chevron-right"></i>
+          <i class="fa-solid fa-chevron-right"></i>
+          <i class="fa-solid fa-chevron-right"></i>
+        </div>
+        <div class="flow-node node-green">
+          <div class="node-title">AI硬件</div>
+          <div class="node-sub">扩散</div>
+        </div>
+      </div>
+
+      <div class="flow-row" id="flowRow2">
+        <div class="flow-node node-orange">
+          <div class="node-title">医疗医药</div>
+          <div class="node-sub">龙头</div>
+        </div>
+        <div class="flow-arrow">
+          <i class="fa-solid fa-chevron-right"></i>
+          <i class="fa-solid fa-chevron-right"></i>
+          <i class="fa-solid fa-chevron-right"></i>
+        </div>
+        <div class="flow-node node-blue">
+          <div class="node-title">医药</div>
+          <div class="node-sub">跟风</div>
+        </div>
+        <div class="flow-arrow">
+          <i class="fa-solid fa-chevron-right"></i>
+          <i class="fa-solid fa-chevron-right"></i>
+          <i class="fa-solid fa-chevron-right"></i>
+        </div>
+        <div class="flow-node node-green">
+          <div class="node-title">其他</div>
+          <div class="node-sub">扩散</div>
+        </div>
+      </div>
+
+      <div class="flow-row" id="flowRow3">
+        <div class="flow-node node-orange">
+          <div class="node-title">机器人</div>
+          <div class="node-sub">龙头</div>
+        </div>
+        <div class="flow-arrow">
+          <i class="fa-solid fa-chevron-right"></i>
+          <i class="fa-solid fa-chevron-right"></i>
+          <i class="fa-solid fa-chevron-right"></i>
+        </div>
+        <div class="flow-node node-blue">
+          <div class="node-title">算力</div>
+          <div class="node-sub">跟风</div>
+        </div>
+        <div class="flow-arrow">
+          <i class="fa-solid fa-chevron-right"></i>
+          <i class="fa-solid fa-chevron-right"></i>
+          <i class="fa-solid fa-chevron-right"></i>
+        </div>
+        <div class="flow-node node-green">
+          <div class="node-title">光通信</div>
+          <div class="node-sub">扩散</div>
+        </div>
+      </div>
+
+      <div class="flow-hint">💡 点击左侧题材切换发酵路径</div>
+
+      <!-- Floating Upgrade Card -->
+      <div class="float-upgrade" id="floatUpgrade">
+        <h4><i class="fa-solid fa-crown"></i> 升级Pro会员</h4>
+        <p>可查看实时数据和最近3个交易日的完整数据</p>
+        <button class="btn-upgrade-sm" onclick="handleUpgrade()">立即升级</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+  <nav class="footer-nav" id="footerNav">
+    <a href="#">涨停趋势</a>
+    <a href="#">涨停矩阵</a>
+    <a href="#">涨停强度</a>
+    <a href="#">资金流向</a>
+    <a href="#" class="active">题材演化</a>
+  </nav>
+  <div class="footer-right">
+    <span class="badge-pro">Pro</span>
+    <span>© 2026 连板天梯</span>
+  </div>
+</footer>
+
+<script>
+// ==================== DATA ====================
+const themeData = [
+  { name: '半导体',     children: ['龙头','跟风','扩散'] },
+  { name: '存储',       children: ['龙头','跟风','扩散'] },
+  { name: 'AI硬件',     children: ['龙头','跟风','扩散'] },
+  { name: '医疗医药',   children: ['龙头','跟风','扩散'] },
+  { name: '其他',       children: ['龙头','跟风','扩散'] },
+  { name: '大消费',     children: ['龙头','跟风','扩散'] },
+  { name: '医药',       children: ['龙头','跟风'] },
+  { name: '可控核聚变', children: ['龙头','跟风'] },
+  { name: '商业航天',   children: ['龙头','跟风'] },
+  { name: '机器人',     children: ['龙头','跟风','扩散'] },
+  { name: '算力',       children: ['龙头','跟风','扩散'] },
+  { name: '公告',       children: ['龙头','跟风','扩散'] },
+  { name: '光通信',     children: ['龙头','跟风'] },
+  { name: '锂电池',     children: ['龙头','跟风'] },
+];
+
+// Flow path data — maps theme child selections to flow rows
+const flowPaths = {
+  '半导体·龙头':   { row: 0, col: 0 },
+  '存储·跟风':     { row: 0, col: 1 },
+  'AI硬件·扩散':   { row: 0, col: 2 },
+  '医疗医药·龙头':  { row: 1, col: 0 },
+  '医药·跟风':     { row: 1, col: 1 },
+  '其他·扩散':     { row: 1, col: 2 },
+  '机器人·龙头':   { row: 2, col: 0 },
+  '算力·跟风':     { row: 2, col: 1 },
+  '光通信·扩散':   { row: 2, col: 2 },
+  '大消费·龙头':   { row: 2, col: 0 },
+  '大消费·跟风':   { row: 2, col: 1 },
+  '可控核聚变·龙头': { row: 0, col: 0 },
+  '商业航天·跟风':  { row: 0, col: 1 },
+  '公告·扩散':     { row: 0, col: 2 },
+  '锂电池·龙头':   { row: 1, col: 0 },
+  '锂电池·跟风':   { row: 1, col: 1 },
+  '存储·扩散':     { row: 0, col: 2 },
+  'AI硬件·龙头':   { row: 0, col: 0 },
+  'AI硬件·跟风':   { row: 0, col: 1 },
+  '医疗医药·跟风':  { row: 1, col: 1 },
+  '医疗医药·扩散':  { row: 1, col: 2 },
+  '其他·龙头':     { row: 1, col: 0 },
+  '其他·跟风':     { row: 1, col: 1 },
+  '大消费·扩散':   { row: 2, col: 2 },
+  '医药·龙头':     { row: 1, col: 0 },
+  '可控核聚变·跟风': { row: 0, col: 1 },
+  '商业航天·龙头':  { row: 0, col: 0 },
+  '机器人·跟风':   { row: 2, col: 1 },
+  '机器人·扩散':   { row: 2, col: 2 },
+  '算力·龙头':     { row: 2, col: 0 },
+  '算力·扩散':     { row: 2, col: 2 },
+  '公告·龙头':     { row: 2, col: 0 },
+  '公告·跟风':     { row: 2, col: 1 },
+  '光通信·龙头':   { row: 2, col: 0 },
+  '半导体·跟风':   { row: 0, col: 1 },
+  '半导体·扩散':   { row: 0, col: 2 },
+  '存储·龙头':     { row: 0, col: 0 },
+};
+
+const nodeColors = ['node-orange', 'node-blue', 'node-green'];
+const nodeCategoryLabels = ['龙头', '跟风', '扩散'];
+
+// ==================== RENDER SIDEBAR ====================
+const themeList = document.getElementById('themeList');
+
+function renderSidebar() {
+  themeList.innerHTML = '';
+  themeData.forEach((theme) => {
+    const group = document.createElement('div');
+    group.className = 'theme-group';
+
+    // Parent row
+    const parent = document.createElement('div');
+    parent.className = 'theme-parent';
+    parent.innerHTML = `<i class="fa-solid fa-chevron-right icon"></i><span>${theme.name}</span>`;
+    parent.addEventListener('click', function() {
+      const icon = this.querySelector('.icon');
+      const childrenEl = this.nextElementSibling;
+      const isOpen = icon.classList.toggle('open');
+      childrenEl.style.display = isOpen ? 'block' : 'none';
+    });
+    group.appendChild(parent);
+
+    // Children
+    const childrenEl = document.createElement('div');
+    childrenEl.className = 'theme-children';
+    childrenEl.style.display = 'block'; // open by default
+
+    theme.children.forEach((childType) => {
+      const child = document.createElement('div');
+      child.className = 'theme-child';
+      child.dataset.key = `${theme.name}·${childType}`;
+      child.dataset.theme = theme.name;
+      child.dataset.type = childType;
+
+      let tagClass = 'tag';
+      if (childType === '龙头') tagClass += ' tag-dragon';
+      else if (childType === '跟风') tagClass += ' tag-follow';
+      else tagClass += ' tag-spread';
+
+      child.innerHTML = `
+        <span>${childType}</span>
+        <span class="${tagClass}">${childType}</span>
+      `;
+      child.addEventListener('click', function(e) {
+        e.stopPropagation();
+        onThemeChildClick(this);
+      });
+      childrenEl.appendChild(child);
+    });
+
+    group.appendChild(childrenEl);
+    themeList.appendChild(group);
+  });
+}
+
+// ==================== SIDEBAR CLICK HANDLER ====================
+function onThemeChildClick(el) {
+  // Remove active from all
+  document.querySelectorAll('.theme-child').forEach(c => c.classList.remove('active'));
+  // Set active
+  el.classList.add('active');
+
+  const key = el.dataset.key;
+  const path = flowPaths[key];
+  if (!path) return;
+
+  // Update corresponding flow row node
+  const flowRow = document.getElementById('flowRow' + (path.row + 1));
+  if (!flowRow) return;
+
+  const nodes = flowRow.querySelectorAll('.flow-node');
+  const node = nodes[path.col];
+  if (!node) return;
+
+  const themeName = el.dataset.theme;
+  const childType = el.dataset.type;
+
+  // Update node content
+  node.querySelector('.node-title').textContent = themeName;
+  node.querySelector('.node-sub').textContent = childType;
+
+  // Update node color class based on position
+  node.className = 'flow-node ' + nodeColors[path.col];
+
+  // Brief pulse animation on the node
+  node.style.transform = 'scale(1.06)';
+  setTimeout(() => { node.style.transform = 'scale(1)'; }, 200);
+}
+
+// ==================== TAB SWITCH ====================
+const tabButtons = document.querySelectorAll('.tab-btn');
+const chartMainTitle = document.getElementById('chartMainTitle');
+
+tabButtons.forEach(btn => {
+  btn.addEventListener('click', function() {
+    tabButtons.forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+
+    const tab = this.dataset.tab;
+    if (tab === 'sankey') {
+      chartMainTitle.textContent = '题材发酵路径桑基图';
+      // Show more SVG curves
+      document.getElementById('svgOverlay').style.opacity = '0.18';
+    } else {
+      chartMainTitle.textContent = '题材发酵路径图';
+      document.getElementById('svgOverlay').style.opacity = '0.12';
+    }
+  });
+});
+
+// ==================== FILTER TAGS ====================
+document.querySelectorAll('.filter-tag').forEach(tag => {
+  tag.addEventListener('click', function() {
+    if (this.classList.contains('active')) return; // skip the already-active 5天发酵
+    this.classList.add('pulse');
+    setTimeout(() => this.classList.remove('pulse'), 600);
+  });
+});
+
+// Refresh button
+document.getElementById('refreshBtn').addEventListener('click', function() {
+  this.classList.add('pulse');
+  setTimeout(() => this.classList.remove('pulse'), 600);
+  // Simulate data refresh
+  const hint = document.querySelector('.flow-hint');
+  hint.textContent = '🔄 刷新中...';
+  setTimeout(() => { hint.textContent = '💡 点击左侧题材切换发酵路径'; }, 1000);
+});
+
+// ==================== UPGRADE ====================
+function handleUpgrade() {
+  alert('跳转至升级会员页面');
+}
+
+// ==================== SVG CURVES ====================
+function drawSankeyCurves() {
+  const svg = document.getElementById('svgOverlay');
+  const container = document.getElementById('flowContainer');
+  const rect = container.getBoundingClientRect();
+
+  svg.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
+  svg.style.width = rect.width + 'px';
+  svg.style.height = rect.height + 'px';
+
+  // Get flow rows and their node positions
+  const flowRows = container.querySelectorAll('.flow-row');
+  if (flowRows.length === 0) return;
+
+  const curves = [
+    { fromRow: 0, fromCol: 0, toRow: 1, toCol: 2, color: 'rgba(246,178,107,0.4)' },
+    { fromRow: 1, fromCol: 0, toRow: 2, toCol: 2, color: 'rgba(79,172,254,0.3)' },
+    { fromRow: 0, fromCol: 1, toRow: 1, toCol: 1, color: 'rgba(161,140,209,0.3)' },
+    { fromRow: 1, fromCol: 1, toRow: 2, toCol: 1, color: 'rgba(67,233,123,0.3)' },
+    { fromRow: 0, fromCol: 2, toRow: 1, toCol: 0, color: 'rgba(246,178,107,0.25)' },
+    { fromRow: 1, fromCol: 2, toRow: 2, toCol: 0, color: 'rgba(79,172,254,0.25)' },
+  ];
+
+  let svgContent = '';
+  curves.forEach(curve => {
+    const fromNodes = flowRows[curve.fromRow]?.querySelectorAll('.flow-node');
+    const toNodes = flowRows[curve.toRow]?.querySelectorAll('.flow-node');
+    if (!fromNodes || !toNodes) return;
+
+    const fromNode = fromNodes[curve.fromCol];
+    const toNode = toNodes[curve.toCol];
+    if (!fromNode || !toNode) return;
+
+    const fromRect = fromNode.getBoundingClientRect();
+    const toRect = toNode.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+
+    const x1 = fromRect.right - containerRect.left;
+    const y1 = fromRect.top + fromRect.height / 2 - containerRect.top;
+    const x2 = toRect.left - containerRect.left;
+    const y2 = toRect.top + toRect.height / 2 - containerRect.top;
+
+    const cx1 = x1 + (x2 - x1) * 0.4;
+    const cx2 = x1 + (x2 - x1) * 0.6;
+
+    svgContent += `
+      <path d="M ${x1} ${y1} C ${cx1} ${y1}, ${cx2} ${y2}, ${x2} ${y2}"
+            fill="none" stroke="${curve.color}" stroke-width="18"
+            stroke-linecap="round" opacity="0.35" />
+    `;
+  });
+
+  svg.innerHTML = svgContent;
+}
+
+// ==================== RESIZE HANDLER ====================
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(drawSankeyCurves, 200);
+});
+
+// ==================== FOOTER NAV ====================
+document.querySelectorAll('.footer-nav a').forEach(link => {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.querySelectorAll('.footer-nav a').forEach(l => l.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// ==================== INIT ====================
+renderSidebar();
+setTimeout(drawSankeyCurves, 300);
+
+// Redraw curves after fonts load
+document.fonts?.ready.then(() => setTimeout(drawSankeyCurves, 100));
+</script>
+
+</body>
+</html>

@@ -1,0 +1,410 @@
+﻿/* ═══════════════════════════════════════════
+   sector-analysis — CSS 布局骨架
+   仅还原排版分区、弹性布局、区块间距、容器嵌套规则
+   不做美化细节（颜色/字号/字体/动画等由主题系统接管）
+   ═══════════════════════════════════════════ */
+
+/* ─── 全局重置 ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+/* ─── 主题背景色 ─── */
+.board-bg { background: #0f172a; color: #f1f5f9; }
+.board-card-bg { background: #1e293b; }
+.board-border { border-color: #334155; }
+
+/* ─── 股票涨跌色 ─── */
+.stock-up { color: #ef4444; }
+.stock-down { color: #22c55e; }
+.stock-flat { color: #6b7280; }
+.text-muted { color: #94a3b8; }
+
+
+/* ═══════════════════════════════════════════
+   一级：页面容器
+   ═══════════════════════════════════════════ */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;           /* 区块间距 */
+  min-height: 100vh;
+  padding: 24px;
+}
+
+
+/* ═══════════════════════════════════════════
+   二级：页面顶部标题栏
+   ═══════════════════════════════════════════ */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.date-label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+
+/* ═══════════════════════════════════════════
+   二级：筛选工具栏
+   ═══════════════════════════════════════════ */
+.filter-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: #1e293b;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-label {
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.btn-group {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-filter {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-filter:hover { background: rgba(255,255,255,0.08); }
+
+.btn-active-red  { background: #ef4444; color: #fff; }
+.btn-active-blue { background: #3b82f6; color: #fff; }
+.btn-active-purple { background: #8b5cf6; color: #fff; }
+
+.divider-v {
+  width: 1px;
+  height: 20px;
+  background: #334155;
+  flex-shrink: 0;
+}
+
+.btn-refresh {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 4px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  color: #cbd5e1;
+  cursor: pointer;
+}
+.btn-refresh:hover { background: rgba(255,255,255,0.1); }
+
+
+/* ═══════════════════════════════════════════
+   二级：主内容区 — 左右双栏
+   ═══════════════════════════════════════════ */
+.content-area {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── 三级：左侧面板 ─── */
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;       /* 防止 flex 子元素溢出 */
+}
+
+/* ─── 三级：右侧面板 ─── */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 380px;
+  flex-shrink: 0;
+}
+
+
+/* ═══════════════════════════════════════════
+   四级：通用卡片容器
+   ═══════════════════════════════════════════ */
+.card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: #1e293b;
+  overflow: hidden;
+}
+
+/* ─── 五级：卡片头部 ─── */
+.card-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #334155;
+}
+
+.card-header-between {
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.card-count {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #64748b;
+}
+
+/* ─── 五级：卡片主体 ─── */
+.card-body {
+  padding: 8px;
+  flex: 1;
+  overflow: auto;
+}
+
+/* ─── 五级：卡片底部 ─── */
+.card-footer {
+  display: flex;
+  gap: 16px;
+  padding: 8px 20px;
+  border-top: 1px solid #334155;
+}
+
+
+/* ═══════════════════════════════════════════
+   四级：象限图表区域
+   ═══════════════════════════════════════════ */
+.chart-container {
+  width: 100%;
+  height: 460px;      /* ECharts 容器需要明确高度 */
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-label {
+  font-weight: 500;
+  color: #cbd5e1;
+}
+
+.legend-desc {
+  color: #475569;
+}
+
+
+/* ═══════════════════════════════════════════
+   四级：搜索框
+   ═══════════════════════════════════════════ */
+.input-search {
+  width: 180px;
+  padding: 4px 12px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 12px;
+  color: #cbd5e1;
+  outline: none;
+}
+.input-search::placeholder { color: #475569; }
+.input-search:focus { border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
+
+
+/* ═══════════════════════════════════════════
+   四级：板块表格
+   ═══════════════════════════════════════════ */
+.sector-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.sector-table thead tr {
+  border-bottom: 2px solid #334155;
+}
+
+.sector-table th {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.sortable { cursor: pointer; }
+.sortable:hover { color: #cbd5e1; }
+
+.sector-row {
+  border-bottom: 1px solid #334155;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sector-row:hover { background: rgba(255,255,255,0.05); }
+.sector-row.selected { background: rgba(59,130,246,0.12); }
+
+.sector-row td {
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.sector-name {
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+.sector-count {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #475569;
+}
+
+
+/* ═══════════════════════════════════════════
+   四级：个股表格
+   ═══════════════════════════════════════════ */
+.stock-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.stock-table thead tr {
+  border-bottom: 2px solid #334155;
+}
+
+.stock-table th {
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.stock-row {
+  border-bottom: 1px solid #334155;
+  transition: background 0.15s;
+}
+.stock-row:hover { background: rgba(255,255,255,0.05); }
+
+.stock-row td {
+  padding: 6px 8px;
+}
+
+.stock-name {
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+.stock-code {
+  margin-left: 6px;
+  color: #475569;
+}
+
+
+/* ═══════════════════════════════════════════
+   四级：象限标签
+   ═══════════════════════════════════════════ */
+.tag-quadrant {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tag-red    { background: rgba(239,68,68,0.15);  color: #ef4444; }
+.tag-orange { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.tag-blue   { background: rgba(59,130,246,0.15); color: #3b82f6; }
+.tag-green  { background: rgba(34,197,94,0.15);  color: #22c55e; }
+
+
+/* ═══════════════════════════════════════════
+   四级：占位提示框
+   ═══════════════════════════════════════════ */
+.placeholder-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 0;
+  font-size: 14px;
+  color: #475569;
+}
+
+
+/* ═══════════════════════════════════════════
+   通用表格对齐
+   ═══════════════════════════════════════════ */
+.th-left, .td-left   { text-align: left; }
+.th-right, .td-right { text-align: right; font-variant-numeric: tabular-nums; }
+.th-center, .td-center { text-align: center; }
+
+
+/* ═══════════════════════════════════════════
+   响应式：小屏切换垂直布局
+   ═══════════════════════════════════════════ */
+@media (max-width: 1280px) {
+  .content-area {
+    flex-direction: column;
+  }
+
+  .right-panel {
+    width: 100%;
+  }
+
+  .filter-toolbar {
+    gap: 10px;
+  }
+}
