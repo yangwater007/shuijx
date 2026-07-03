@@ -1,6 +1,6 @@
-﻿/** 表现层 — 应用路由配置 */
+/** 表现层 — 应用路由配置 */
 
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createHashRouter, Navigate } from "react-router-dom";
 import AppLayout from "@ui/layout/AppLayout";
 import LadderPage from "@ui/pages/market/LadderPage/LadderPage";
 import SectorAnalysisPage from "@ui/pages/market/SectorAnalysis/SectorAnalysisPage";
@@ -10,7 +10,7 @@ import ThemeLibrary from "@ui/pages/ThemeLibrary/ThemeLibrary";
 import Charts from "@ui/pages/Charts/Charts";
 import AIAnalysis from "@ui/pages/AIAnalysis/AIAnalysis";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <AppLayout />,
