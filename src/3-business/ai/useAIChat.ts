@@ -73,7 +73,8 @@ export default function useAIChat() {
           model,
           messages: apiMessages,
           tools: mcpTools.length > 0 ? mcpTools : undefined,
-          temperature: 0.7,
+          tool_choice: mcpTools.length > 0 ? "auto" : undefined,
+          temperature: 0.3,
           max_tokens: 2048,
         }),
         signal,
@@ -121,15 +122,28 @@ export default function useAIChat() {
       abortRef.current = controller;
 
       try {
-        // 获取市场上下文
-        const ladderCtx = await fetchBoardLadderForContext();
+        // 预取实时市场数据（确保 AI 拿到当前数据）
+        let marketCtx = "";
+        try {
+          const [overviewResult, ladderResult] = await Promise.allSettled([
+            callMCPTool("market_overview", {}),
+            callMCPTool("limit_up_ladder", {}),
+          ]);
+          if (overviewResult.status === "fulfilled") marketCtx += overviewResult.value.content + "\n";
+          if (ladderResult.status === "fulfilled") marketCtx += ladderResult.value.content + "\n";
+        } catch { /* MCP 预取失败，回退到 API */ }
+
+        // 如果 MCP 预取失败，回退到 REST API
+        if (!marketCtx) {
+          marketCtx = await fetchBoardLadderForContext();
+        }
         const newsCtx = AIService.formatNewsContext(
           news as Array<{ content?: string; brief?: string }>
         );
 
         const systemPrompt = AIService.buildSystemPrompt(
           enabledFrameworks,
-          ladderCtx + newsCtx
+          marketCtx + newsCtx
         );
 
         const currentMsgs = [...messages, userMsg];

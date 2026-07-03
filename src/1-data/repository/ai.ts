@@ -1,9 +1,9 @@
-﻿/**
+/**
  * AI Repository — DeepSeek 对话 + 新闻/TGB 数据获取
  */
 
 import { DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL } from "@infra/config";
-import type { ChatMessage, NewsItem, KaipanlaItem } from "@infra/types/ai";
+import type { NewsItem, KaipanlaItem } from "@infra/types/ai";
 
 // ─── DeepSeek 流式对话 ──────────────────────────
 
@@ -15,9 +15,10 @@ interface StreamCallbacks {
 
 /** 调用 DeepSeek API 进行流式对话 */
 export async function streamDeepSeekChat(
-  messages: Pick<ChatMessage, "role" | "content">[],
+  messages: Array<{ role: string; content: string; tool_call_id?: string; tool_calls?: unknown[] }>,
   callbacks: StreamCallbacks,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  model = "deepseek-chat"
 ): Promise<void> {
   try {
     const resp = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
@@ -27,7 +28,7 @@ export async function streamDeepSeekChat(
         Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: model,
         messages,
         stream: true,
         temperature: 0.7,
