@@ -1,4 +1,4 @@
-﻿/** 基础设施层 — 核心业务类型定义 */
+/** 基础设施层 — 核心业务类型定义 */
 
 /** ─── 股票基本信息 ─── */
 export interface Stock {
@@ -8,11 +8,19 @@ export interface Stock {
   changePct: number;
   change: number;
   volume: number;
+  amount: number;
   turnover: number;
+  amplitude: number;
+  turnoverRate: number;
+  volumeRatio: number;
   high: number;
   low: number;
   open: number;
   preClose: number;
+  marketCap: number;
+  circulatingCap: number;
+  pe: number;
+  pb: number;
 }
 
 /** ─── 连板天梯层级 ─── */

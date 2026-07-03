@@ -1,4 +1,4 @@
-﻿/** 服务层测试 — SelectorService */
+/** 服务层测试 — SelectorService */
 
 import { describe, it, expect } from "vitest";
 import SelectorService from "./SelectorService";
@@ -12,17 +12,14 @@ function makeStock(
   volume = 50000
 ): Stock {
   return {
-    code,
-    name,
-    price,
-    changePct,
-    change: 0.1,
-    volume,
-    turnover: volume * price,
-    high: price + 1,
-    low: price - 1,
-    open: price,
-    preClose: price,
+    code, name, price, changePct,
+    change: 0.1, volume,
+    amount: volume * price, turnover: volume * price,
+    amplitude: 3, turnoverRate: 5, volumeRatio: 1.2,
+    high: price + 1, low: price - 1,
+    open: price, preClose: price,
+    marketCap: 1e10, circulatingCap: 5e9,
+    pe: 20, pb: 2.5,
   };
 }
 
