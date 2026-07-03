@@ -1,7 +1,7 @@
 /** 业务层 — AI 对话 Hook（数据注入 + DeepSeek 流式分析） */
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { streamDeepSeekChat, fetchCailianNews, fetchKaipanla, fetchBoardLadderForContext, fetchMarketOverview, fetchHotSectors, fetchStockRank } from "@data/repository/ai";
+import { streamDeepSeekChat, fetchCailianNews, fetchKaipanla, fetchBoardLadderForContext } from "@data/repository/ai";
 import AIService from "@service/ai/AIService";
 import type { ChatMessage, AnalysisFramework, AIModel, NewsItem, KaipanlaItem } from "@infra/types/ai";
 import { BUILTIN_FRAMEWORKS } from "@infra/types/ai";
@@ -41,16 +41,10 @@ export default function useAIChat() {
   const fetchMarketContext = useCallback(async (): Promise<string> => {
     const results = await Promise.allSettled([
       fetchBoardLadderForContext(),
-      fetchMarketOverview(),
-      fetchHotSectors(),
-      fetchStockRank("gainers", 10),
     ]);
 
     const parts: string[] = [];
     if (results[0].status === "fulfilled" && results[0].value) parts.push(results[0].value);
-    if (results[1].status === "fulfilled" && results[1].value) parts.push(results[1].value);
-    if (results[2].status === "fulfilled" && results[2].value) parts.push(results[2].value);
-    if (results[3].status === "fulfilled" && results[3].value) parts.push(results[3].value);
 
     return parts.join("\n\n");
   }, []);

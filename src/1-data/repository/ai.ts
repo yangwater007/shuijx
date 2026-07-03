@@ -143,46 +143,5 @@ export async function fetchBoardLadderForContext(): Promise<string> {
 }
 
 /** 获取市场概况 */
-export async function fetchMarketOverview(): Promise<string> {
-  try {
-    const resp = await fetch("https://stock.quicktiny.cn/api/market-overview");
-    if (!resp.ok) return "";
-    const json = await resp.json() as { data?: { upCount?: number; downCount?: number; flatCount?: number; limitUpCount?: number; limitDownCount?: number } };
-    if (!json.data) return "";
-    const d = json.data;
-    return `市场概况: 上涨${d.upCount ?? "?"}家, 下跌${d.downCount ?? "?"}家, 涨停${d.limitUpCount ?? "?"}家, 跌停${d.limitDownCount ?? "?"}家`;
-  } catch (e) { console.warn("api fetch failed:", e); return ""; }
-}
 
-/** 获取热门板块 */
-export async function fetchHotSectors(): Promise<string> {
-  try {
-    const resp = await fetch("https://stock.quicktiny.cn/api/hot-sectors");
-    if (!resp.ok) return "";
-    const json = await resp.json() as { data?: Array<{ name: string; changePercent: number; stockCount: number }> };
-    if (!json.data?.length) return "";
-    const lines = ["热门板块:"];
-    for (const s of json.data.slice(0, 10)) {
-      const sign = s.changePercent >= 0 ? "+" : "";
-      lines.push(`  ${s.name} ${sign}${s.changePercent.toFixed(2)}% (${s.stockCount}只)`);
-    }
-    return lines.join("\n");
-  } catch (e) { console.warn("api fetch failed:", e); return ""; }
-}
 
-/** 获取股票排行 */
-export async function fetchStockRank(type: string, limit = 10): Promise<string> {
-  try {
-    const resp = await fetch(`/api/quicktiny/stock-rank?type=${type}&limit=${limit}`);
-    if (!resp.ok) return "";
-    const json = await resp.json() as { data?: Array<{ name: string; code: string; changePercent: number }> };
-    if (!json.data?.length) return "";
-    const label = type === "gainers" ? "涨幅榜" : type === "losers" ? "跌幅榜" : "排行";
-    const lines = [`${label}:`];
-    for (const s of json.data.slice(0, limit)) {
-      const sign = s.changePercent >= 0 ? "+" : "";
-      lines.push(`  ${s.name}(${s.code}) ${sign}${s.changePercent.toFixed(2)}%`);
-    }
-    return lines.join("\n");
-  } catch (e) { console.warn("api fetch failed:", e); return ""; }
-}
