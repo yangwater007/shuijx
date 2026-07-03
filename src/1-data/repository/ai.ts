@@ -68,7 +68,7 @@ export async function streamDeepSeekChat(
           };
           const content = parsed.choices?.[0]?.delta?.content;
           if (content) callbacks.onToken(content);
-        } catch { /* 跳过解析失败的行 */ }
+        } catch (e) { console.warn("api fetch failed:", e); /* 跳过解析失败的行 */ }
       }
     }
 
@@ -84,11 +84,11 @@ export async function streamDeepSeekChat(
 /** 获取财联社电报 */
 export async function fetchCailianNews(): Promise<NewsItem[]> {
   try {
-    const resp = await fetch("/api/quicktiny/cailian-telegraph");
+    const resp = await fetch("https://stock.quicktiny.cn/api/cailian-telegraph");
     if (!resp.ok) return [];
     const json = (await resp.json()) as { error: number; data: NewsItem[] };
     return json.data ?? [];
-  } catch {
+  } catch (e) { console.warn("api fetch failed:", e);
     return [];
   }
 }
@@ -96,11 +96,11 @@ export async function fetchCailianNews(): Promise<NewsItem[]> {
 /** 获取开盘啦热榜 */
 export async function fetchKaipanla(): Promise<KaipanlaItem[]> {
   try {
-    const resp = await fetch("/api/quicktiny/hotlist/kaipanla");
+    const resp = await fetch("https://stock.quicktiny.cn/api/hotlist/kaipanla");
     if (!resp.ok) return [];
     const json = (await resp.json()) as { success: boolean; data: KaipanlaItem[] };
     return json.data ?? [];
-  } catch {
+  } catch (e) { console.warn("api fetch failed:", e);
     return [];
   }
 }
@@ -108,11 +108,11 @@ export async function fetchKaipanla(): Promise<KaipanlaItem[]> {
 /** 获取第一财经新闻 */
 export async function fetchYicaiNews(): Promise<Array<{ id: string; title: string; summary: string; url: string; source: string }>> {
   try {
-    const resp = await fetch("/api/quicktiny/news/yicai");
+    const resp = await fetch("https://stock.quicktiny.cn/api/news/yicai");
     if (!resp.ok) return [];
     const json = (await resp.json()) as { success: boolean; data: Array<{ id: string; title: string; summary: string; url: string; source: string }> };
     return json.data ?? [];
-  } catch {
+  } catch (e) { console.warn("api fetch failed:", e);
     return [];
   }
 }
@@ -120,7 +120,7 @@ export async function fetchYicaiNews(): Promise<Array<{ id: string; title: strin
 /** 获取连板天梯数据作为上下文 */
 export async function fetchBoardLadderForContext(): Promise<string> {
   try {
-    const resp = await fetch("/api/quicktiny/ladder");
+    const resp = await fetch("https://stock.quicktiny.cn/api/ladder");
     if (!resp.ok) return "";
     const json = await resp.json() as { dateRange: string; dates: Array<{ date: string; dayOfWeek: string; totalStocks: number; pauseRatio: number; boards: Array<{ level: number; stocks: Array<{ name: string; code: string; high_days: string; limit_up_type: string; reason_type: string; primary_theme: string }> }> }> };
     if (!json.dates?.length) return "";
@@ -137,7 +137,7 @@ export async function fetchBoardLadderForContext(): Promise<string> {
     }
 
     return lines.join("\n");
-  } catch {
+  } catch (e) { console.warn("api fetch failed:", e);
     return "";
   }
 }
@@ -145,19 +145,19 @@ export async function fetchBoardLadderForContext(): Promise<string> {
 /** 获取市场概况 */
 export async function fetchMarketOverview(): Promise<string> {
   try {
-    const resp = await fetch("/api/quicktiny/market-overview");
+    const resp = await fetch("https://stock.quicktiny.cn/api/market-overview");
     if (!resp.ok) return "";
     const json = await resp.json() as { data?: { upCount?: number; downCount?: number; flatCount?: number; limitUpCount?: number; limitDownCount?: number } };
     if (!json.data) return "";
     const d = json.data;
     return `市场概况: 上涨${d.upCount ?? "?"}家, 下跌${d.downCount ?? "?"}家, 涨停${d.limitUpCount ?? "?"}家, 跌停${d.limitDownCount ?? "?"}家`;
-  } catch { return ""; }
+  } catch (e) { console.warn("api fetch failed:", e); return ""; }
 }
 
 /** 获取热门板块 */
 export async function fetchHotSectors(): Promise<string> {
   try {
-    const resp = await fetch("/api/quicktiny/hot-sectors");
+    const resp = await fetch("https://stock.quicktiny.cn/api/hot-sectors");
     if (!resp.ok) return "";
     const json = await resp.json() as { data?: Array<{ name: string; changePercent: number; stockCount: number }> };
     if (!json.data?.length) return "";
@@ -167,7 +167,7 @@ export async function fetchHotSectors(): Promise<string> {
       lines.push(`  ${s.name} ${sign}${s.changePercent.toFixed(2)}% (${s.stockCount}只)`);
     }
     return lines.join("\n");
-  } catch { return ""; }
+  } catch (e) { console.warn("api fetch failed:", e); return ""; }
 }
 
 /** 获取股票排行 */
@@ -184,5 +184,5 @@ export async function fetchStockRank(type: string, limit = 10): Promise<string> 
       lines.push(`  ${s.name}(${s.code}) ${sign}${s.changePercent.toFixed(2)}%`);
     }
     return lines.join("\n");
-  } catch { return ""; }
+  } catch (e) { console.warn("api fetch failed:", e); return ""; }
 }
