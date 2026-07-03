@@ -1,4 +1,4 @@
-﻿/** 基础设施层 — 全局配置常量 */
+/** 基础设施层 — 全局配置常量 */
 
 /** 后端 API 地址 */
 export const API_BASE_URL = "https://stock.quicktiny.cn/api";
@@ -46,3 +46,6 @@ export const BOARD_BORDER = "#334155";
 
 /** 连板天梯最大显示层级 */
 export const MAX_BOARD_LEVEL = 15;
+/** Wudao Data MCP 配置 */
+export const WUDAO_API_KEY = "lb_3013ad2ba0aca0c769b34eab2192f52d50809313c02a1a7db787a7980ecff112";
+export const MCP_BASE_URL = "https://stock.quicktiny.cn/api/mcp-stream";

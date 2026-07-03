@@ -1,20 +1,22 @@
-﻿/** 基础设施层 — AI对话相关类型 */
+/** 基础设施层 — AI对话相关类型 */
 
 /** 聊天消息角色 */
-export type ChatRole = "user" | "assistant" | "system";
+export type ChatRole = "user" | "assistant" | "system" | "tool";
+
+/** 聊天消息 */
 
 /** 聊天消息 */
 export interface ChatMessage {
   id: string;
   role: ChatRole;
   content: string;
-  /** 是否正在流式输出 */
   isStreaming?: boolean;
-  /** 是否包含错误 */
   isError?: boolean;
-  /** 是否被中断 */
   isInterrupted?: boolean;
-  /** 时间戳 */
+  toolCalls?: Array<{ id: string; name: string; arguments: string }>;
+  toolCallId?: string;
+  toolName?: string;
+  isToolRunning?: boolean;
   timestamp: number;
 }
 

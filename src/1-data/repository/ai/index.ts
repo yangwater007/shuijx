@@ -1,4 +1,4 @@
-﻿/** 数据层 — AI 分析 Repository（DeepSeek API） */
+/** 数据层 — AI 分析 Repository（DeepSeek API） */
 
 import axios from "axios";
 import type { ChatMessage, DeepSeekResponse } from "@data/dto/ai";
