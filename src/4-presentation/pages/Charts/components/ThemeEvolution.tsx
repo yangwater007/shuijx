@@ -1,5 +1,18 @@
-﻿// ─── 子组件：右侧个股明细面板（成分股 + K线/分时） ──────
+﻿/** 表现层 — 题材演化可视化（含左右面板、路径图/桑基图切换） */
 
+import React, { useState, useCallback, useEffect, type FC } from "react";
+import type { EvoStock, EvoChildType, ThemeEvoNode } from "@infra/types/themeEvolution";
+import ThemeEvolutionService from "@service/theme/ThemeEvolutionService";
+import useThemeEvolution from "@business/visualization/useThemeEvolution";
+import type { PathWithActive } from "@service/theme/ThemeEvolutionService";
+
+// ─── 筛选栏静态数据 ──────────────────────────────
+
+const FILTER_INFO = {
+  date: "2026-07-03",
+  fermentDays: "5天发酵",
+  fundFlow: ">20亿",
+} as const;
 type PanelTab = "stocks" | "kline" | "timeshare";
 
 interface StockDetailPanelProps {
@@ -110,52 +123,7 @@ const StockDetailPanel: FC<StockDetailPanelProps> = ({ stocks, onClose }) => {
                 className="text-xs text-slate-500 hover:text-slate-300">← 返回列表</button>
             </div>
             <div className="rounded-lg p-2" style={{ backgroundColor: "#0b0e14", height: 200 }}>
-              {typeof window !== "undefined" ? (
-                (() => {
-                  const MiniKL: FC<{ code: string; height: number }> = (() => {
-                    const { useState: us, useEffect: ue } = require("react");
-                    const MiniComp: FC<{ code: string; height: number }> = ({ code: c, height: h }) => {
-                      const [d, s] = us<Array<{ date: string; open: number; close: number; high: number; low: number }>>([]);
-                      const [l, sl] = us(true);
-                      ue(() => {
-                        let cancelled = false;
-                        (async () => {
-                          const { fetchStockKLine } = await import("@data/repository/stockChart");
-                          const r = await fetchStockKLine(c, 30);
-                          if (!cancelled) { s(r); sl(false); }
-                        })();
-                        return () => { cancelled = true; };
-                      }, [c]);
-                      if (l) return <div className="flex items-center justify-center" style={{ height: h }}><span className="text-xs text-slate-600">加载中…</span></div>;
-                      if (!d.length) return <div className="flex items-center justify-center" style={{ height: h }}><span className="text-xs text-slate-600">无数据</span></div>;
-                      const maxH = Math.max(...d.map((p) => p.high));
-                      const minL = Math.min(...d.map((p) => p.low));
-                      const rng = maxH - minL || 1;
-                      const cw2 = 248; const ch2 = h - 16;
-                      const cw3 = Math.max(1.2, cw2 / d.length * 0.6);
-                      return React.createElement("svg", { viewBox: `0 0 280 ${h}`, className: "w-full" },
-                        ...d.map((p, i) => {
-                          const x = 28 + (i / Math.max(d.length - 1, 1)) * 248 - cw3 / 2;
-                          const up = p.close >= p.open;
-                          const clr = up ? "#ef4444" : "#22c55e";
-                          const yH = 4 + ch2 - ((p.high - minL) / rng) * ch2;
-                          const yL = 4 + ch2 - ((p.low - minL) / rng) * ch2;
-                          const yO = 4 + ch2 - ((p.open - minL) / rng) * ch2;
-                          const yC = 4 + ch2 - ((p.close - minL) / rng) * ch2;
-                          const bt = Math.min(yO, yC);
-                          const bh = Math.max(Math.abs(yC - yO), 0.5);
-                          return React.createElement("g", { key: p.date },
-                            React.createElement("line", { x1: x + cw3 / 2, y1: yH, x2: x + cw3 / 2, y2: yL, stroke: clr, strokeWidth: "0.6" }),
-                            React.createElement("rect", { x, y: bt, width: cw3, height: bh, fill: up ? clr : "transparent", stroke: clr, strokeWidth: "0.6" })
-                          );
-                        })
-                      );
-                    };
-                    return MiniComp;
-                  })();
-                  return null; // fallback to simple loading
-                })()
-              ) : null}
+              
             </div>
             {/* 简易内联K线 */}
             <MiniKLineInline code={selectedStock.code} />
@@ -180,11 +148,14 @@ const StockDetailPanel: FC<StockDetailPanelProps> = ({ stocks, onClose }) => {
   );
 };
 
-// ─── 内联迷你图表组件（避免循环依赖） ──────────────
+
+// ─── 内联迷你图表组件 ──────────────────────────
 
 const MiniKLineInline: FC<{ code: string }> = ({ code }) => {
-  const [data, setData] = useState<Array<{ date: string; open: number; close: number; high: number; low: number; volume?: number }>>([]);
+  const [data, setData] = useState<KLinePoint[]>([]);
   const [loading, setLoading] = useState(true);
+
+  interface KLinePoint { date: string; open: number; close: number; high: number; low: number; volume?: number }
 
   useEffect(() => {
     let cancelled = false;
@@ -193,26 +164,26 @@ const MiniKLineInline: FC<{ code: string }> = ({ code }) => {
       try {
         const { fetchStockKLine } = await import("@data/repository/stockChart");
         const result = await fetchStockKLine(code, 30);
-        if (!cancelled) { setData(result); setLoading(false); }
+        if (!cancelled) { setData(result as KLinePoint[]); setLoading(false); }
       } catch { if (!cancelled) setLoading(false); }
     })();
     return () => { cancelled = true; };
   }, [code]);
 
-  if (loading) return <div className="flex items-center justify-center py-10"><span className="text-xs text-slate-600">加载K线数据...</span></div>;
+  if (loading) return <div className="flex items-center justify-center py-10"><span className="text-xs text-slate-600">加载K线...</span></div>;
   if (!data.length) return <div className="flex items-center justify-center py-10"><span className="text-xs text-slate-600">暂无K线数据</span></div>;
 
-  const maxH = Math.max(...data.map((d) => d.high));
-  const minL = Math.min(...data.map((d) => d.low));
+  const maxH = Math.max(...data.map((d: KLinePoint) => d.high));
+  const minL = Math.min(...data.map((d: KLinePoint) => d.low));
   const rng = maxH - minL || 1;
   const H = 200; const pad = { t: 4, r: 4, b: 20, l: 42 };
   const cw = 240; const ch = H - pad.t - pad.b;
   const candleW = Math.max(1.5, cw / data.length * 0.6);
 
   return (
-    <div className="rounded-lg" style={{ backgroundColor: "#0b0e14", padding: 8 }}>
+    <div className="rounded-lg p-2" style={{ backgroundColor: "#0b0e14" }}>
       <svg viewBox={`0 0 300 ${H}`} className="w-full">
-        {[0, 0.33, 0.67, 1].map((frac) => {
+        {[0, 0.33, 0.67, 1].map((frac: number) => {
           const y = pad.t + ch * (1 - frac);
           const price = minL + frac * rng;
           return (
@@ -222,7 +193,7 @@ const MiniKLineInline: FC<{ code: string }> = ({ code }) => {
             </g>
           );
         })}
-        {data.map((d, i) => {
+        {data.map((d: KLinePoint, i: number) => {
           const x = pad.l + (i / Math.max(data.length - 1, 1)) * cw - candleW / 2;
           const isUp = d.close >= d.open;
           const color = isUp ? "#ef4444" : "#22c55e";
@@ -239,13 +210,6 @@ const MiniKLineInline: FC<{ code: string }> = ({ code }) => {
             </g>
           );
         })}
-        {[0, 0.25, 0.5, 0.75, 1].map((frac) => {
-          const idx = Math.floor(frac * (data.length - 1));
-          const x = pad.l + frac * cw;
-          const raw = data[idx]!.date;
-          const label = raw.length >= 8 ? `${raw.slice(4, 6)}-${raw.slice(6, 8)}` : raw;
-          return <text key={`dx${frac}`} x={x} y={H - 4} fill="#4a6a8a" fontSize="8" textAnchor="middle">{label}</text>;
-        })}
       </svg>
     </div>
   );
@@ -253,7 +217,7 @@ const MiniKLineInline: FC<{ code: string }> = ({ code }) => {
 
 const MiniTimeshareInline: FC<{ code: string }> = ({ code }) => {
   const [data, setData] = useState<Array<{ time: string; price: number }>>([]);
-  const [preClose, setPreClose] = useState(0);
+  const [, setPreClose] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -269,58 +233,197 @@ const MiniTimeshareInline: FC<{ code: string }> = ({ code }) => {
     return () => { cancelled = true; };
   }, [code]);
 
-  if (loading) return <div className="flex items-center justify-center py-10"><span className="text-xs text-slate-600">加载分时数据...</span></div>;
+  if (loading) return <div className="flex items-center justify-center py-10"><span className="text-xs text-slate-600">加载分时...</span></div>;
   if (!data.length) return <div className="flex items-center justify-center py-10"><span className="text-xs text-slate-600">暂无分时数据</span></div>;
 
-  const prices = data.map((d) => d.price);
+  const prices = data.map((d: { price: number }) => d.price);
   const minP = Math.min(...prices) * 0.998;
   const maxP = Math.max(...prices) * 1.002;
   const rng = maxP - minP || 1;
   const H = 200; const pad = { t: 4, r: 4, b: 20, l: 42 };
   const cw = 240; const ch = H - pad.t - pad.b;
-  const isUp = data[data.length - 1]!.price >= (preClose || data[0]!.price);
-  const color = isUp ? "#ef4444" : "#22c55e";
-
-  const pathD = data.map((d, i) => {
+  const color = "#a855f7";
+  const pathD = data.map((d: { price: number }, i: number) => {
     const x = pad.l + (i / Math.max(data.length - 1, 1)) * cw;
     const y = pad.t + ch - ((d.price - minP) / rng) * ch;
     return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(" ");
 
   return (
-    <div className="rounded-lg" style={{ backgroundColor: "#0b0e14", padding: 8 }}>
+    <div className="rounded-lg p-2" style={{ backgroundColor: "#0b0e14" }}>
       <svg viewBox={`0 0 300 ${H}`} className="w-full">
-        {[0, 0.33, 0.67, 1].map((frac) => {
-          const y = pad.t + ch * (1 - frac);
-          const price = minP + frac * rng;
-          return (
-            <g key={`g${frac}`}>
-              <line x1={pad.l} y1={y} x2={pad.l + cw} y2={y} stroke="#1e2a36" strokeWidth="0.5" />
-              <text x={pad.l - 4} y={y + 3} fill="#9aaec9" fontSize="9" textAnchor="end">{price.toFixed(2)}</text>
-            </g>
-          );
-        })}
-        {preClose > 0 && (() => {
-          const y = pad.t + ch - ((preClose - minP) / rng) * ch;
-          return <line x1={pad.l} y1={y} x2={pad.l + cw} y2={y} stroke="#4a6a8a" strokeWidth="0.5" strokeDasharray="3,2" />;
-        })()}
         <defs>
-          <linearGradient id={`tsf_${code}`} x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={`tsf2_${code}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={color} stopOpacity="0.25" />
             <stop offset="100%" stopColor={color} stopOpacity="0.02" />
           </linearGradient>
         </defs>
-        <path d={`${pathD} L${pad.l + cw},${pad.t + ch} L${pad.l},${pad.t + ch} Z`} fill={`url(#tsf_${code})`} />
+        <path d={`${pathD} L${pad.l + cw},${pad.t + ch} L${pad.l},${pad.t + ch} Z`} fill={`url(#tsf2_${code})`} />
         <path d={pathD} fill="none" stroke={color} strokeWidth="1" />
-        {[0, 0.25, 0.5, 0.75, 1].map((frac) => {
-          const idx = Math.floor(frac * (data.length - 1));
-          const x = pad.l + frac * cw;
-          return <text key={`tx${frac}`} x={x} y={H - 4} fill="#4a6a8a" fontSize="8" textAnchor="middle">{data[idx]!.time.slice(-5)}</text>;
+      </svg>
+    </div>
+  );
+};
+
+
+// ─── 子组件：左侧题材树 ───────────────────────────
+
+interface ThemeTreeProps {
+  nodes: readonly ThemeEvoNode[];
+  selectedThemeId: string | null;
+  selectedChildType: EvoChildType | null;
+  onSelect: (themeId: string, childType: EvoChildType) => void;
+}
+
+const ThemeTree: FC<ThemeTreeProps> = ({ nodes, selectedThemeId, selectedChildType, onSelect }) => (
+  <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "#1e2a36" }}>
+      <span className="text-sm font-bold text-white">题材演化</span>
+      <span className="rounded px-1.5 py-0.5 text-[10px] font-bold"
+        style={{ backgroundColor: "rgba(246,178,107,0.15)", color: "#f6b26b" }}>树形</span>
+    </div>
+    <div className="flex-1 overflow-y-auto">
+      {nodes.map((node) => (
+        <div key={node.id} className="border-b" style={{ borderColor: "#1e2a36" }}>
+          <div className="px-4 py-2 text-xs font-bold text-slate-300">{node.name}</div>
+          {node.children.map((child) => {
+            const isActive = selectedThemeId === node.id && selectedChildType === child.type;
+            const colorMap: Record<string, string> = { leader: "#f6b26b", follower: "#3b82f6", diffusion: "#22c55e" };
+            const borderClr = colorMap[child.type] ?? "#94a3b8";
+            return (
+              <button
+                key={child.type}
+                type="button"
+                onClick={() => onSelect(node.id, child.type)}
+                className="flex w-full items-center gap-2 px-4 py-2 text-left text-xs transition-colors"
+                style={{
+                  borderLeft: isActive ? `3px solid ${borderClr}` : "3px solid transparent",
+                  backgroundColor: isActive ? "rgba(255,255,255,0.05)" : "transparent",
+                  color: isActive ? "#f1f5f9" : "#9aaec9",
+                }}>
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: borderClr }} />
+                <span>{child.label}</span>
+                <span className="ml-auto text-[10px] text-slate-600">{child.stockCount}只</span>
+              </button>
+            );
+          })}
+        </div>
+      ))}
+      {nodes.length === 0 && (
+        <div className="flex items-center justify-center py-10 text-xs text-slate-600">暂无题材数据</div>
+      )}
+    </div>
+  </div>
+);
+
+
+// ─── 子组件：桑基图/路径图 ───────────────────────────
+
+interface SankeyFlowProps {
+  activePaths: readonly PathWithActive[];
+  viewMode: "path" | "sankey";
+}
+
+const SankeyFlow: FC<SankeyFlowProps> = ({ activePaths, viewMode }) => {
+  if (activePaths.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <span className="text-xs text-slate-600">点击左侧题材切换发酵路径</span>
+      </div>
+    );
+  }
+
+  const colorMap: Record<string, string> = {
+    leader: "#f6b26b",
+    follower: "#3b82f6",
+    diffusion: "#22c55e",
+  };
+
+  if (viewMode === "path") {
+    return (
+      <div className="flex flex-col gap-4">
+        {activePaths.map((path, pi) => (
+          <div key={pi} className="flex items-center gap-1 rounded-lg p-3"
+            style={{ backgroundColor: "#0b0e14", border: "1px solid #1e2a36" }}>
+            {path.steps.map((step, si) => {
+              const clr = colorMap[step.childType] ?? "#94a3b8";
+              const isActive = step.isActive;
+              return (
+                <React.Fragment key={step.id}>
+                  {si > 0 && (
+                    <span className="mx-1 text-slate-600 text-xs">→</span>
+                  )}
+                  <div className="rounded-lg px-3 py-2 text-center min-w-[120px]" style={{
+                    border: `1.5px solid ${clr}`,
+                    backgroundColor: isActive ? `${clr}22` : "transparent",
+                    boxShadow: isActive ? `0 0 8px ${clr}33` : "none",
+                  }}>
+                    <div className="text-[10px] mb-0.5" style={{ color: clr }}>
+                      {step.label}
+                    </div>
+                    <div className="text-xs font-bold text-white">{step.theme}</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">{step.stockCount}只</div>
+                  </div>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Sankey view
+  return (
+    <div className="relative" style={{ height: 320 }}>
+      <svg viewBox="0 0 600 300" className="w-full h-full" style={{ opacity: 0.85 }}>
+        {activePaths.map((path, pi) => {
+          const yBase = 40 + pi * 100;
+          const steps = path.steps;
+          return steps.slice(0, -1).map((step, si) => {
+            const x1 = 80 + si * 220;
+            const x2 = x1 + 220;
+            const y1 = yBase + 20;
+            const y2 = yBase + 20;
+            const cx1 = x1 + 110;
+            const cx2 = x2 - 110;
+            const clr = colorMap[step.childType] ?? "#94a3b8";
+            return (
+              <path key={`${pi}-${si}`}
+                d={`M${x1},${y1} C${cx1},${y1} ${cx2},${y2} ${x2},${y2}`}
+                fill="none" stroke={clr} strokeWidth={step.isActive ? 3 : 1.5}
+                strokeOpacity={step.isActive ? 0.7 : 0.2}
+              />
+            );
+          });
+        })}
+        {activePaths.map((path, pi) => {
+          const yBase = 40 + pi * 100;
+          return path.steps.map((step, si) => {
+            const x = 80 + si * 220;
+            const clr = colorMap[step.childType] ?? "#94a3b8";
+            return (
+              <g key={`n-${pi}-${si}`}>
+                <rect x={x - 50} y={yBase} width={100} height={40} rx={8}
+                  fill={step.isActive ? `${clr}22` : "#0b0e14"}
+                  stroke={clr} strokeWidth={1.5}
+                  strokeOpacity={step.isActive ? 0.9 : 0.4}
+                />
+                <text x={x} y={yBase + 16} textAnchor="middle" fill="#e8edf5" fontSize="11" fontWeight="bold">
+                  {step.theme}
+                </text>
+                <text x={x} y={yBase + 30} textAnchor="middle" fill={clr} fontSize="9">
+                  {step.label}
+                </text>
+              </g>
+            );
+          });
         })}
       </svg>
     </div>
   );
 };
+
 // ─── 子组件：顶部筛选栏 ───────────────────────────
 
 const TopFilterBar: FC = () => (
@@ -518,7 +621,7 @@ const ThemeEvolution: FC = () => {
         <div className="flex items-center gap-2">
           <span className="rounded px-1.5 py-0.5 text-[10px] font-bold text-orange-400"
             style={{ backgroundColor: "rgba(246,178,107,0.15)" }}>Pro</span>
-          <span style={{ color: "#4a6a8a" }}>© 2026 连板天梯</span>
+          <span style={{ color: "#4a6a8a" }}>? 2026 连板天梯</span>
         </div>
       </div>
     </div>

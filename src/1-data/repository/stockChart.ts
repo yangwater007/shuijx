@@ -166,7 +166,7 @@ export async function fetchStockTimeshare(code: string): Promise<{ data: Timesha
     const parsed = parseTHSResponse(text);
     if (parsed) {
       // 同花顺 data 格式: "时间,价格,成交额,均价,成交量;..."
-      const raw = (parsed as Record<string, string>).data;
+      // const raw unused, using parsed directly
       // data 可能嵌套在第一个key下
       const key = Object.keys(parsed).find((k) => k.includes("_") && parsed[k] && typeof parsed[k] === "object");
       const payload = key ? (parsed[key] as Record<string, unknown>) : (parsed as Record<string, unknown>);

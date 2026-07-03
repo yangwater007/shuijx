@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AIAnalysis — AI智能分析页面
  * 复刻 stock.quicktiny.cn/ai
  * 功能：AI对话 + 新闻TGB + 热榜 + 分析框架
@@ -191,7 +191,7 @@ const FrameworkPanel: FC<{
 const AIAnalysis: FC = () => {
   const {
     messages, isStreaming, model, setModel,
-    frameworks, enabledFrameworks, toggleFramework,
+    frameworks, toggleFramework,
     news, hotStocks,
     sendMessage, stopStreaming, clearMessages,
   } = useAIChat();

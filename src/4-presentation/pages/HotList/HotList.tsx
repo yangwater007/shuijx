@@ -7,7 +7,7 @@ import PageHeader from "@ui/components/PageHeader";
 import HotRankBar from "@ui/components/HotRankBar";
 import StockDetailModal from "@ui/components/business/StockDetailModal";
 import type { HotStockItem, HotNewsItem } from "@infra/types/stock";
-import type { HotTab } from "@business/hot/useHotList";
+import type { } from "@business/hot/useHotList";
 
 // ─── 股票热榜行 ────────────────────────
 

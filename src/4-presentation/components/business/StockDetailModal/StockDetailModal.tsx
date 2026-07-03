@@ -1,4 +1,4 @@
-﻿/**
+/**
  * StockDetailModal — 个股详情弹窗（通用组件）
  * 三Tab：分时图 + K线(含MA+成交量副图) + 题材概念
  * 可被连板天梯、板块轮动、题材演化等任何模块调用
@@ -128,13 +128,11 @@ const TimeshareTab: FC<{ code: string; preClose: number }> = ({ code, preClose: 
   if (timeshareData.length === 0) return <EmptyState text="暂无分时数据（非交易时段）" height={400} />;
 
   const data = timeshareData;
-  const prices = data.map((d) => d.price);
   const volumes = data.map((d) => d.volume ?? 0);
     const limitPct = getLimitPct(code);
   const minPrice = effectivePreClose * (1 - limitPct);
   const maxPrice = effectivePreClose * (1 + limitPct);
   const priceRange = maxPrice - minPrice || 1;
-  const isUp = data[data.length - 1]!.price >= effectivePreClose;
   const lineColor = "#a855f7";
 
   // 成交量范围
@@ -152,7 +150,6 @@ const TimeshareTab: FC<{ code: string; preClose: number }> = ({ code, preClose: 
 
   const toX = (i: number) => PAD.left + (i / Math.max(data.length - 1, 1)) * chartW;
   const toPriceY = (p: number) => PAD.top + mainH - ((p - minPrice) / priceRange) * mainH;
-  const toVolY = (v: number) => PAD.top + mainH + PAD.mid * 2 + volH - (v / volRange) * volH;
 
   // 分时折线
   const pathD = data.map((d, i) => `${i === 0 ? "M" : "L"}${toX(i).toFixed(1)},${toPriceY(d.price).toFixed(1)}`).join(" ");
@@ -334,7 +331,6 @@ const KLineTab: FC<{ code: string; preClose?: number }> = ({ code, preClose: fal
 
   const toX = (i: number) => PAD.left + (i / Math.max(data.length - 1, 1)) * chartW;
   const toPriceY = (p: number) => PAD.top + mainH - ((p - minP) / pRange) * mainH;
-  const toVolY = (v: number) => PAD.top + mainH + PAD.mid * 2 + volH - (v / maxVol) * volH;
 
   // 蜡烛宽度
   const candleW = Math.max(2, (chartW / data.length) * 0.65);
@@ -412,8 +408,8 @@ const KLineTab: FC<{ code: string; preClose?: number }> = ({ code, preClose: fal
           {limitUpPrice <= maxP && limitUpPrice >= minP && (
             <>
               <line x1={PAD.left} y1={toPriceY(limitUpPrice)} x2={W - PAD.right} y2={toPriceY(limitUpPrice)}
-                stroke={CLR.limitUp} strokeWidth="0.8" strokeDasharray="5,3" opacity="0.5" />
-              <text x={W - PAD.right - 2} y={toPriceY(limitUpPrice) - 4} fill={CLR.limitUp} fontSize="9" textAnchor="end" opacity="0.7">
+                stroke={CLR.limitup} strokeWidth="0.8" strokeDasharray="5,3" opacity="0.5" />
+              <text x={W - PAD.right - 2} y={toPriceY(limitUpPrice) - 4} fill={CLR.limitup} fontSize="9" textAnchor="end" opacity="0.7">
                 涨停 {limitUpPrice.toFixed(2)}
               </text>
             </>
@@ -683,4 +679,3 @@ const StockDetailModal: FC<Props> = ({ visible, stock, onClose }) => {
 };
 
 export default StockDetailModal;
-export type { StockBrief };

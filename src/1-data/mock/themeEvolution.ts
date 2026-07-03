@@ -1,8 +1,6 @@
-﻿/** 数据层 — 题材演化 Mock 数据 + Raw→Domain 转换 */
+/** 数据层 — 题材演化 Mock 数据 + Raw→Domain 转换 */
 
-import type {
-  ThemeEvoNode, EvoPath, EvoStepNode, EvoStock,
-} from "@infra/types/themeEvolution";
+import type { ThemeEvoNode, EvoPath, EvoStock } from "@infra/types/themeEvolution";
 import type { ThemeEvolutionData, RawThemeEvolutionResponse } from "@data/dto/themeEvolution";
 import { mapRawEvoStock } from "@data/dto/themeEvolution";
 import { EVO_CHILD_LABELS } from "@infra/types/themeEvolution";
@@ -284,15 +282,6 @@ const STOCK_025: EvoStock = {
   limitUpSucRate: 0.75, isAgainLimit: 0, changeTag: "FIRST_LIMIT",
 };
 
-/** Stock pool for reference */
-const ALL_MOCK_STOCKS: EvoStock[] = [
-  STOCK_001, STOCK_002, STOCK_003, STOCK_004, STOCK_005, STOCK_006,
-  STOCK_007, STOCK_008, STOCK_009, STOCK_010, STOCK_011, STOCK_012,
-  STOCK_013, STOCK_014, STOCK_015, STOCK_016, STOCK_017, STOCK_018,
-  STOCK_019, STOCK_020, STOCK_021, STOCK_022, STOCK_023, STOCK_024,
-  STOCK_025,
-];
-
 // ─── 题材演化节点树 ─────────────────────────────
 
 /** 预生成步骤节点ID */
@@ -408,12 +397,6 @@ export const MOCK_THEME_EVO_NODES: ThemeEvoNode[] = [
 // ─── 发酵路径 ──────────────────────────────────
 
 /** 从节点树中查找 stocks */
-function findStocks(themeId: string, childType: string, existingStocks: EvoStock[]): EvoStock[] {
-  const node = MOCK_THEME_EVO_NODES.find((n) => n.id === themeId);
-  if (!node) return existingStocks;
-  const child = node.children.find((c) => c.type === childType);
-  return child?.stocks ?? existingStocks;
-}
 
 export const MOCK_EVO_PATHS: EvoPath[] = [
   {
@@ -486,8 +469,8 @@ export function buildDomainFromRaw(raw: RawThemeEvolutionResponse): ThemeEvoluti
     // 从 "主题名(龙头/跟风/扩散)" 提取
     const match = rawNode.name.match(/^(.+?)\((龙头|跟风|扩散)\)$/);
     if (!match) continue;
-    const themeName = match[1];
-    const childLabel = match[2];
+    const themeName = match[1]!;
+    const childLabel = match[2]!;
     const childType: "leader" | "follower" | "diffusion" =
       childLabel === "龙头" ? "leader" : childLabel === "跟风" ? "follower" : "diffusion";
 
@@ -545,18 +528,18 @@ export function buildDomainFromRaw(raw: RawThemeEvolutionResponse): ThemeEvoluti
         paths.push({
           steps: [
             {
-              id: sourceNode.id, label: sourceNode.name, theme: sourceMatch[1],
-              childType: parseType(sourceMatch[2]), stockCount: sourceNode.stockCount,
+              id: sourceNode.id, label: sourceNode.name, theme: (sourceMatch[1]! ?? ""),
+              childType: parseType((sourceMatch[2]! ?? "")), stockCount: sourceNode.stockCount,
               stocks: sourceStocks,
             },
             {
-              id: targetNode.id, label: targetNode.name, theme: targetMatch[1],
-              childType: parseType(targetMatch[2]), stockCount: targetNode.stockCount,
+              id: targetNode.id, label: targetNode.name, theme: (targetMatch[1]! ?? ""),
+              childType: parseType((targetMatch[2]! ?? "")), stockCount: targetNode.stockCount,
               stocks: targetStocks,
             },
             {
-              id: dsNode.id, label: dsNode.name, theme: dsMatch[1],
-              childType: parseType(dsMatch[2]), stockCount: dsNode.stockCount,
+              id: dsNode.id, label: dsNode.name, theme: (dsMatch[1]! ?? ""),
+              childType: parseType((dsMatch[2]! ?? "")), stockCount: dsNode.stockCount,
               stocks: dsStocks,
             },
           ],
