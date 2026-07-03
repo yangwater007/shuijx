@@ -49,7 +49,7 @@ interface RawStock {
 
 /** Raw → Domain 映射 */
 function mapRawStock(raw: RawStock): Stock {
-  const code = raw.f12 ?? "000000";
+  const code = (raw.f12 || "000000");
   return {
     code,
     name: raw.f14 ?? "未知",
@@ -99,8 +99,8 @@ async function fetchByCriteria(criteria: SelectorCriteria): Promise<Stock[]> {
     data?: { diff?: RawStock[]; total?: number };
   };
 
-  const rawList = json.data?.diff ?? [];
-  return rawList.map(mapRawStock);
+  const rawList = (json.data?.diff || []);
+  return rawList.map(mapRawStock).filter(s => s && s.code !== "000000");
 }
 
 const selectorRepository = { fetchByCriteria };

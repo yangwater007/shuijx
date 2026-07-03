@@ -1,4 +1,4 @@
-﻿/** 表现层 — 条件选股页面 */
+/** 表现层 — 条件选股页面 */
 
 import type { FC, ChangeEvent } from "react";
 import type { SelectorCriteria } from "@data/dto/selector";
@@ -278,7 +278,7 @@ const Selector: FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {result.stocks.map((stock) => (
+                    {(result.stocks || []).filter(Boolean).map((stock) => (
                       <tr
                         key={stock.code}
                         className="border-b transition-colors hover:bg-white/5"
