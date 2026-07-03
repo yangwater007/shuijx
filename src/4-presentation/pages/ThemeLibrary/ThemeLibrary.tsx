@@ -32,7 +32,7 @@ const KPLView: FC<{ nodes: ThemeNode[]; onSelect: (name: string) => void; select
             <td className="px-3 py-2.5 font-medium" style={{ color: C.text }}>{n.name}</td>
             <td className="px-3 py-2.5 font-bold" style={{ color: C.up }}>{n.limitUpCount}</td>
             <td className="px-3 py-2.5" style={{ color: C.accent }}>{n.maxContinueNum}板</td>
-            <td className="px-3 py-2.5" style={{ color: C.text }}>{n.dragonHead.name}<span className="ml-1" style={{ color: C.dim }}>{n.dragonHead.code}</span></td>
+            <td className="px-3 py-2.5" style={{ color: C.text }}>{n.dragonHead?.name ?? '—'}<span className="ml-1" style={{ color: C.dim }}>{n.dragonHead.code}</span></td>
             <td className="px-3 py-2.5"><span className="rounded px-1.5 py-0.5 text-[10px]" style={{ backgroundColor: `${getStageColor(n.stage)}18`, color: getStageColor(n.stage) }}>{n.stageLabel}</span></td>
             <td className="px-3 py-2.5 font-bold" style={{ color: getTrendColor(n.change.trend) }}>{getTrendIcon(n.change.trend)}{n.change.count > 0 ? "+" : ""}{n.change.count}</td>
           </tr>
@@ -137,7 +137,7 @@ const GraphView: FC<{
             </text>
             {isSel && (
               <text x={pos.x} y={pos.y + r + 26} textAnchor="middle" fill={C.dim} fontSize={9}>
-                龙头: {n.dragonHead.name} | {n.stageLabel}
+                龙头: {n.dragonHead?.name ?? '—'} | {n.stageLabel}
               </text>
             )}
           </g>
@@ -264,7 +264,7 @@ const ThemeLibrary: FC = () => {
             if (!node) return null;
             return (
               <>
-                <span style={{ color: C.sub }}>龙头: <span style={{ color: C.text }}>{node.dragonHead.name}({node.dragonHead.code}) {node.dragonHead.continueNum}板</span></span>
+                <span style={{ color: C.sub }}>龙头: <span style={{ color: C.text }}>{node?.dragonHead.name}({node?.dragonHead.code}) {node?.dragonHead.continueNum}板</span></span>
                 <span className="rounded px-1.5 py-0.5 text-[10px]" style={{ backgroundColor: `${getStageColor(node.stage)}18`, color: getStageColor(node.stage) }}>{node.stageLabel}</span>
                 <span style={{ color: C.sub }}>涨停: <span className="font-bold" style={{ color: C.up }}>{node.limitUpCount}只</span></span>
                 <span style={{ color: C.sub }}>趋势: <span style={{ color: getTrendColor(node.change.trend) }}>{getTrendIcon(node.change.trend)}{node.change.count > 0 ? "+" : ""}{node.change.count}</span></span>

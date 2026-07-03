@@ -32,7 +32,7 @@ export function filterThemes(nodes: readonly ThemeNode[], keyword: string): Them
   if (!keyword.trim()) return [...nodes];
   const kw = keyword.trim().toLowerCase();
   return nodes.filter(
-    (n) => n.name.toLowerCase().includes(kw) || n.dragonHead.name.toLowerCase().includes(kw)
+    (n) => n.name.toLowerCase().includes(kw) || n.dragonHead?.name?.toLowerCase().includes(kw)
   );
 }
 
