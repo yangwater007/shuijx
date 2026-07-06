@@ -55,7 +55,7 @@ const AppLayout: FC = () => {
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden">
       {/* ═══ DESKTOP SIDEBAR ═══ */}
       <aside className="hidden md:flex h-full w-[220px] shrink-0 flex-col border-r"
         style={{ backgroundColor: "var(--board-card)", borderColor: "var(--board-border)" }}>
