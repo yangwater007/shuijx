@@ -580,7 +580,7 @@ const StockDetailModal: FC<Props> = ({ visible, stock, onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ backgroundColor: "rgba(0,0,0,0.65)" }}
       onClick={onClose}>
-      <div className="mx-2 flex max-h-[94vh] w-full max-w-[840px] flex-col overflow-hidden rounded-2xl shadow-2xl"
+      <div className="mx-0 md:mx-2 flex max-h-[100dvh] md:max-h-[94vh] w-full max-w-full md:max-w-[840px] flex-col overflow-hidden rounded-none md:rounded-2xl shadow-2xl"
         style={{ backgroundColor: "var(--board-bg)" }}
         onClick={(e: MouseEvent) => e.stopPropagation()}>
         {/* 头部 */}

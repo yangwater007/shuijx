@@ -1,6 +1,6 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
-/* 股票主题色 */
+/* ─── 股票主题色 ─── */
 :root {
   --stock-up: #ef4444;
   --stock-down: #22c55e;
@@ -8,34 +8,46 @@
   --board-bg: #0f172a;
   --board-card: #1e293b;
   --board-border: #334155;
-  --sidebar-width: 220px;
 }
 
-/* 全局暗色背景 */
+/* ─── 全局暗色背景 ─── */
 body {
   margin: 0;
   padding: 0;
   background-color: var(--board-bg);
   color: #e2e8f0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
 }
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 6px;
+/* ─── 滚动条 ─── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--board-bg); }
+::-webkit-scrollbar-thumb { background: var(--board-border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* ─── 移动端动画 ─── */
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
 }
-::-webkit-scrollbar-track {
-  background: var(--board-bg);
+.animate-slide-in {
+  animation: slideIn 0.2s ease-out;
 }
-::-webkit-scrollbar-thumb {
-  background: var(--board-border);
-  border-radius: 3px;
+
+/* ─── iPhone底部安全区 ─── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 8px);
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+
+/* ─── 移动端触摸优化 ─── */
+@media (max-width: 767px) {
+  input, select, textarea { font-size: 16px !important; }
+  button { min-height: 36px; }
 }

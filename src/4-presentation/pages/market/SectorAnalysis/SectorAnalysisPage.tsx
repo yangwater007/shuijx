@@ -50,7 +50,7 @@ const SectorAnalysisPage: FC = () => {
   );
 
   return (
-    <div className="flex gap-4 items-start">
+    <div className="flex flex-col md:flex-row gap-4 items-start">
       <div className="flex-1 min-w-0 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -199,7 +199,7 @@ const SectorAnalysisPage: FC = () => {
       </div>
 
       {hook.selectedSector && (
-        <div className="w-[400px] shrink-0 space-y-4">
+        <div className="w-full md:w-[400px] shrink-0 space-y-4">
           <div className="overflow-hidden rounded-xl" style={{ backgroundColor: "var(--board-card)" }}>
             <div className="flex items-center justify-between border-b px-5 py-3" style={{ borderColor: "var(--board-border)" }}>
               <h2 className="text-sm font-bold text-slate-300">

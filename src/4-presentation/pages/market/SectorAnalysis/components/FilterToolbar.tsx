@@ -40,7 +40,7 @@ const FilterToolbar: FC<Props> = ({ params, onChange, onRefresh, loading, source
   const btnBase = "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors";
 
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-xl px-5 py-3" style={{ backgroundColor: "var(--board-card)" }}>
+    <div className="flex flex-wrap items-center gap-2 md:gap-4 rounded-xl px-3 md:px-5 py-2 md:py-3" style={{ backgroundColor: "var(--board-card)" }}>
       <div className="flex items-center gap-1.5">
         <span className="text-xs text-slate-500">数据源</span>
         {sourceLabel && (
