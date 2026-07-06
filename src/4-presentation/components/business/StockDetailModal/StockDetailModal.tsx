@@ -97,8 +97,22 @@ function getLimitPct(code: string): number {
 }
 
 // ════════════════════════════════════════════════
-//  分时图 Tab — 百分比 Y轴
+//  分时图 Tab — 百分比Y轴 + 时间比例X轴（含午休缺口）
 // ════════════════════════════════════════════════
+
+/** HHMM -> 距9:30开盘的分钟数（不含午休90分钟） */
+function timeToMin(t: string): number {
+  const h = parseInt(t.slice(0, 2), 10);
+  const m = parseInt(t.slice(2), 10);
+  let total = (h - 9) * 60 + m - 30;
+  if (h >= 13) total -= 90; // 减去午休
+  return total;
+}
+
+/** 距离开盘的分钟数 -> 在240分钟交易日中的比例 */
+const TRADING_DAY_MIN = 240; // 9:30-11:30(120) + 13:00-15:00(120)
+const LUNCH_START_MIN = 120; // 11:30
+const LUNCH_END_MIN = 120;   // 13:00 (same after gap subtraction)
 
 const TimeshareTab: FC<{ code: string; preClose: number }> = ({ code, preClose: fallbackPreClose }) => {
   const { timeshareData, preClose: tsPreClose, tsLoading } = useStockChart(code);
@@ -112,40 +126,44 @@ const TimeshareTab: FC<{ code: string; preClose: number }> = ({ code, preClose: 
   const volumes = data.map((d) => d.volume ?? 0);
   const limitPct = getLimitPct(code);
 
-  // 百分比计算：以昨收为基准
+  // 百分比 = (当前价 - 昨收) / 昨收 * 100
   const pctValues = data.map((d) => ((d.price - effectivePreClose) / effectivePreClose) * 100);
-  const minPct = Math.max(-limitPct * 100, Math.min(...pctValues) - 1);
-  const maxPct = Math.min(limitPct * 100, Math.max(...pctValues) + 1);
+  const minPct = Math.max(-limitPct * 100, Math.min(...pctValues) - 0.5);
+  const maxPct = Math.min(limitPct * 100, Math.max(...pctValues) + 0.5);
   const pctRange = maxPct - minPct || 1;
 
   const maxVol = Math.max(...volumes, 1);
 
   // 布局
-  const W = 680, TOTAL_H = 380;
+  const W = 700, TOTAL_H = 400;
   const MAIN_RATIO = 0.72;
-  const PAD = { top: 29, right: 12, bottom: 24, left: 62, mid: 6 };
+  const PAD = { top: 32, right: 16, bottom: 26, left: 60, mid: 8 };
   const mainH = Math.floor(TOTAL_H * MAIN_RATIO) - PAD.top - PAD.mid;
   const volH = TOTAL_H - Math.floor(TOTAL_H * MAIN_RATIO) - PAD.mid - PAD.bottom;
   const chartW = W - PAD.left - PAD.right;
 
-  const toX = (i: number) => PAD.left + (i / Math.max(data.length - 1, 1)) * chartW;
+  // X轴：按交易时间比例映射（含午休缺口可视化）
+  const toX = (t: string) => PAD.left + (timeToMin(t) / TRADING_DAY_MIN) * chartW;
   const toPctY = (pct: number) => PAD.top + mainH - ((pct - minPct) / pctRange) * mainH;
+  const zeroY = toPctY(0);
 
-  // 分时折线和均价线（百分比）
-  const pathD = data.map((d, i) => {
-    const pct = ((d.price - effectivePreClose) / effectivePreClose) * 100;
-    return (i === 0 ? "M" : "L") + toX(i).toFixed(1) + "," + toPctY(pct).toFixed(1);
-  }).join(" ");
+  // 线宽按比例
+  const barW = Math.max(1.2, (chartW / TRADING_DAY_MIN) * 0.9);
+
+  // 分时折线 & 均价线
+  const pathD = data.map((d, i) =>
+    (i === 0 ? "M" : "L") + toX(d.time).toFixed(1) + "," + toPctY(((d.price - effectivePreClose) / effectivePreClose) * 100).toFixed(1)
+  ).join(" ");
 
   const avgPathD = data.map((d, i) => {
     const avg = d.avgPrice ?? d.price;
-    const pct = ((avg - effectivePreClose) / effectivePreClose) * 100;
-    return (i === 0 ? "M" : "L") + toX(i).toFixed(1) + "," + toPctY(pct).toFixed(1);
+    return (i === 0 ? "M" : "L") + toX(d.time).toFixed(1) + "," + toPctY(((avg - effectivePreClose) / effectivePreClose) * 100).toFixed(1);
   }).join(" ");
 
-  const zeroY = toPctY(0);
-  const barW = Math.max(1, chartW / data.length * 0.7);
   const hovered = hoverIdx !== null ? data[hoverIdx] : null;
+
+  // 午休竖线标记（灰色虚线）
+  const lunchX = PAD.left + (LUNCH_START_MIN / TRADING_DAY_MIN) * chartW;
 
   return (
     <div>
@@ -154,12 +172,12 @@ const TimeshareTab: FC<{ code: string; preClose: number }> = ({ code, preClose: 
           <h3 className="text-sm font-bold" style={{ color: CLR.text }}>
             分时走势
             <span className="text-[10px] ml-1" style={{ color: CLR.textDim }}>
-              ({(limitPct * 100).toFixed(0)}%涨跌幅)
+              ({(limitPct * 100).toFixed(0)}%板)
             </span>
           </h3>
           {hovered && (
             <span className="text-xs font-mono" style={{ color: CLR.textSub }}>
-              {hovered.time} | {hovered.price.toFixed(2)}
+              {hovered.time.slice(0,2)}:{hovered.time.slice(2)} | {hovered.price.toFixed(2)}
               <span style={{ color: hovered.price >= effectivePreClose ? CLR.up : CLR.down }}>
                 {" "}{((hovered.price - effectivePreClose) / effectivePreClose * 100).toFixed(2)}%
               </span>
@@ -169,65 +187,75 @@ const TimeshareTab: FC<{ code: string; preClose: number }> = ({ code, preClose: 
         </div>
         <div className="flex items-center gap-3 text-[10px]">
           <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3 rounded" style={{ backgroundColor: CLR.tsLine }} />分时</span>
-          <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3 rounded" style={{ borderTop: "1px dashed #a855f7" }} />均价</span>
+          <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3 rounded" style={{ borderTop: "1px dashed " + CLR.tsLine }} />均价</span>
         </div>
       </div>
 
       <div className="overflow-hidden rounded-xl" style={{ backgroundColor: CLR.bg }}
         onMouseLeave={() => setHoverIdx(null)}>
         <svg viewBox={"0 0 " + W + " " + TOTAL_H} className="w-full cursor-crosshair">
-          {/* 百分比网格 */}
-          {[0, 0.25, 0.5, 0.75, 1].map((frac) => {
+          {/* 百分比网格 + Y轴标签 */}
+          {[0, 0.2, 0.4, 0.6, 0.8, 1].map((frac) => {
             const y = PAD.top + mainH * (1 - frac);
             const pct = minPct + frac * pctRange;
-            const color = pct > 0 ? CLR.up : pct < 0 ? CLR.down : CLR.textDim;
+            const isZero = Math.abs(pct) < 0.01;
+            const color = isZero ? CLR.textDim : (pct > 0 ? CLR.up : CLR.down);
             return (
               <g key={"g" + frac}>
-                <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke={pct === 0 ? CLR.textDim : CLR.grid} strokeWidth={pct === 0 ? "1" : "0.5"} />
-                <text x={PAD.left - 4} y={y + 4} fill={color} fontSize="10" textAnchor="end">{pct.toFixed(1)}%</text>
+                <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
+                  stroke={isZero ? CLR.textDim : CLR.grid}
+                  strokeWidth={isZero ? "1" : "0.5"}
+                  strokeDasharray={isZero ? "4,3" : ""} />
+                <text x={PAD.left - 4} y={y + 4} fill={color} fontSize="10" textAnchor="end">
+                  {pct.toFixed(1)}%
+                </text>
               </g>
             );
           })}
 
-          {/* 昨收零线 */}
-          <line x1={PAD.left} y1={zeroY} x2={W - PAD.right} y2={zeroY} stroke={CLR.textDim} strokeWidth="0.8" strokeDasharray="4,3" />
-          <text x={W - PAD.right - 6} y={zeroY - 5} fill={CLR.textDim} fontSize="9" textAnchor="end">0.00%</text>
+          {/* 零线标注 */}
+          <text x={W - PAD.right - 4} y={zeroY - 5} fill={CLR.textDim} fontSize="9" textAnchor="end">
+            昨收 {effectivePreClose.toFixed(2)}
+          </text>
 
-          {/* 渐变填充 */}
+          {/* 渐变色填充 */}
           <defs>
             <linearGradient id="tsFillGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={CLR.tsLine} stopOpacity="0.25" />
+              <stop offset="0%" stopColor={CLR.tsLine} stopOpacity="0.22" />
               <stop offset="100%" stopColor={CLR.tsLine} stopOpacity="0.02" />
-            </linearGradient>
-            <linearGradient id="tsFillGreen" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={CLR.down} stopOpacity="0.15" />
-              <stop offset="100%" stopColor={CLR.down} stopOpacity="0.01" />
             </linearGradient>
           </defs>
 
-          {/* 均价线（虚线） */}
-          <path d={avgPathD} fill="none" stroke={CLR.tsLine} strokeWidth="0.9" strokeDasharray="4,3" opacity="0.7" />
+          {/* 均价线 */}
+          <path d={avgPathD} fill="none" stroke={CLR.tsLine} strokeWidth="0.9" strokeDasharray="4,3" opacity="0.6" />
 
-          {/* 分时填充 */}
-          <path d={pathD + " L" + toX(data.length - 1).toFixed(1) + "," + (PAD.top + mainH) + " L" + toX(0).toFixed(1) + "," + (PAD.top + mainH) + " Z"}
+          {/* 分时线下方面积填充 */}
+          <path d={pathD + " L" + toX(data[data.length-1]!.time).toFixed(1) + "," + (PAD.top + mainH) + " L" + toX(data[0]!.time).toFixed(1) + "," + (PAD.top + mainH) + " Z"}
             fill="url(#tsFillGrad)" />
 
           {/* 分时主线 */}
           <path d={pathD} fill="none" stroke={CLR.tsLine} strokeWidth="1.3" />
 
+          {/* 午休分隔线 */}
+          <line x1={lunchX} y1={PAD.top} x2={lunchX} y2={PAD.top + mainH}
+            stroke={CLR.textDim} strokeWidth="0.8" strokeDasharray="3,4" opacity="0.35" />
+          <text x={lunchX} y={PAD.top - 6} fill={CLR.textDim} fontSize="8" textAnchor="middle" opacity="0.5">11:30|13:00</text>
+
           {/* Hover 竖线 */}
           {hoverIdx !== null && (
-            <line x1={toX(hoverIdx)} y1={PAD.top} x2={toX(hoverIdx)} y2={PAD.top + mainH} stroke={CLR.textSub} strokeWidth="0.6" strokeDasharray="3,2" opacity="0.5" />
+            <line x1={toX(data[hoverIdx]!.time)} y1={PAD.top} x2={toX(data[hoverIdx]!.time)} y2={PAD.top + mainH}
+              stroke={CLR.textSub} strokeWidth="0.6" strokeDasharray="3,2" opacity="0.5" />
           )}
 
           {/* 成交量分隔线 */}
-          <line x1={PAD.left} y1={PAD.top + mainH + PAD.mid} x2={W - PAD.right} y2={PAD.top + mainH + PAD.mid} stroke={CLR.grid} strokeWidth="0.8" />
+          <line x1={PAD.left} y1={PAD.top + mainH + PAD.mid} x2={W - PAD.right} y2={PAD.top + mainH + PAD.mid}
+            stroke={CLR.grid} strokeWidth="0.8" />
           <text x={PAD.left - 4} y={PAD.top + mainH + PAD.mid + volH / 2 + 1} fill={CLR.textDim} fontSize="8" textAnchor="end">量</text>
 
           {/* 成交量柱 */}
           {volumes.map((v, i) => {
             if (v === 0) return null;
-            const x = toX(i) - barW / 2;
+            const x = toX(data[i]!.time) - barW / 2;
             const h = (v / maxVol) * volH;
             const barY = PAD.top + mainH + PAD.mid * 2 + volH - h;
             const barColor = data[i]!.price >= (data[i]!.avgPrice ?? data[i]!.price) ? CLR.up : CLR.down;
@@ -235,15 +263,15 @@ const TimeshareTab: FC<{ code: string; preClose: number }> = ({ code, preClose: 
             return (
               <g key={"v" + i}>
                 <rect x={x} y={barY} width={barW} height={Math.max(h, 0.5)}
-                  fill={barColor} opacity={isHovered ? 1 : 0.45} stroke={isHovered ? barColor : "none"} strokeWidth="0.3" />
+                  fill={barColor} opacity={isHovered ? 1 : 0.45} rx="0.3" />
                 {isHovered && (
-                  <text x={toX(i)} y={barY - 3} fill={CLR.text} fontSize="9" textAnchor="middle">{fmtVol(v)}</text>
+                  <text x={toX(data[i]!.time)} y={barY - 3} fill={CLR.text} fontSize="9" textAnchor="middle">{fmtVol(v)}</text>
                 )}
               </g>
             );
           })}
 
-          {/* Hover 透明层 */}
+          {/* Hover 捕获层 */}
           <rect x={PAD.left} y={PAD.top} width={chartW} height={mainH + PAD.mid + volH + PAD.mid}
             fill="transparent"
             onMouseMove={(e) => {
@@ -253,15 +281,21 @@ const TimeshareTab: FC<{ code: string; preClose: number }> = ({ code, preClose: 
               const mx = e.clientX - rect.left;
               const scaleX = W / rect.width;
               const svgX = mx * scaleX;
-              const idx = Math.round(((svgX - PAD.left) / chartW) * (data.length - 1));
-              setHoverIdx(Math.max(0, Math.min(data.length - 1, idx)));
+              // 根据SVG坐标反查最近的数据点
+              let nearest = 0;
+              let minDist = Infinity;
+              for (let i = 0; i < data.length; i++) {
+                const dx = Math.abs(toX(data[i]!.time) - svgX);
+                if (dx < minDist) { minDist = dx; nearest = i; }
+              }
+              setHoverIdx(nearest);
             }} />
 
-          {/* 时间轴 */}
-          {[0, 0.25, 0.5, 0.75, 1].map((frac) => {
-            const idx = Math.floor(frac * (data.length - 1));
-            const x = PAD.left + frac * chartW;
-            return <text key={"t" + frac} x={x} y={TOTAL_H - 6} fill={CLR.textDim} fontSize="9" textAnchor="middle">{data[idx]!.time.slice(-5)}</text>;
+          {/* 时间轴刻度 */}
+          {["0930","1000","1030","1100","1130","1300","1330","1400","1430","1500"].map((t) => {
+            const x = PAD.left + (timeToMin(t) / TRADING_DAY_MIN) * chartW;
+            const label = t.slice(0,2) + ":" + t.slice(2);
+            return <text key={"t" + t} x={x} y={TOTAL_H - 6} fill={CLR.textDim} fontSize="9" textAnchor="middle">{label}</text>;
           })}
         </svg>
       </div>
