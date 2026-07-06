@@ -42,7 +42,7 @@ const KPLView: FC<{ nodes: ThemeNode[]; onSelect: (name: string) => void; select
             <td className="px-3 py-2.5" style={{ color: C.accent }}>{n.maxContinueNum}板</td>
             <td className="px-3 py-2.5">
               {n.dragonHead ? (
-                <><span style={{ color: C.text }}>{n.dragonHead.name}</span><span className="ml-1" style={{ color: C.dim }}>{n.dragonHead.code}</span></>
+                <><span style={{ color: C.text }}>{n.dragonHead?.name}</span><span className="ml-1" style={{ color: C.dim }}>{n.dragonHead?.code}</span></>
               ) : (
                 <span style={{ color: C.dim }}>—</span>
               )}
@@ -127,7 +127,7 @@ const GraphView: FC<{
               </div>
               {n.dragonHead && (
                 <div className="mt-1 text-[10px]" style={{ color: C.sub }}>
-                  龙头: {n.dragonHead.name}({n.dragonHead.code})
+                  龙头: {n.dragonHead?.name}({n.dragonHead?.code})
                 </div>
               )}
               <div className="mt-1">
@@ -238,7 +238,7 @@ const ThemeLibrary: FC = () => {
               <>
                 {node.dragonHead ? (
                   <span style={{ color: C.sub }}>
-                    龙头: <span style={{ color: C.text }}>{node.dragonHead.name}({node.dragonHead.code}) {node.dragonHead.continueNum}板</span>
+                    龙头: <span style={{ color: C.text }}>{node.dragonHead?.name}({node.dragonHead?.code}) {node.dragonHead?.continueNum}板</span>
                   </span>
                 ) : (
                   <span style={{ color: C.dim }}>暂无龙头</span>
