@@ -32,14 +32,6 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--board-border); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-/* ─── 移动端动画 ─── */
-@keyframes slideIn {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
-}
-.animate-slide-in {
-  animation: slideIn 0.2s ease-out;
-}
 
 /* ─── iPhone底部安全区 ─── */
 .pb-safe {
@@ -47,6 +39,7 @@ body {
 }
 
 /* ─── 移动端触摸优化 ─── */
+html { touch-action: manipulation; -webkit-overflow-scrolling: touch; }
 @media (max-width: 767px) {
   input, select, textarea { font-size: 16px !important; }
   button { min-height: 36px; }

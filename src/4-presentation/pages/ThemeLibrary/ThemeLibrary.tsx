@@ -45,7 +45,7 @@ const KPLView: FC<{
   );
 
   return (
-    <div className="overflow-x-auto rounded-xl" style={{ backgroundColor: C.card, border: "1px solid " + C.border }}>
+    <div className="overflow-x-auto rounded-xl -mx-2 md:mx-0" style={{ backgroundColor: C.card, border: "1px solid " + C.border }}>
       <table className="w-full text-xs">
         <thead>
           <tr style={{ borderBottom: "1px solid " + C.border, backgroundColor: "rgba(0,0,0,0.15)" }}>
@@ -155,7 +155,7 @@ const ConceptView: FC<{
         <div key={cat} className="rounded-xl overflow-hidden" style={{ backgroundColor: C.card, border: "1px solid " + C.border }}>
           {/* 分类标题栏 */}
           <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: C.border, backgroundColor: "rgba(0,0,0,0.1)" }}>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               <span className="text-xl">{catInfo?.icon ?? "📂"}</span>
               <div>
                 <h3 className="text-sm font-bold" style={{ color: C.text }}>{cat}</h3>
@@ -170,7 +170,7 @@ const ConceptView: FC<{
             </div>
           </div>
           {/* 题材网格 */}
-          <div className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="p-3 md:p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
             {nodes.sort((a, b) => b.limitUpCount - a.limitUpCount).map((n) => {
               const isSel = selected === n.name;
               return (
@@ -306,7 +306,7 @@ const GraphView: FC<{
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 md:gap-2">
             {topNodes.slice(0, 20).map(n => (
               <button key={n.name} onClick={() => onSelect(n.name)}
                 className="rounded-lg px-3 py-2 text-xs text-left transition-colors hover:bg-white/5"
@@ -422,7 +422,7 @@ const ThemeLibrary: FC = () => {
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: C.bg }}>
       {/* 顶栏 */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b" style={{ borderColor: C.border, backgroundColor: C.card }}>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 md:px-5 py-3 border-b" style={{ borderColor: C.border, backgroundColor: C.card }}>
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-bold" style={{ color: C.text }}>题材库</h1>
           <div className="flex items-center gap-3 text-xs">
@@ -450,7 +450,7 @@ const ThemeLibrary: FC = () => {
           <input type="text" value={search} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             placeholder="搜索题材..."
             className="rounded-lg px-3 py-1.5 text-xs outline-none"
-            style={{ backgroundColor: C.bg, color: C.text, border: "1px solid " + C.border, width: 150 }} />
+            style={{ backgroundColor: C.bg, color: C.text, border: "1px solid " + C.border, width: 120 }} />
 
           <button type="button" onClick={refresh}
             className="rounded-lg px-2.5 py-1.5 text-xs transition-colors hover:bg-white/5" style={{ color: C.dim }} title="刷新">
@@ -460,7 +460,7 @@ const ThemeLibrary: FC = () => {
       </div>
 
       {/* 内容区 */}
-      <div className="flex-1 overflow-auto p-4 md:p-5">
+      <div className="flex-1 overflow-auto p-2 md:p-5">
         {view === "kpl" && (
           <KPLView
             nodes={sortedKPL}
