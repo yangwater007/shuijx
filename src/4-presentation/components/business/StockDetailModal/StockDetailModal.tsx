@@ -115,7 +115,7 @@ const LUNCH_START_MIN = 120; // 11:30
 const LUNCH_END_MIN = 120;   // 13:00 (same after gap subtraction)
 
 const TimeshareTab: FC<{ code: string; preClose: number }> = ({ code, preClose: fallbackPreClose }) => {
-  const { timeshareData, preClose: tsPreClose, tsLoading } = useStockChart(code);
+  const { timeshareData, preClose: tsPreClose, tsLoading, tsDate } = useStockChart(code);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const effectivePreClose = tsPreClose > 0 ? tsPreClose : fallbackPreClose;
 
@@ -171,6 +171,7 @@ const TimeshareTab: FC<{ code: string; preClose: number }> = ({ code, preClose: 
         <div className="flex items-center gap-3">
           <h3 className="text-sm font-bold" style={{ color: CLR.text }}>
             分时走势
+            {tsDate && (<span className="text-[10px] ml-1.5 rounded px-1.5 py-0.5" style={{backgroundColor:"rgba(59,130,246,0.2)",color:"#60a5fa"}}>{tsDate.slice(0,4)}-{tsDate.slice(4,6)}-{tsDate.slice(6,8)}</span>)}
             <span className="text-[10px] ml-1" style={{ color: CLR.textDim }}>
               ({(limitPct * 100).toFixed(0)}%板)
             </span>
@@ -308,7 +309,7 @@ const TimeshareTab: FC<{ code: string; preClose: number }> = ({ code, preClose: 
 // ════════════════════════════════════════════════
 
 const KLineTab: FC<{ code: string; preClose?: number }> = ({ code, preClose: fallbackPreClose }) => {
-  const { klineData, klineLoading } = useStockChart(code);
+  const { klineData, klineLoading, klineDate } = useStockChart(code);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   if (klineLoading && klineData.length === 0) return <ChartSkeleton height={480} />;
@@ -365,7 +366,7 @@ const KLineTab: FC<{ code: string; preClose?: number }> = ({ code, preClose: fal
     <div>
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h3 className="text-sm font-bold" style={{ color: CLR.text }}>日K线（近{data.length}日）</h3>
+          <h3 className="text-sm font-bold" style={{ color: CLR.text }}>日K线（近{data.length}日）{klineDate && (<span className="text-[10px] ml-1.5 rounded px-1.5 py-0.5" style={{backgroundColor:"rgba(59,130,246,0.2)",color:"#60a5fa"}}>{klineDate.slice(0,4)}-{klineDate.slice(4,6)}-{klineDate.slice(6,8)}</span>)}</h3>
           {hovered && (
             <span className="text-xs font-mono" style={{ color: CLR.textSub }}>
               {hovered.date} | O{hovered.open.toFixed(2)} H{hovered.high.toFixed(2)} L{hovered.low.toFixed(2)} C{hovered.close.toFixed(2)}
