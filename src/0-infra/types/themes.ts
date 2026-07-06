@@ -1,4 +1,6 @@
-/** 基础设施层 — 题材库类型定义 */
+/**
+ * 基础设施层 — 题材库类型定义
+ */
 
 /** 题材节点（来自 /api/themes/graph） */
 export interface ThemeNode {
@@ -9,7 +11,7 @@ export interface ThemeNode {
   maxContinueNum: number;
   stage: "climax" | "rising" | "divergence" | "fading";
   stageLabel: string;
-  dragonHead: ThemeDragonHead;
+  dragonHead: ThemeDragonHead | null;
   change: ThemeChange;
 }
 
@@ -55,7 +57,7 @@ export type ThemeViewMode = "kpl" | "concept" | "graph";
 export const THEME_VIEWS: { key: ThemeViewMode; label: string; icon: string }[] = [
   { key: "kpl", label: "题材小表格", icon: "📊" },
   { key: "concept", label: "题材分类", icon: "📂" },
-  { key: "graph", label: "题材挖掘", icon: "🔗" },
+  { key: "graph", label: "题材挖掘", icon: "🔆" },
 ];
 
 /** 阶段颜色映射 */

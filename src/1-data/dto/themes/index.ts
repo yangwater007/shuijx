@@ -21,7 +21,7 @@ interface RawThemeNode {
   maxContinueNum: number;
   stage: string;
   stageLabel: string;
-  dragonHead: { code: string; name: string; continueNum: number };
+  dragonHead: { code: string; name: string; continueNum: number } | null;
   change: { count: number; trend: string };
 }
 
@@ -31,7 +31,6 @@ interface RawThemeEdge {
   type: string;
 }
 
-/** 将 Raw 转为 Domain */
 export function mapRawThemeNode(raw: RawThemeNode): ThemeNode {
   return {
     name: raw.name,
@@ -41,7 +40,7 @@ export function mapRawThemeNode(raw: RawThemeNode): ThemeNode {
     maxContinueNum: raw.maxContinueNum,
     stage: raw.stage as ThemeNode["stage"],
     stageLabel: raw.stageLabel,
-    dragonHead: raw.dragonHead,
+    dragonHead: raw.dragonHead ?? null,
     change: raw.change as ThemeNode["change"],
   };
 }
