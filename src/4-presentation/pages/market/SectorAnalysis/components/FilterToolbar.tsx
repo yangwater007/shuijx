@@ -1,6 +1,6 @@
-﻿/**
+/**
  * FilterToolbar — 板块轮动筛选工具栏
- * 数据源 / 周期 / 强度周期 选择器
+ * 数据源 / 周期 / 强度周期 / 成交量调整选择器
  */
 
 import { type FC } from "react";
@@ -11,6 +11,10 @@ interface Props {
   onChange: (p: Partial<SectorQueryParams>) => void;
   onRefresh: () => void;
   loading: boolean;
+  sourceLabel?: string;
+  volumeAdjusted?: boolean;
+  onVolumeAdjustedChange?: (v: boolean) => void;
+  updateDate?: string;
 }
 
 const SOURCES = [
@@ -32,14 +36,18 @@ const STRENGTH_PERIODS = [
   { value: 10, label: "10日强度" },
 ];
 
-const FilterToolbar: FC<Props> = ({ params, onChange, onRefresh, loading }) => {
+const FilterToolbar: FC<Props> = ({ params, onChange, onRefresh, loading, sourceLabel, updateDate, volumeAdjusted = false, onVolumeAdjustedChange }) => {
   const btnBase = "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors";
 
   return (
     <div className="flex flex-wrap items-center gap-4 rounded-xl px-5 py-3" style={{ backgroundColor: "var(--board-card)" }}>
-      {/* 数据源 */}
       <div className="flex items-center gap-1.5">
         <span className="text-xs text-slate-500">数据源</span>
+        {sourceLabel && (
+          <span className="rounded-full px-2 py-0.5 text-[11px]" style={{ backgroundColor: "rgba(59,130,246,0.15)", color: "#60a5fa" }}>
+            {sourceLabel}
+          </span>
+        )}
         {SOURCES.map((s) => (
           <button
             key={s.value}
@@ -56,10 +64,8 @@ const FilterToolbar: FC<Props> = ({ params, onChange, onRefresh, loading }) => {
         ))}
       </div>
 
-      {/* 分隔 */}
       <div className="h-5 w-px" style={{ backgroundColor: "var(--board-border)" }} />
 
-      {/* 长周期 */}
       <div className="flex items-center gap-1.5">
         <span className="text-xs text-slate-500">周期</span>
         {PERIODS.map((p) => (
@@ -78,10 +84,8 @@ const FilterToolbar: FC<Props> = ({ params, onChange, onRefresh, loading }) => {
         ))}
       </div>
 
-      {/* 分隔 */}
       <div className="h-5 w-px" style={{ backgroundColor: "var(--board-border)" }} />
 
-      {/* 短周期强度 */}
       <div className="flex items-center gap-1.5">
         <span className="text-xs text-slate-500">强度</span>
         {STRENGTH_PERIODS.map((p) => (
@@ -100,8 +104,31 @@ const FilterToolbar: FC<Props> = ({ params, onChange, onRefresh, loading }) => {
         ))}
       </div>
 
-      {/* 刷新 */}
-      <div className="ml-auto">
+      <div className="h-5 w-px" style={{ backgroundColor: "var(--board-border)" }} />
+
+      {onVolumeAdjustedChange && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-slate-500">成交量</span>
+          <button
+            type="button"
+            onClick={() => onVolumeAdjustedChange(!volumeAdjusted)}
+            className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+            style={{
+              backgroundColor: volumeAdjusted ? "#22c55e" : "transparent",
+              color: volumeAdjusted ? "#fff" : "#94a3b8",
+            }}
+          >
+            {volumeAdjusted ? "已调整" : "未调整"}
+          </button>
+        </div>
+      )}
+
+      <div className="ml-auto flex items-center gap-2">
+        {updateDate && (
+          <span className="text-xs text-slate-600">
+            {updateDate.slice(0,4)}-{updateDate.slice(4,6)}-{updateDate.slice(6,8)}
+          </span>
+        )}
         <button
           type="button"
           onClick={onRefresh}

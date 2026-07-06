@@ -1,12 +1,12 @@
-﻿/**
+/**
  * StockQuadrant — 选中板块的个股象限分布
- * 右侧面板：显示板块下钻个股列表（按涨幅排序，前30只）
- * 每行点击弹出 StockDetailModal
+ * 右侧面板：显示板块下钻个股列表（按涨幅排序，前40只）
+ * 每行点击弹出 StockDetailModal，显示K线/分时/题材
  */
 
 import { useState, type FC } from "react";
 import type { StockQuadrantResponse, StockQuadrantItem } from "@data/dto/sector";
-import { getQuadrantLabel, getQuadrantColor } from "@service/sector/SectorService";
+import { getQuadrantLabel, getQuadrantColor, formatSectorAmount, formatSectorMv } from "@service/sector/SectorService";
 import StockDetailModal from "@ui/components/business/StockDetailModal";
 
 interface Props {
@@ -22,7 +22,7 @@ function changeColor(v: number): string {
 
 function formatPct(v: number): string {
   const sign = v > 0 ? "+" : "";
-  return `${sign}${v.toFixed(2)}%`;
+  return sign + v.toFixed(2) + "%";
 }
 
 const StockQuadrant: FC<Props> = ({ data, loading }) => {
@@ -55,7 +55,7 @@ const StockQuadrant: FC<Props> = ({ data, loading }) => {
     ...data.quadrants.lowWeak.map((s) => ({ ...s, quadKey: "lowWeak" as const })),
   ];
   const sorted = [...allStocks].sort((a, b) => b.recentChange - a.recentChange);
-  const topStocks = sorted.slice(0, 30);
+  const topStocks = sorted.slice(0, 40);
 
   if (topStocks.length === 0) {
     return (
@@ -71,11 +71,13 @@ const StockQuadrant: FC<Props> = ({ data, loading }) => {
         <table className="w-full text-xs">
           <thead>
             <tr style={{ borderBottom: "2px solid var(--board-border)" }}>
-              <th className="px-2.5 py-2 text-left text-slate-500 font-medium">股票</th>
-              <th className="px-2.5 py-2 text-right text-slate-500 font-medium">近N日</th>
-              <th className="px-2.5 py-2 text-right text-slate-500 font-medium">今日</th>
-              <th className="px-2.5 py-2 text-right text-slate-500 font-medium">量比</th>
-              <th className="px-2.5 py-2 text-center text-slate-500 font-medium">象限</th>
+              <th className="px-2 py-2 text-left text-slate-500 font-medium">股票</th>
+              <th className="px-2 py-2 text-right text-slate-500 font-medium">近N日</th>
+              <th className="px-2 py-2 text-right text-slate-500 font-medium">今日</th>
+              <th className="px-2 py-2 text-right text-slate-500 font-medium">成交额</th>
+              <th className="px-2 py-2 text-right text-slate-500 font-medium">流通市值</th>
+              <th className="px-2 py-2 text-right text-slate-500 font-medium">排名</th>
+              <th className="px-2 py-2 text-center text-slate-500 font-medium">象限</th>
             </tr>
           </thead>
           <tbody>
@@ -87,24 +89,30 @@ const StockQuadrant: FC<Props> = ({ data, loading }) => {
                 style={{ borderBottom: "1px solid var(--board-border)" }}
                 title="点击查看详情"
               >
-                <td className="px-2.5 py-1.5 text-left">
+                <td className="px-2 py-1.5 text-left">
                   <span className="font-medium text-slate-200">{stock.name}</span>
                   <span className="ml-1.5 font-mono text-[11px] text-slate-600">{stock.code}</span>
                 </td>
-                <td className="px-2.5 py-1.5 text-right font-mono" style={{ color: changeColor(stock.recentChange) }}>
+                <td className="px-2 py-1.5 text-right font-mono" style={{ color: changeColor(stock.recentChange) }}>
                   {formatPct(stock.recentChange)}
                 </td>
-                <td className="px-2.5 py-1.5 text-right font-mono" style={{ color: changeColor(stock.todayChange) }}>
+                <td className="px-2 py-1.5 text-right font-mono" style={{ color: changeColor(stock.todayChange) }}>
                   {formatPct(stock.todayChange)}
                 </td>
-                <td className="px-2.5 py-1.5 text-right font-mono text-slate-400">
-                  {stock.volumeRatio.toFixed(2)}
+                <td className="px-2 py-1.5 text-right font-mono text-slate-400">
+                  {formatSectorAmount(stock.amount)}
                 </td>
-                <td className="px-2.5 py-1.5 text-center">
+                <td className="px-2 py-1.5 text-right font-mono text-slate-400">
+                  {formatSectorMv(stock.circMv)}
+                </td>
+                <td className="px-2 py-1.5 text-right font-mono text-slate-500">
+                  {stock.positionPctRank}
+                </td>
+                <td className="px-1.5 py-1.5 text-center">
                   <span
-                    className="inline-block rounded-full px-2 py-0.5 text-[11px] font-medium"
+                    className="inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium"
                     style={{
-                      backgroundColor: `${getQuadrantColor(stock.quadKey)}18`,
+                      backgroundColor: getQuadrantColor(stock.quadKey) + "18",
                       color: getQuadrantColor(stock.quadKey),
                     }}>
                     {getQuadrantLabel(stock.quadKey)}
@@ -116,7 +124,6 @@ const StockQuadrant: FC<Props> = ({ data, loading }) => {
         </table>
       </div>
 
-      {/* 个股详情弹窗 */}
       <StockDetailModal
         visible={selectedStock !== null}
         stock={selectedStock ? {
