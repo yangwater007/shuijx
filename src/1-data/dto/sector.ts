@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 板块轮动 DTO — API 响应类型（100% 对齐 quicktiny API）
  *
  * API 端点:
@@ -32,15 +32,15 @@ export interface SectorQuadrantResponse {
     lowStrong: SectorQuadrantItem[];    // 滞涨 — 右下
     lowWeak: SectorQuadrantItem[];      // 领跌 — 左下
   };
-  meta: {
-    source: string;
-    sourceLabel: string;
-    period: number;
-    strengthPeriod: number;
-    date: string;
-    sectorCount: number;
-    volumeAdjusted: boolean;
-    volumeProgress: number;
+  meta?: {
+    source?: string;
+    sourceLabel?: string;
+    period?: number;
+    strengthPeriod?: number;
+    date?: string;
+    sectorCount?: number;
+    volumeAdjusted?: boolean;
+    volumeProgress?: number;
   };
 }
 
@@ -76,16 +76,16 @@ export interface StockQuadrantResponse {
     lowStrong: StockQuadrantItem[];
     lowWeak: StockQuadrantItem[];
   };
-  meta: {
-    source: string;
-    sourceLabel: string;
+  meta?: {
+    source?: string;
+    sourceLabel?: string;
     sectorName: string;
-    period: number;
-    strengthPeriod: number;
-    date: string;
-    stockCount: number;
-    volumeAdjusted: boolean;
-    volumeProgress: number;
+    period?: number;
+    strengthPeriod?: number;
+    date?: string;
+    stockCount?: number;
+    volumeAdjusted?: boolean;
+    volumeProgress?: number;
   };
 }
 

@@ -1,9 +1,8 @@
-﻿/**
+/**
  * 板块轮动 Repository — 数据获取层
- * 代理 quicktiny API 获取板块象限与个股象限数据
+ * 直接调用 quicktiny REST API（生产环境 CORS 兼容）
  */
 
-import http from "@infra/http/index";
 import type {
   SectorQuadrantResponse,
   StockQuadrantResponse,
@@ -11,18 +10,31 @@ import type {
   StockQuadrantParams,
 } from "@data/dto/sector";
 
-const BASE = "/sector-analysis";
+const API = "https://stock.quicktiny.cn/api";
 
 /** 获取板块象限分布数据 */
 export async function fetchSectorQuadrant(params: SectorQueryParams): Promise<SectorQuadrantResponse> {
-  const res = await http.get<SectorQuadrantResponse>(`${BASE}/quadrant`, { params });
-  return res.data;
+  const qs = new URLSearchParams({
+    source: params.source,
+    period: String(params.period),
+    strengthPeriod: String(params.strengthPeriod),
+  });
+  const resp = await fetch(`${API}/sector-analysis/quadrant?${qs}`);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  return resp.json();
 }
 
 /** 获取指定板块的个股象限分布数据 */
 export async function fetchStockQuadrant(params: StockQuadrantParams): Promise<StockQuadrantResponse> {
-  const res = await http.get<StockQuadrantResponse>(`${BASE}/stock-quadrant`, { params });
-  return res.data;
+  const qs = new URLSearchParams({
+    source: params.source,
+    sector: params.sector,
+    period: String(params.period),
+    strengthPeriod: String(params.strengthPeriod),
+  });
+  const resp = await fetch(`${API}/sector-analysis/stock-quadrant?${qs}`);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  return resp.json();
 }
 
 /** 将四个象限数据拍平为统一数组（用于表格展示） */
@@ -45,6 +57,6 @@ export function flattenQuadrants(q: SectorQuadrantResponse["quadrants"]): FlatSe
     "highStrong", "highWeak", "lowStrong", "lowWeak",
   ];
   return quadrants.flatMap((key) =>
-    q[key].map((item) => ({ ...item, quadrant: key }))
+    (q[key] ?? []).map((item) => ({ ...item, quadrant: key }))
   );
 }

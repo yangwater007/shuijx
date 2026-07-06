@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SectorAnalysisPage — 板块轮动分析页面
  * 左右双栏布局：左侧图表+表格，右侧个股下钻面板
  * 支持全局视图/分组视图切换
@@ -237,7 +237,7 @@ const SectorAnalysisPage: FC = () => {
                 {hook.selectedSector} — 个股分布
                 {hook.stockQuadrant && (
                   <span className="ml-2 text-xs font-normal text-slate-500">
-                    {hook.stockQuadrant.meta.stockCount} 只
+                    {hook.stockQuadrant?.meta?.stockCount ?? 0} 只
                   </span>
                 )}
               </h2>
