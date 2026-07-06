@@ -1,6 +1,5 @@
 /**
  * StockChartCache — Zustand stock chart data cache with date validation
- * K-line cached by code+date, timeshare 5s TTL with date check
  */
 import { create } from "zustand";
 
@@ -16,15 +15,15 @@ interface State {
   timeshare: Record<string, CacheEntry<unknown[]>>;
   setKline: (code: string, data: unknown[], preClose: number, dataDate: string) => void;
   setTimeshare: (code: string, data: unknown[], preClose: number, dataDate: string) => void;
-  getKline: (code: string, today: string) => CacheEntry<unknown[]> | null;
-  getTimeshare: (code: string, today: string) => CacheEntry<unknown[]> | null;
-  isTimeshareStale: (code: string, today: string) => boolean;
+  getKline: (code: string, date: string) => CacheEntry<unknown[]> | null;
+  getTimeshare: (code: string, date: string) => CacheEntry<unknown[]> | null;
+  isTimeshareStale: (code: string, date: string) => boolean;
   clear: (code: string) => void;
 }
 
 const TS_TTL = 5_000;
 
-function todayStr(): string {
+export function todayStr(): string {
   const d = new Date();
   return d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
 }
@@ -66,6 +65,4 @@ export const useStockChartCache = create<State>((set, get) => ({
       for (const key in s.timeshare) { if (!key.startsWith(prefix)) rt[key] = s.timeshare[key]!; }
       return { kline: rk, timeshare: rt };
     }),
-
-  todayStr,
 }));

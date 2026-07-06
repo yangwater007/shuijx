@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchStockKLine, fetchStockTimeshare, fetchStockConcepts } from "@data/repository/stockChart";
 import type { StockConceptInfo } from "@data/repository/stockChart";
 import type { KLineDataPoint, TimeshareDataPoint } from "@infra/types/chart";
-import { useStockChartCache } from "@infra/store/stockChartCache";
+import { useStockChartCache, todayStr } from "@infra/store/stockChartCache";
 
 interface UseStockChartReturn {
   klineData: KLineDataPoint[];
@@ -86,7 +86,7 @@ export function useStockChart(code: string | undefined): UseStockChartReturn {
   const [error, setError] = useState<string | null>(null);
   const codeRef = useRef(code);
 
-  const today = useStockChartCache.todayStr();
+  const today = todayStr();
 
   // Load K-line (date-validated cache)
   const loadKline = useCallback(async (c: string) => {
