@@ -135,42 +135,44 @@ const SectorAnalysisPage: FC = () => {
         </div>
       )}
 
-      {/* ═══ 四象限分组 ═══ */}
-      <div className="space-y-5">
+      {/* ═══ 四象限田字格 ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {QUADRANTS.map((cfg) => {
           const sectors = groups[cfg.key];
           return (
-            <div key={cfg.key} className="overflow-hidden rounded-xl border"
-              style={{ backgroundColor: "var(--board-card)", borderColor: cfg.borderColor }}>
+            <div key={cfg.key} className="flex flex-col overflow-hidden rounded-xl border"
+              style={{ backgroundColor: "var(--board-card)", borderColor: cfg.borderColor, height: 420 }}>
               {/* 区块标题 */}
-              <div className="flex items-center justify-between px-5 py-3"
-                style={{ borderLeft: "4px solid " + cfg.barColor, backgroundColor: cfg.bgColor }}>
-                <div className="flex items-center gap-3">
-                  <h3 className="text-sm font-bold text-white">{cfg.label}</h3>
-                  <span className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+              <div className="shrink-0 flex items-center justify-between px-4 py-2.5"
+                style={{ borderLeft: "4px solid " + cfg.barColor, backgroundColor: cfg.bgColor, borderBottom: "1px solid var(--board-border)" }}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <h3 className="text-sm font-bold text-white truncate">{cfg.label}</h3>
+                  <span className="rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0"
                     style={{ backgroundColor: cfg.barColor + "18", color: cfg.barColor }}>
-                    {sectors.length}个板块
+                    {sectors.length}个
                   </span>
-                  <span className="hidden sm:inline text-xs text-slate-500">{cfg.desc}</span>
+                  <span className="hidden xl:inline text-[11px] text-slate-500 truncate">{cfg.desc}</span>
                 </div>
               </div>
 
-              {/* 区块表格 */}
-              {sectors.length > 0 ? (
-                <SectorTable
-                  sectors={sectors}
-                  selectedSector={hook.selectedSector}
-                  onSelect={hook.setSelectedSector}
-                  sortField={hook.sortField}
-                  sortDir={hook.sortDir}
-                  onSort={hook.setSort}
-                  loading={hook.loading}
-                  hideQuadrantCol
-                  accentColor={cfg.barColor}
-                />
-              ) : (
-                <div className="py-14 text-center text-sm text-slate-600">暂无该象限板块</div>
-              )}
+              {/* 区块表格 — 固定高度滚动 */}
+              <div className="flex-1 overflow-auto">
+                {sectors.length > 0 ? (
+                  <SectorTable
+                    sectors={sectors}
+                    selectedSector={hook.selectedSector}
+                    onSelect={hook.setSelectedSector}
+                    sortField={hook.sortField}
+                    sortDir={hook.sortDir}
+                    onSort={hook.setSort}
+                    loading={hook.loading}
+                    hideQuadrantCol
+                    accentColor={cfg.barColor}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-sm text-slate-600">暂无该象限板块</div>
+                )}
+              </div>
             </div>
           );
         })}
