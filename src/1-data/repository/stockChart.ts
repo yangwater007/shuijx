@@ -201,29 +201,58 @@ export interface StockConceptInfo {
 }
 
 export async function fetchStockConcepts(code: string): Promise<StockConceptInfo | null> {
+  // 1. 从连板天梯 API 查找涨停原因
   try {
     const resp = await fetch("https://stock.quicktiny.cn/api/ladder");
-    if (!resp.ok) return null;
-    const json = await resp.json() as Record<string, unknown>;
+    if (resp.ok) {
+      const json = await resp.json() as Record<string, unknown>;
+      const dates = json.dates as Array<Record<string, unknown>> | undefined;
+      if (dates?.length) {
+        const latest = dates[dates.length - 1];
+        const boards = latest?.boards as Array<Record<string, unknown>> | undefined;
+        if (boards) {
+          for (const level of boards) {
+            const stocks = level.stocks as Array<Record<string, unknown>>;
+            if (!stocks) continue;
+            const found = stocks.find((s) => s.code === code);
+            if (found) {
+              return {
+                concept: (found.primary_theme as string) ?? (found.industry as string) ?? "",
+                reasonType: (found.changeColor as string) === "red" ? "涨停" : "跌停",
+                reasonInfo: (found.price as string) ?? "",
+                analysis: (found.main_business as string) ?? "",
+              };
+            }
+          }
+        }
+      }
+    }
+  } catch { /* continue to themes */ }
 
-    const dates = json.dates as Array<Record<string, unknown>> | undefined;
-    if (!dates?.length) return null;
-
-    const latest = dates[dates.length - 1];
-    const boards = latest?.boards as Array<Record<string, unknown>> | undefined;
-    if (!boards) return null;
-
-    for (const level of boards) {
-      const stocks = level.stocks as Array<Record<string, unknown>>;
-      if (!stocks) continue;
-      const found = stocks.find((s) => s.code === code);
-      if (found) {
-        return {
-          concept: (found.primary_theme as string) ?? (found.industry as string) ?? "",
-          reasonType: (found.changeColor as string) === "red" ? "涨停" : "跌停",
-          reasonInfo: (found.price as string) ?? "",
-          analysis: (found.main_business as string) ?? "",
-        };
+  // 2. 从题材图谱 API 查找关联题材
+  try {
+    const resp = await fetch("https://stock.quicktiny.cn/api/themes/graph");
+    if (resp.ok) {
+      const json = await resp.json() as Record<string, unknown>;
+      const data = json.data as Record<string, unknown> | undefined;
+      const nodes = data?.nodes as Array<Record<string, unknown>> | undefined;
+      if (nodes) {
+        // 查找该股是否是某个题材的龙头
+        const relatedThemes: string[] = [];
+        for (const node of nodes) {
+          const dh = node.dragonHead as Record<string, unknown> | null;
+          if (dh && dh.code === code) {
+            relatedThemes.push((node.name as string) + "（" + (dh.continueNum ?? "?") + "板龙头）");
+          }
+        }
+        if (relatedThemes.length > 0) {
+          return {
+            concept: relatedThemes.join("、"),
+            reasonType: "题材龙头",
+            reasonInfo: "关联" + relatedThemes.length + "个题材",
+            analysis: "该股票是以下题材的龙头股，在题材轮动中具有标志性意义。",
+          };
+        }
       }
     }
   } catch { /* ignore */ }

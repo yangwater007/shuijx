@@ -1,6 +1,8 @@
 /**
- * useStockChart — stock chart data Hook with date-validated Zustand cache
- * K-line: cached per code+date, timeshare: 5s auto-refresh with date check
+ * useStockChart — stock chart data with date-validated cache
+ * K-line: per code+date, Timeshare: 5s auto-refresh
+ * PreClose always from the last COMPLETE (settled) daily candle
+ * Auto-merges today candle from timeshare when K-line is stale
  */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchStockKLine, fetchStockTimeshare, fetchStockConcepts } from "@data/repository/stockChart";
@@ -16,7 +18,6 @@ interface UseStockChartReturn {
   klineLoading: boolean;
   tsLoading: boolean;
   conceptLoading: boolean;
-  /** 数据日期（YYYYMMDD），用于判断是否为最新交易日数据 */
   klineDate: string;
   tsDate: string;
   error: string | null;
@@ -31,45 +32,34 @@ function isTradingHours(): boolean {
   return (m >= 570 && m <= 690) || (m >= 780 && m <= 900);
 }
 
-/** 解析同花顺 JSONP 响应 */
-function parseTHS(raw: string): Record<string, unknown> | null {
-  try {
-    const json = raw.replace(/^[^(]*\(/, "").replace(/\)\s*$/, "");
-    return JSON.parse(json) as Record<string, unknown>;
-  } catch { return null; }
+/**
+ * Get last complete candle's close as preClose.
+ * If last date === today: today is incomplete -> preClose = second-to-last close
+ * If last date < today: last IS the complete candle -> preClose = last close
+ */
+function calcPreClose(data: KLineDataPoint[], today: string): number {
+  if (data.length === 0) return 0;
+  const lastCandle = data[data.length - 1]!;
+  if (lastCandle.date === today) {
+    return data.length >= 2 ? data[data.length - 2]!.close : data[data.length - 1]!.close;
+  }
+  return lastCandle.close;
 }
 
-/** 从同花顺 K-line 响应中提取最新日期 */
-async function getLatestKLineDate(code: string): Promise<string> {
-  try {
-    const market = code.startsWith("6") ? "hs" : (code.startsWith("4") || code.startsWith("8") ? "bj" : "sz");
-    const resp = await fetch("https://d.10jqka.com.cn/v2/line/" + market + "_" + code + "/01/last.js");
-    const text = await resp.text();
-    const parsed = parseTHS(text);
-    if (parsed?.data) {
-      const lines = (parsed.data as string).split(";").filter(Boolean);
-      if (lines.length > 0) {
-        return lines[lines.length - 1]!.split(",")[0]!;
-      }
-    }
-  } catch { /* ignore */ }
-  return "";
-}
-
-/** 从同花顺 timeshare 响应中提取日期 */
-async function getTimeshareDate(code: string): Promise<string> {
-  try {
-    const market = code.startsWith("6") ? "hs" : (code.startsWith("4") || code.startsWith("8") ? "bj" : "sz");
-    const resp = await fetch("https://d.10jqka.com.cn/v2/time/" + market + "_" + code + "/last.js");
-    const text = await resp.text();
-    const parsed = parseTHS(text);
-    if (parsed) {
-      const key = Object.keys(parsed).find((k) => k.includes("_"));
-      const payload = key ? (parsed[key] as Record<string, unknown>) : (parsed as Record<string, unknown>);
-      return (payload?.date as string) ?? "";
-    }
-  } catch { /* ignore */ }
-  return "";
+/**
+ * Build synthetic today daily candle from timeshare data
+ */
+function buildTodayCandle(tsData: TimeshareDataPoint[], today: string, preClose: number): KLineDataPoint | null {
+  if (tsData.length === 0 || preClose <= 0) return null;
+  let open = tsData[0]!.price;
+  let high = open, low = open, close = tsData[tsData.length - 1]!.price;
+  let totalVol = 0;
+  for (const pt of tsData) {
+    if (pt.price > high) high = pt.price;
+    if (pt.price < low) low = pt.price;
+    totalVol += pt.volume ?? 0;
+  }
+  return { date: today, open, high, low, close, volume: totalVol };
 }
 
 export function useStockChart(code: string | undefined): UseStockChartReturn {
@@ -85,42 +75,54 @@ export function useStockChart(code: string | undefined): UseStockChartReturn {
   const [tsDate, setTsDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const codeRef = useRef(code);
+  const rawKlineRef = useRef<KLineDataPoint[]>([]); // raw K-line without today merge
+  const preCloseRef = useRef(0);
 
   const today = todayStr();
 
-  // Load K-line (date-validated cache)
+  // Load K-line
   const loadKline = useCallback(async (c: string) => {
     const cached = cache.getKline(c, today);
     if (cached) {
+      rawKlineRef.current = cached.data as KLineDataPoint[];
+      const pc = cached.preClose;
+      setPreClose(pc);
+      preCloseRef.current = pc;
       setKlineData(cached.data as KLineDataPoint[]);
-      setPreClose(cached.preClose);
       setKlineDate(cached.dataDate);
       return;
     }
     setKlineLoading(true);
     try {
       const data = await fetchStockKLine(c, 60);
-      // Use last complete candle as preClose (skip today if it's intraday)
-      const lastClose = data.length >= 2 ? data[data.length - 2]!.close : (data[0]?.close ?? 0);
-      const dataDate = data.length > 0 ? data[data.length - 1]!.date : today;
+      if (data.length === 0) { setKlineLoading(false); return; }
+
+      const pc = calcPreClose(data, today);
+      const lastDate = data[data.length - 1]!.date;
+
+      rawKlineRef.current = data;
+      setPreClose(pc);
+      preCloseRef.current = pc;
       setKlineData(data);
-      setPreClose(lastClose);
-      setKlineDate(dataDate);
-      cache.setKline(c, data, lastClose, today);
+      setKlineDate(lastDate);
+      cache.setKline(c, data, pc, today);
     } catch (err) {
-      console.error("K-line fetch failed:", err);
+      console.error("K-line failed:", err);
     } finally {
       setKlineLoading(false);
     }
   }, [cache, today]);
 
-  // Load timeshare (date-validated, auto-refresh)
+  // Load timeshare
   const loadTimeshare = useCallback(async (c: string, force = false) => {
     if (!force && !cache.isTimeshareStale(c, today)) {
       const cached = cache.getTimeshare(c, today);
       if (cached) {
         setTimeshareData(cached.data as TimeshareDataPoint[]);
-        setPreClose((prev) => cached.preClose || prev);
+        if (cached.preClose > 0 && preCloseRef.current === 0) {
+          setPreClose(cached.preClose);
+          preCloseRef.current = cached.preClose;
+        }
         setTsDate(cached.dataDate);
         return;
       }
@@ -130,12 +132,16 @@ export function useStockChart(code: string | undefined): UseStockChartReturn {
       const { data, preClose: pc } = await fetchStockTimeshare(c);
       if (data.length > 0) {
         setTimeshareData(data);
-        if (pc > 0) setPreClose(pc);
+        // K-line preClose takes priority for date alignment
+        if (preCloseRef.current === 0 && pc > 0) {
+          setPreClose(pc);
+          preCloseRef.current = pc;
+        }
         setTsDate(today);
-        cache.setTimeshare(c, data, pc, today);
+        cache.setTimeshare(c, data, preCloseRef.current > 0 ? preCloseRef.current : (pc > 0 ? pc : 0), today);
       }
     } catch (err) {
-      console.error("Timeshare fetch failed:", err);
+      console.error("Timeshare failed:", err);
     } finally {
       setTsLoading(false);
     }
@@ -148,13 +154,42 @@ export function useStockChart(code: string | undefined): UseStockChartReturn {
       const info = await fetchStockConcepts(c);
       setConceptInfo(info);
     } catch (err) {
-      console.error("Concept fetch failed:", err);
+      console.error("Concept failed:", err);
     } finally {
       setConceptLoading(false);
     }
   }, []);
 
-  // Main load effect
+  // Merge today candle into K-line when raw K-line lacks today but timeshare has data
+  useEffect(() => {
+    const raw = rawKlineRef.current;
+    const ts = timeshareData;
+    if (raw.length === 0 || ts.length === 0) return;
+
+    const lastKlineDate = raw[raw.length - 1]!.date;
+    if (lastKlineDate === today) {
+      // K-line already has today, no merge needed
+      // But update the last candle with latest timeshare info
+      const todayCandle = buildTodayCandle(ts, today, preCloseRef.current);
+      if (todayCandle) {
+        const merged = [...raw.slice(0, -1), todayCandle];
+        setKlineData(merged);
+      }
+      return;
+    }
+
+    // K-line ends at yesterday or earlier, append today candle
+    if (lastKlineDate < today && preCloseRef.current > 0) {
+      const todayCandle = buildTodayCandle(ts, today, preCloseRef.current);
+      if (todayCandle) {
+        const merged = [...raw, todayCandle];
+        setKlineData(merged);
+        setKlineDate(today);
+      }
+    }
+  }, [timeshareData]);
+
+  // Initial load
   useEffect(() => {
     if (!code) return;
     codeRef.current = code;
@@ -164,14 +199,19 @@ export function useStockChart(code: string | undefined): UseStockChartReturn {
     void loadConcepts(code);
   }, [code, loadKline, loadTimeshare, loadConcepts]);
 
-  // Auto-refresh timeshare during trading (every 5s)
+  // Auto-refresh timeshare during trading
   useEffect(() => {
     if (!code || !isTradingHours()) return;
-    const timer = setInterval(() => {
-      void loadTimeshare(code, true);
-    }, 5000);
+    const timer = setInterval(() => { void loadTimeshare(code, true); }, 5000);
     return () => clearInterval(timer);
   }, [code, loadTimeshare]);
+
+  // Also refresh K-line every 60s during trading (in case new data arrives)
+  useEffect(() => {
+    if (!code || !isTradingHours()) return;
+    const timer = setInterval(() => { void loadKline(code); }, 60000);
+    return () => clearInterval(timer);
+  }, [code, loadKline]);
 
   const refresh = useCallback(() => {
     const c = codeRef.current;
