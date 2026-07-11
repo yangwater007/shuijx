@@ -7,16 +7,72 @@ import { WUDAO_API_KEY } from "@infra/config";
 const MCP_URL = "https://stock.quicktiny.cn/api/mcp-stream";
 
 /** 调用单个 MCP 工具 */
+// ????? + ??????
+const _cache = new Map<string, { text: string; ts: number }>();
+const CACHE_TTL = 30 * 60 * 1000; // 30??
+const DAILY_LIMIT = 50;
+
+function _getTodayKey(): string {
+  return "mcp_quota_" + new Date().toISOString().slice(0, 10);
+}
+function _getCallCount(): number {
+  try { const v = localStorage.getItem(_getTodayKey()); return v ? parseInt(v, 10) : 0; } catch { return 0; }
+}
+function _incrCallCount(): number {
+  const c = _getCallCount() + 1;
+  try { localStorage.setItem(_getTodayKey(), String(c)); } catch { /* */ }
+  return c;
+}
+function _cacheKey(name: string, args: Record<string, unknown>): string {
+  return name + "::" + JSON.stringify(args);
+}
+
+/** ???? MCP ???????????????? */
 export async function callMCPTool(name: string, args: Record<string, unknown> = {}): Promise<string> {
-  const resp = await fetch(MCP_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: "Bearer " + WUDAO_API_KEY },
-    body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "tools/call", params: { name, arguments: args } }),
-  });
-  if (!resp.ok) throw new Error("MCP HTTP " + resp.status);
-  const json = (await resp.json()) as { result?: { content: Array<{ type: string; text: string }> }; error?: { message: string } };
-  if (json.error) throw new Error("MCP: " + json.error.message);
-  return json.result?.content?.[0]?.text ?? "";
+  const key = _cacheKey(name, args);
+  const cached = _cache.get(key);
+  if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.text;
+
+  const count = _incrCallCount();
+  if (count > DAILY_LIMIT) {
+    console.warn("[MCP] ????????????????");
+    if (cached) return cached.text;
+    return "[?????] ??MCP????" + DAILY_LIMIT + "???????";
+  }
+
+  try {
+    const resp = await fetch(MCP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + WUDAO_API_KEY },
+      body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "tools/call", params: { name, arguments: args } }),
+    });
+    if (!resp.ok) throw new Error("MCP HTTP " + resp.status);
+    const json = (await resp.json()) as { result?: { content: Array<{ type: string; text: string }> }; error?: { message: string } };
+    if (json.error) throw new Error("MCP: " + json.error.message);
+    const text = json.result?.content?.[0]?.text ?? "";
+    _cache.set(key, { text, ts: Date.now() });
+    if (count >= DAILY_LIMIT * 0.8) {
+      console.warn("[MCP] ???? " + count + "/" + DAILY_LIMIT + "??? " + (DAILY_LIMIT - count) + " ?");
+    }
+    return text;
+  } catch (e) {
+    const errMsg = e instanceof Error ? e.message : String(e);
+    if (errMsg.includes("??")) {
+      _cache.set(key, { text: "[?????]", ts: Date.now() + CACHE_TTL });
+    }
+    throw e;
+  }
+}
+
+/** ???????MCP???? */
+if (typeof window !== "undefined") {
+  (window as unknown as Record<string, unknown>).__mcpResetQuota = () => {
+    try { localStorage.removeItem(_getTodayKey()); console.log("[MCP] ???????"); } catch { /* */ }
+  };
+  (window as unknown as Record<string, unknown>).__mcpQuotaLeft = () => {
+    const used = _getCallCount();
+    console.log("[MCP] ?? " + used + "/" + DAILY_LIMIT + "??? " + Math.max(0, DAILY_LIMIT - used));
+  };
 }
 
 export interface FunctionDef {
