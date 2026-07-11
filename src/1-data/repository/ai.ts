@@ -1,6 +1,6 @@
 /**
- * AI Repository — DeepSeek 对话 + 新闻/热榜 + 市场上下文提取
- * 数据源: quicktiny ladder API + 东方财富(大盘指数/成交额)
+ * AI Repository — DeepSeek 对话 + 市场上下文提取
+ * 数据源: quicktiny ladder + 同花顺(大盘指数) + 财联社(新闻)
  */
 import { DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL } from "@infra/config";
 import type { NewsItem, KaipanlaItem } from "@infra/types/ai";
@@ -98,48 +98,62 @@ export async function fetchKaipanla(): Promise<KaipanlaItem[]> {
   } catch { return []; }
 }
 
-// ─── 东方财富 大盘指数 ──────────────────────────
+// ─── 同花顺 大盘指数 (替代不稳定的东方财富) ─────
 
 interface IndexQuote {
-  name: string; code: string; price: number; change: number;
-  changePercent: number; open: number; high: number; low: number;
-  preClose: number; volume: number; amount: number;
+  name: string; price: number; change: number; changePercent: number;
+  open: number; high: number; low: number; preClose: number;
+  amount: number;
 }
 
-async function fetchEMIndex(secid: string): Promise<IndexQuote | null> {
+/** 解析同花顺 realhead JSONP 响应 */
+function parseTHSRealhead(raw: string): Record<string, string> | null {
   try {
-    const url = "https://push2.eastmoney.com/api/qt/stock/get?secid=" + secid +
-      "&fields=f43,f44,f45,f46,f47,f48,f57,f58,f60";
-    const resp = await fetch(url, {
-      headers: { Referer: "https://quote.eastmoney.com/" },
-    });
+    const start = raw.indexOf("({");
+    if (start === -1) return null;
+    const json = raw.slice(start + 1, raw.lastIndexOf(")"));
+    const parsed = JSON.parse(json) as { items: Record<string, string> };
+    return parsed.items ?? null;
+  } catch { return null; }
+}
+
+/** 从同花顺获取指数行情 */
+async function fetchTHSIndex(code: string): Promise<IndexQuote | null> {
+  try {
+    const resp = await fetch("https://d.10jqka.com.cn/v2/realhead/" + code + "/last.js");
     if (!resp.ok) return null;
-    const json = (await resp.json()) as {
-      data?: { f43: number; f44: number; f45: number; f46: number;
-        f47: number; f48: number; f57: string; f58: string; f60: number; };
-    };
-    const d = json.data;
-    if (!d) return null;
+    const text = await resp.text();
+    const items = parseTHSRealhead(text);
+    if (!items) return null;
+
+    const price = parseFloat(items["10"] ?? "0");
+    const preClose = parseFloat(items["6"] ?? items["24"] ?? "0");
+    const changePct = preClose > 0 ? ((price - preClose) / preClose) * 100 : (parseFloat(items["199112"] ?? "0"));
+
     return {
-      name: d.f58, code: d.f57,
-      price: d.f43 / 100, change: (d.f43 - (d.f60 || d.f43)) / 100,
-      changePercent: d.f60 ? ((d.f43 - d.f60) / d.f60) * 100 : 0,
-      open: d.f46 / 100, high: d.f44 / 100, low: d.f45 / 100,
-      preClose: (d.f60 || d.f43) / 100,
-      volume: d.f47, amount: d.f48,
+      name: items["name"] ?? "",
+      price,
+      change: price - preClose,
+      changePercent: changePct,
+      open: parseFloat(items["7"] ?? "0"),
+      high: parseFloat(items["8"] ?? "0"),
+      low: parseFloat(items["9"] ?? "0"),
+      preClose,
+      amount: parseFloat(items["19"] ?? "0"),
     };
   } catch { return null; }
 }
 
+/** 获取三大指数概览 */
 async function fetchMarketOverview(): Promise<string> {
   const results = await Promise.allSettled([
-    fetchEMIndex("1.000001"),
-    fetchEMIndex("0.399001"),
-    fetchEMIndex("0.399006"),
+    fetchTHSIndex("hs_1A0001"),   // 上证指数
+    fetchTHSIndex("sz_399001"),   // 深证成指
+    fetchTHSIndex("sz_399006"),   // 创业板指
   ]);
-
-  const lines: string[] = ["=== 大盘指数（东方财富实时数据） ==="];
   const names = ["上证指数", "深证成指", "创业板指"];
+
+  const lines: string[] = ["=== 大盘指数（同花顺实时数据） ==="];
   let totalAmount = 0;
 
   for (let i = 0; i < 3; i++) {
@@ -149,9 +163,9 @@ async function fetchMarketOverview(): Promise<string> {
       const sign = q.changePercent >= 0 ? "+" : "";
       lines.push(q.name + ": " + q.price.toFixed(2) +
         " " + sign + q.changePercent.toFixed(2) + "%" +
-        " 开盘" + q.open.toFixed(2) + " 最高" + q.high.toFixed(2) +
-        " 最低" + q.low.toFixed(2) + " 昨收" + q.preClose.toFixed(2) +
-        " 成交额" + (q.amount >= 1e12 ? (q.amount / 1e12).toFixed(2) + "万亿" : (q.amount / 1e8).toFixed(0) + "亿"));
+        " 开" + q.open.toFixed(2) + " 高" + q.high.toFixed(2) +
+        " 低" + q.low.toFixed(2) + " 昨收" + q.preClose.toFixed(2) +
+        " 成交" + (q.amount >= 1e12 ? (q.amount / 1e12).toFixed(2) + "万亿" : (q.amount / 1e8).toFixed(0) + "亿"));
       totalAmount += q.amount;
     } else {
       lines.push(names[i] + ": 获取失败");
@@ -161,6 +175,9 @@ async function fetchMarketOverview(): Promise<string> {
   if (totalAmount > 0) {
     lines.push("两市合计成交额: " + (totalAmount >= 1e12 ? (totalAmount / 1e12).toFixed(2) + "万亿" : (totalAmount / 1e8).toFixed(0) + "亿"));
   }
+
+  // 涨跌家数 — 同花顺 realhead 无直接字段，标注为暂缺
+  lines.push("涨跌家数: [数据暂缺，同花顺realhead API不直接暴露此字段]");
 
   return lines.join("\n");
 }
@@ -191,63 +208,53 @@ function analyzeTrends(dates: RawApiDate[]): string {
   const prev = dates[dates.length - 2]!;
   const prev2 = dates.length >= 3 ? dates[dates.length - 3] : null;
 
-  const lines: string[] = ["=== 关键趋势信号（用于交易计划和风险评估） ==="];
+  const lines: string[] = ["=== 关键趋势信号（驱动交易计划和风险评估） ==="];
 
-  // 涨停数趋势
   const tDelta = latest.totalStocks - prev.totalStocks;
-  lines.push("涨停数变化: " + (tDelta >= 0 ? "+" : "") + tDelta + "只 (" + prev.totalStocks + " -> " + latest.totalStocks + ")" +
-    (tDelta > 10 ? " 情绪显著回暖" : tDelta < -10 ? " 情绪明显降温" : " 情绪平稳"));
+  lines.push("涨停数变化: " + (tDelta >= 0 ? "+" : "") + tDelta + " (" + prev.totalStocks + "->" + latest.totalStocks + ")" +
+    (tDelta > 10 ? " 情绪回暖" : tDelta < -10 ? " 情绪降温" : " 平稳"));
 
-  // 炸板率趋势
   const pDelta = latest.pauseRatio - prev.pauseRatio;
-  lines.push("炸板率变化: " + (pDelta >= 0 ? "+" : "") + pDelta.toFixed(1) + "% (" + prev.pauseRatio.toFixed(1) + "% -> " + latest.pauseRatio.toFixed(1) + "%)" +
-    (pDelta > 5 ? " 风险信号！封板意愿下降" : pDelta < -5 ? " 积极信号，封板意愿增强" : ""));
+  lines.push("炸板率变化: " + (pDelta >= 0 ? "+" : "") + pDelta.toFixed(1) + "% (" + prev.pauseRatio.toFixed(1) + "%->" + latest.pauseRatio.toFixed(1) + "%)" +
+    (pDelta > 5 ? " 风险信号！" : pDelta < -5 ? " 积极信号" : ""));
 
-  // 连板高度趋势
   const latestMax = latest.boards[0]?.level ?? 0;
   const prevMax = prev.boards[0]?.level ?? 0;
-  lines.push("连板高度: " + latestMax + "板" + (prevMax > 1 ? " (昨: " + prevMax + "板)" : "") +
-    (latestMax > prevMax ? " 空间打开" : latestMax < prevMax ? " 空间压缩" : " 高度持平"));
+  lines.push("连板高度: " + latestMax + "板" + (prevMax > 1 ? " (昨:" + prevMax + "板)" : "") +
+    (latestMax > prevMax ? " 空间打开" : latestMax < prevMax ? " 空间压缩" : " 持平"));
 
-  // 高位股表现
   const todayHigh = latest.boards.filter((b) => b.level >= 3).flatMap((b) => b.stocks);
   const prevHigh = prev.boards.filter((b) => b.level >= 3).flatMap((b) => b.stocks);
-  lines.push("高位股(>=3板): " + todayHigh.length + "只" + " (昨: " + prevHigh.length + "只)" +
-    (todayHigh.length > prevHigh.length ? " 高位扩容" : todayHigh.length < prevHigh.length ? " 高位收缩" : ""));
+  lines.push("高位股(>=3板): " + todayHigh.length + "只 (昨:" + prevHigh.length + "只)" +
+    (todayHigh.length > prevHigh.length ? " 扩容" : todayHigh.length < prevHigh.length ? " 收缩" : ""));
 
-  // 炸板股识别：之前有 continue_num 的股今天不在 ladder 中 = 断板
-  if (prev2) {
-    const prevBoards = prev.boards.flatMap((b) => b.stocks);
-    const todayCodes = new Set(latest.boards.flatMap((b) => b.stocks).map((s) => s.code));
-    const broken = prevBoards.filter((s) => s.continue_num >= 2 && !todayCodes.has(s.code));
-    if (broken.length > 0) {
-      lines.push("断板高位股(" + broken.length + "只): " + broken.slice(0, 5).map((s) => s.name + "(" + s.continue_num + "板)").join("、") +
-        (broken.length > 5 ? "等" : ""));
-    }
+  const todayCodes = new Set(latest.boards.flatMap((b) => b.stocks).map((s) => s.code));
+  const broken = prev.boards.flatMap((b) => b.stocks).filter((s) => s.continue_num >= 2 && !todayCodes.has(s.code));
+  if (broken.length > 0) {
+    lines.push("断板高位股(" + broken.length + "只): " + broken.slice(0, 5).map((s) => s.name + "(" + s.continue_num + "板)").join("、") +
+      (broken.length > 5 ? "等" : ""));
   }
 
-  // 连续趋势（三天）
   if (prev2) {
     const trend3 = [prev2.totalStocks, prev.totalStocks, latest.totalStocks];
     const trendP = [prev2.pauseRatio, prev.pauseRatio, latest.pauseRatio];
-    lines.push("三日涨停趋势: " + trend3.join(" -> ") + " (" + (trend3[2]! > trend3[0]! ? "上升通道" : "下降通道") + ")");
+    lines.push("三日涨停趋势: " + trend3.join(" -> ") + " (" + (trend3[2]! > trend3[0]! ? "上升" : "下降") + "通道)");
     lines.push("三日炸板率趋势: " + trendP.map((p) => p.toFixed(1) + "%").join(" -> ") + " (" + (trendP[2]! > trendP[0]! ? "恶化" : "改善") + ")");
   }
 
-  // 风险等级自动判定
   let riskLevel = "低";
   const riskReasons: string[] = [];
   if (latest.pauseRatio > 35) { riskLevel = "高"; riskReasons.push("炸板率>35%"); }
   else if (latest.pauseRatio > 25) { riskLevel = "中"; riskReasons.push("炸板率>25%"); }
-  if (latestMax <= 3) { riskLevel = riskLevel === "高" ? "高" : "中"; riskReasons.push("连板高度<=3板"); }
-  if (latest.totalStocks < 30) { riskLevel = "高"; riskReasons.push("涨停<30只，情绪冰点"); }
-  if (broken.length >= 5) { riskReasons.push("断板高位股>=5只"); }
+  if (latestMax <= 3) { riskLevel = riskLevel === "高" ? "高" : "中"; riskReasons.push("连板高度<=3"); }
+  if (latest.totalStocks < 30) { riskLevel = "高"; riskReasons.push("涨停<30只，冰点"); }
+  if (broken.length >= 5) { riskReasons.push("断板高位>=5只"); }
   lines.push("综合风险等级: " + riskLevel + (riskReasons.length > 0 ? " (" + riskReasons.join("; ") + ")" : ""));
 
   return lines.join("\n");
 }
 
-// ─── 市场上下文主函数 ──────────────────────────
+// ─── 主入口 ────────────────────────────────────
 
 export async function fetchBoardLadderForContext(): Promise<string> {
   const [ladderResult, overviewResult] = await Promise.allSettled([
@@ -278,20 +285,17 @@ export async function fetchBoardLadderForContext(): Promise<string> {
 
   const lines: string[] = [];
 
-  // 1. 大盘概览补充
   lines.push("=== 涨停市场数据 ===");
   lines.push("日期: " + today.date + " " + today.dayOfWeek);
   if (yesterday) lines.push("上一交易日: " + yesterday.date + " " + yesterday.dayOfWeek);
   lines.push("涨停总数: " + today.totalStocks + "只" + (yesterday ? " (昨: " + yesterday.totalStocks + "只)" : ""));
   lines.push("炸板率: " + today.pauseRatio.toFixed(1) + "%" + (yesterday ? " (昨: " + yesterday.pauseRatio.toFixed(1) + "%)" : ""));
 
-  // 2. 情绪速览
   lines.push("");
   const estimatedTouched = today.totalStocks / Math.max(0.01, 1 - today.pauseRatio / 100);
   lines.push("触板数(估): " + Math.round(estimatedTouched) + "只 炸板数(估): " + Math.round(estimatedTouched - today.totalStocks) + "只");
   lines.push("封板率: " + (100 - today.pauseRatio).toFixed(1) + "%");
 
-  // 3. 晋级率
   function stocksByContinue(d: RawApiDate, n: number): RawApiStock[] {
     return d.boards.flatMap((b) => b.stocks).filter((s) => s.continue_num === n);
   }
@@ -314,7 +318,6 @@ export async function fetchBoardLadderForContext(): Promise<string> {
     lines.push("高位晋级(>=3板): " + hr.toFixed(1) + "% (" + tHigh.length + "/" + yHigh.length + ")");
   }
 
-  // 4. 连板天梯
   lines.push("");
   lines.push("=== 连板天梯 ===");
   const sortedBoards = [...today.boards].sort((a, b) => b.level - a.level);
@@ -326,7 +329,6 @@ export async function fetchBoardLadderForContext(): Promise<string> {
     lines.push(board.level + "板 (" + board.stocks.length + "只):\n    " + descs);
   }
 
-  // 5. 题材聚类
   lines.push("");
   lines.push("=== 题材分布 ===");
   const flatToday = today.boards.flatMap((b) => b.stocks);
@@ -347,7 +349,6 @@ export async function fetchBoardLadderForContext(): Promise<string> {
       (data.stocks.length > 1 ? " 跟风:" + data.stocks.slice(1, 4).map((s) => s.name).join(",") : ""));
   }
 
-  // 6. 龙头定位
   lines.push("");
   lines.push("=== 龙头定位 ===");
   if (sortedBoards.length > 0 && sortedBoards[0]!.stocks.length > 0) {
@@ -364,7 +365,6 @@ export async function fetchBoardLadderForContext(): Promise<string> {
     }
   }
 
-  // 7. 情绪周期
   lines.push("");
   lines.push("=== 情绪周期三连对比 ===");
   lines.push("指标\t\t" + (dayBefore ? dayBefore.date : "N/A") + "\t" + (yesterday ? yesterday.date : "N/A") + "\t" + today.date);
@@ -385,7 +385,6 @@ export async function fetchBoardLadderForContext(): Promise<string> {
   else if (yesterday && today.pauseRatio > 35 && maxLevel < (yesterday.boards[0]?.level ?? 9)) stage = "退潮期(亏钱效应蔓延)";
   lines.push("情绪阶段: " + stage);
 
-  // 8. 趋势信号（关键！驱动八~十模块）
   const trendSection = analyzeTrends(dates);
   if (trendSection) {
     lines.push("");
