@@ -48,7 +48,7 @@ const ThinkingPanel: FC<{ text: string; expanded: boolean; onToggle: () => void 
 // ─── 消息气泡 ──────────────────────────────────
 
 const MessageBubble: FC<{ msg: ChatMessage }> = ({ msg }) => {
-  const [thinkingExpanded, setThinkingExpanded] = useState(false);
+  const [thinkingExpanded, setThinkingExpanded] = useState(true);
   const isUser = msg.role === "user";
   const isTool = msg.role === "tool";
 
@@ -103,11 +103,10 @@ const MessageBubble: FC<{ msg: ChatMessage }> = ({ msg }) => {
 // ─── 快捷操作 ──────────────────────────────────
 
 const QUICK_ACTIONS = [
-  { label: "完整复盘", prompt: "请输出今日完整复盘报告，严格按十大模块：大盘概览→情绪速览→连板天梯→主线题材→支线题材→龙头定位→情绪周期→明日计划→竞价清单→风险清单", primary: true },
-  { label: "涨停复盘", prompt: "请分析今日涨停板情况，包括最高板、主线题材、首板挖掘和炸板风险" },
-  { label: "板块3日轮动", prompt: "请分析近3日板块轮动情况：1) 调用sector_analysis获取3日板块数据 2) 哪些板块连续走强 3) 哪些板块高位回调 4) 轮动节奏预判" },
-  { label: "趋势龙头", prompt: "请分析当前各主线题材的趋势龙头股：1) 调用concept_ranking获取题材排行 2) 每个题材的龙头股技术面(调用kline) 3) 持续性评估" },
-  { label: "市场情绪", prompt: "请分析当前市场情绪周期：调用limit_stats+market_overview，结合涨停家数/炸板率/连板高度/涨跌家数做综合评估" },
+  { label: "完整复盘", prompt: "请输出今日完整复盘报告，严格按十大模块：大盘概览→情绪速览→连板天梯→主线题材→3日轮动→趋势龙头→龙头定位→情绪周期→明日计划→风险清单。先并行调用market_overview+limit_stats+limit_up_ladder+concept_ranking+sector_analysis+capital_flow获取全貌数据", primary: true },
+  { label: "3日轮动", prompt: "请分析近3日板块轮动：1)调用sector_analysis无参看持续强势/低位启动/高位走弱 2)调用capital_flow(type:sector)看资金流向 3)轮动节奏和切换信号" },
+  { label: "趋势龙头", prompt: "请分析各主线题材的趋势龙头股技术面：1)调用concept_ranking取前排题材 2)对Top3题材龙头调用kline看均线多头/量价配合/突破形态 3)调用stock_rank看领涨股" },
+  { label: "情绪周期", prompt: "请分析市场情绪周期：调用limit_stats+market_overview+broken_limit_up+limit_down，综合涨停/炸板/跌停/涨跌家数，判断处于冰点/修复/启动/发酵/高潮/分歧/退潮哪个阶段" },
 ];
 
 // ─── 主页面 ────────────────────────────────────
@@ -123,7 +122,6 @@ const AIAnalysis: FC = () => {
   } = useAIChat();
 
   const [input, setInput] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [configOpen, setConfigOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -178,16 +176,16 @@ const AIAnalysis: FC = () => {
         {/* 模型配置面板 */}
         {configOpen && (
           <div className="px-4 py-3 space-y-3" style={{ borderBottom: "1px solid " + C.border, backgroundColor: C.card }}>
-            <div className="flex items-center gap-3 flex-wrap">
-              <label className="flex items-center gap-1.5 text-[11px]" style={{ color: C.sub }}>
+            <div className="flex items-center gap-4 flex-wrap">
+              <label className="flex items-center gap-1.5 text-[11px] cursor-pointer" style={{ color: C.sub }}>
                 <input type="checkbox" checked={config.mcpEnabled} onChange={(e) => saveConfig({ mcpEnabled: e.target.checked })}
                   className="rounded" />
-                MCP工具调用
+                MCP工具({config.mcpEnabled ? "16个" : "关闭"})
               </label>
-              <label className="flex items-center gap-1.5 text-[11px]" style={{ color: C.sub }}>
+              <label className="flex items-center gap-1.5 text-[11px] cursor-pointer" style={{ color: C.sub }}>
                 <input type="checkbox" checked={config.thinkingEnabled} onChange={(e) => saveConfig({ thinkingEnabled: e.target.checked })}
                   className="rounded" />
-                思维链(R1)
+                思维链
               </label>
               <div className="flex items-center gap-1.5 text-[11px]" style={{ color: C.sub }}>
                 温度
@@ -200,12 +198,9 @@ const AIAnalysis: FC = () => {
             <div className="flex items-center gap-2">
               <span className="text-[10px]" style={{ color: C.dim }}>API Key</span>
               <input type="password" value={config.apiKey} onChange={(e) => saveConfig({ apiKey: e.target.value })}
-                placeholder="留空使用默认DeepSeek Key"
+                placeholder="留空使用默认"
                 className="flex-1 rounded px-2 py-1 text-[11px] outline-none"
                 style={{ backgroundColor: C.bg, color: C.text, border: "1px solid " + C.border }} />
-              <span className="text-[10px]" style={{ color: C.dim }}>
-                {config.mcpEnabled ? "MCP已启用(16工具)" : "MCP已关闭"}
-              </span>
             </div>
           </div>
         )}
@@ -213,12 +208,12 @@ const AIAnalysis: FC = () => {
         {/* 消息列表 */}
         <div className="flex-1 overflow-y-auto px-3 md:px-4 py-3 md:py-4">
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 md:py-20">
+            <div className="flex flex-col items-center justify-center py-12 md:py-16">
               <div className="mb-4 text-4xl">🤖</div>
               <div className="mb-2 text-lg font-bold" style={{ color: C.text }}>AI 复盘助手</div>
               <div className="mb-6 text-xs md:text-sm text-center" style={{ color: C.sub }}>
-                DeepSeek V3/R1 + 同花顺实时指数 + 连板天梯 + MCP 16工具<br />
-                涨停复盘 · 板块轮动 · 趋势龙头 · 情绪周期
+                DeepSeek V3/R1 + MCP 16工具 + 同花顺实时指数<br />
+                涨停复盘 · 3日轮动 · 趋势龙头 · 情绪周期
               </div>
               <div className="flex flex-wrap gap-2 justify-center max-w-lg">
                 {QUICK_ACTIONS.map((qa) => (

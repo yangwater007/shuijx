@@ -285,6 +285,40 @@ function analyzeTrends(dates: RawApiDate[]): string {
   return lines.join("\n");
 }
 
+
+/** 3?????????????????????????? */
+export async function fetchSectorRotation(): Promise<string> {
+  try {
+    // ???3??5??10?????
+    const results = await Promise.allSettled([
+      callMCPTool("sector_analysis", { period: 3 } as Record<string, unknown>),
+      callMCPTool("sector_analysis", { period: 5, strengthPeriod: 5 } as Record<string, unknown>),
+    ]);
+    const parts: string[] = ["=== 3??????? ==="];
+    if (results[0].status === "fulfilled") parts.push("?3????" + results[0].value.slice(0, 2000));
+    if (results[1].status === "fulfilled") parts.push("?5????" + results[1].value.slice(0, 1000));
+    return parts.join("\n");
+  } catch { return ""; }
+}
+
+/** ????K????????????5??????? */
+export async function fetchTrendLeaderKlines(topCodes: string[]): Promise<string> {
+  if (!topCodes.length) return "";
+  try {
+    const results = await Promise.allSettled(
+      topCodes.slice(0, 5).map(code => callMCPTool("kline", { code, days: 30, adjust: "qfq" } as Record<string, unknown>))
+    );
+    const lines: string[] = ["=== ????K?(30????) ==="];
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i];
+      if (r && r.status === "fulfilled") {
+        lines.push("?" + (topCodes[i] ?? "?") + "?" + r.value.slice(0, 600));
+      }
+    }
+    return lines.join("\n");
+  } catch { return ""; }
+}
+
 export async function fetchBoardLadderForContext(): Promise<string> {
   const [ladderResult, overviewResult] = await Promise.allSettled([
     (async () => { try { const r = await fetch("https://stock.quicktiny.cn/api/ladder"); if (!r.ok) return null; return await r.json() as RawApiResponse; } catch { return null; } })(),
@@ -358,5 +392,14 @@ export async function fetchBoardLadderForContext(): Promise<string> {
   const trend = analyzeTrends(dates);
   if (trend) { lines.push(""); lines.push(trend); }
   parts.push(lines.join("\n"));
+    // ??3?????
+  const [rotResult, topCodes] = await Promise.all([
+    fetchSectorRotation().catch(() => ""),
+    Promise.resolve(sorted.slice(0, 5).flatMap(b => b.stocks.slice(0, 2).map(s => s.code))),
+  ]);
+  if (rotResult) parts.push(rotResult);
+  const klineResult = await fetchTrendLeaderKlines(topCodes).catch(() => "");
+  if (klineResult) parts.push(klineResult);
+
   return parts.join("\n\n");
 }
