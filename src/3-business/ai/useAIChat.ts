@@ -8,33 +8,18 @@ import type { ChatMessage, AnalysisFramework, AIModel, NewsItem, KaipanlaItem } 
 import { BUILTIN_FRAMEWORKS } from "@infra/types/ai";
 import type { FunctionDef } from "@data/repository/mcp";
 
-// 模型配置（持久化到 localStorage）
 interface ModelConfig {
   provider: "deepseek" | "custom";
-  apiKey: string;
-  baseURL: string;
-  temperature: number;
-  thinkingEnabled: boolean;
-  mcpEnabled: boolean;
+  apiKey: string; baseURL: string;
+  temperature: number; thinkingEnabled: boolean; mcpEnabled: boolean;
 }
 
 function loadModelConfig(): ModelConfig {
-  try {
-    const saved = localStorage.getItem("ai_model_config");
-    if (saved) return { ...getDefaultConfig(), ...JSON.parse(saved) as Partial<ModelConfig> };
-  } catch { /* ignore */ }
+  try { const s = localStorage.getItem("ai_model_config"); if (s) return { ...getDefaultConfig(), ...JSON.parse(s) as Partial<ModelConfig> }; } catch { /* */ }
   return getDefaultConfig();
 }
-
 function getDefaultConfig(): ModelConfig {
-  return {
-    provider: "deepseek",
-    apiKey: "",
-    baseURL: "https://api.deepseek.com/v1",
-    temperature: 0.7,
-    thinkingEnabled: false,
-    mcpEnabled: true,
-  };
+  return { provider: "deepseek", apiKey: "", baseURL: "https://api.deepseek.com/v1", temperature: 0.7, thinkingEnabled: false, mcpEnabled: true };
 }
 
 export default function useAIChat() {
@@ -51,26 +36,12 @@ export default function useAIChat() {
 
   const enabledFrameworks = useMemo(() => frameworks.filter((f) => f.enabled), [frameworks]);
 
-  // 持久化配置
   const saveConfig = useCallback((patch: Partial<ModelConfig>) => {
-    setConfig((prev) => {
-      const next = { ...prev, ...patch };
-      try { localStorage.setItem("ai_model_config", JSON.stringify(next)); } catch { /* ignore */ }
-      return next;
-    });
+    setConfig((prev) => { const next = { ...prev, ...patch }; try { localStorage.setItem("ai_model_config", JSON.stringify(next)); } catch { /* */ } return next; });
   }, []);
 
-  // 初始化
-  useEffect(() => {
-    void (async () => {
-      const [nd, hd] = await Promise.all([fetchCailianNews(), fetchKaipanla()]);
-      setNews(nd); setHotStocks(hd);
-    })();
-  }, []);
-
-  const toggleFramework = useCallback((id: string) => {
-    setFrameworks((prev) => prev.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f)));
-  }, []);
+  useEffect(() => { void (async () => { const [nd, hd] = await Promise.all([fetchCailianNews(), fetchKaipanla()]); setNews(nd); setHotStocks(hd); })(); }, []);
+  const toggleFramework = useCallback((id: string) => { setFrameworks((prev) => prev.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f))); }, []);
 
   // ─── 核心：带函数调用的流式对话 ─────────────────
 
@@ -91,42 +62,30 @@ export default function useAIChat() {
           onToken: (token) => {
             fullContent += token;
             setMessages((prev) => {
-              const updated = [...prev];
-              const last = updated[updated.length - 1];
-              if (last?.role === "assistant" && last.isStreaming) {
-                updated[updated.length - 1] = { ...last, content: fullContent, thinking: fullThinking || undefined };
-              }
-              return updated;
+              const u = [...prev]; const last = u[u.length - 1];
+              if (last?.role === "assistant" && last.isStreaming) u[u.length - 1] = { ...last, content: fullContent, thinking: fullThinking || undefined };
+              return u;
             });
           },
           onReasoning: (token) => {
-            fullThinking += token;
-            setThinkingText(fullThinking);
+            fullThinking += token; setThinkingText(fullThinking);
             setMessages((prev) => {
-              const updated = [...prev];
-              const last = updated[updated.length - 1];
-              if (last?.role === "assistant" && last.isStreaming) {
-                updated[updated.length - 1] = { ...last, content: fullContent, thinking: fullThinking || undefined };
-              }
-              return updated;
+              const u = [...prev]; const last = u[u.length - 1];
+              if (last?.role === "assistant" && last.isStreaming) u[u.length - 1] = { ...last, content: fullContent, thinking: fullThinking || undefined };
+              return u;
             });
           },
-          onFunctionCall: (call) => {
-            toolCalls.push(call);
-            setToolCallStatus("调用: " + call.name + "...");
-          },
+          onFunctionCall: (call) => { toolCalls.push(call); setToolCallStatus(call.name + "..."); },
           onDone: () => resolve({ content: fullContent, toolCalls }),
           onError: (err) => reject(err),
         },
-        signal,
-        modelName,
-        functions,
+        signal, modelName, functions,
         { temperature: config.temperature },
       );
     });
   }, [config.temperature]);
 
-  // ─── 发送消息主流程 ──────────────────────────
+  // ─── 发送消息 ──────────────────────────────────
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isStreaming) return;
@@ -134,107 +93,98 @@ export default function useAIChat() {
     const userMsg = AIService.createUserMessage(content);
     const assistantMsg = AIService.createAssistantPlaceholder();
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
-    setIsStreaming(true);
-    setThinkingText("");
-    setToolCallStatus("");
+    setIsStreaming(true); setThinkingText(""); setToolCallStatus("");
 
     const controller = new AbortController();
     abortRef.current = controller;
 
     try {
-      // 1. 静态数据上下文
       const marketCtx = await fetchBoardLadderForContext();
       const newsCtx = AIService.formatNewsContext(news as Array<{ content?: string; brief?: string }>);
-
       const systemPrompt = AIService.buildSystemPrompt(enabledFrameworks, marketCtx + newsCtx);
       const currentMsgs = [...messages, userMsg];
-
-      // 2. 构建API消息列表
       let apiMessages = AIService.toAPIMessages(currentMsgs, systemPrompt);
-
-      // 3. MCP工具集
       const functions = config.mcpEnabled ? MCP_FUNCTIONS : undefined;
 
-      // 4. 工具调用循环（最多5轮）
       const MAX_ROUNDS = 5;
-      let round = 0;
-
-      while (round < MAX_ROUNDS) {
-        round++;
+      for (let round = 0; round < MAX_ROUNDS; round++) {
         const result = await executeChatTurn(apiMessages, controller.signal, model, functions);
 
-        // AI 返回了工具调用
-        if (result.toolCalls.length > 0) {
-          setToolCallStatus("执行工具... (" + round + "/" + MAX_ROUNDS + ")");
-
-          // 添加 AI 的 tool_calls 消息
-          const toolCallMsg: ChatMessage = {
-            id: AIService.generateMessageId(),
-            role: "assistant",
-            content: result.content || "",
-            toolCalls: result.toolCalls.map((tc) => ({
-              id: "call_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
-              name: tc.name,
-              arguments: tc.arguments,
-            })),
-            timestamp: Date.now(),
-          };
-
-          // 执行工具并添加结果
-          const toolResults: ChatMessage[] = [];
-          for (const tc of result.toolCalls) {
-            const toolResult = await executeToolCall(tc.name, tc.arguments);
-            setToolCallStatus(tc.name + " 完成");
-            toolResults.push({
-              id: AIService.generateMessageId(),
-              role: "tool",
-              content: toolResult.slice(0, 3000),
-              toolCallId: "call_" + Date.now(),
-              toolName: tc.name,
-              timestamp: Date.now(),
-            });
-          }
-
-          // 更新消息列表（替换当前的 assistant 占位符为工具调用消息）
+        // 无工具调用 → 完成
+        if (result.toolCalls.length === 0) {
+          setToolCallStatus("");
           setMessages((prev) => {
-            const updated = [...prev];
-            // 移除最后的占位符
-            const last = updated[updated.length - 1];
-            if (last?.role === "assistant" && last.isStreaming) {
-              updated.pop();
-            }
-            // 添加工具调用消息和结果
-            updated.push(toolCallMsg, ...toolResults);
-            // 添加新的占位符
-            updated.push(AIService.createAssistantPlaceholder());
-            return updated;
+            const u = [...prev]; const last = u[u.length - 1];
+            if (last?.role === "assistant" && last.isStreaming) u[u.length - 1] = { ...last, content: result.content, isStreaming: false, timestamp: Date.now() };
+            return u;
           });
-
-          // 更新 API 消息列表（用于下一轮）
-          apiMessages.push(
-            { role: "assistant", content: result.content || "", tool_calls: toolCallMsg.toolCalls?.map((tc) => ({
-              id: tc.id, type: "function", function: { name: tc.name, arguments: tc.arguments },
-            })) },
-            ...toolResults.map((tr) => ({
-              role: "tool" as const,
-              content: tr.content,
-              tool_call_id: tr.toolCallId ?? "",
-            })),
-          );
-          continue; // 继续下一轮
+          break;
         }
 
-        // AI 返回了最终文本（无工具调用）
-        setToolCallStatus("");
+        // 有工具调用 → 生成唯一 call_id 并执行
+        setToolCallStatus("执行工具(" + (round + 1) + "/" + MAX_ROUNDS + ")...");
+
+        const callId = "call_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+
+        // 构建 assistant message 的 tool_calls（OpenAI 格式，所有调用共享同一个 callId 前缀）
+        const openaiToolCalls = result.toolCalls.map((tc, i) => ({
+          id: callId + "_" + i,
+          type: "function" as const,
+          function: { name: tc.name, arguments: tc.arguments },
+        }));
+
+        const toolCallMsgForUI: ChatMessage = {
+          id: AIService.generateMessageId(),
+          role: "assistant",
+          content: result.content || "",
+          toolCalls: result.toolCalls.map((tc, i) => ({
+            id: openaiToolCalls[i]!.id,
+            name: tc.name,
+            arguments: tc.arguments,
+          })),
+          timestamp: Date.now(),
+        };
+
+        // 执行每个工具调用
+        const toolResultsForUI: ChatMessage[] = [];
+        const toolResultsForAPI: Array<{ role: "tool"; content: string; tool_call_id: string }> = [];
+
+        for (let i = 0; i < result.toolCalls.length; i++) {
+          const tc = result.toolCalls[i]!;
+          const tid = openaiToolCalls[i]!.id;
+          const resText = await executeToolCall(tc.name, tc.arguments);
+          setToolCallStatus(tc.name + " 完成");
+
+          toolResultsForUI.push({
+            id: AIService.generateMessageId(),
+            role: "tool",
+            content: resText.slice(0, 3000),
+            toolCallId: tid,
+            toolName: tc.name,
+            timestamp: Date.now(),
+          });
+
+          toolResultsForAPI.push({
+            role: "tool",
+            content: resText.slice(0, 3000),
+            tool_call_id: tid,
+          });
+        }
+
+        // 更新 UI 消息列表
         setMessages((prev) => {
-          const updated = [...prev];
-          const last = updated[updated.length - 1];
-          if (last?.role === "assistant" && last.isStreaming) {
-            updated[updated.length - 1] = { ...last, content: result.content, isStreaming: false, timestamp: Date.now() };
-          }
-          return updated;
+          const u = [...prev];
+          const last = u[u.length - 1];
+          if (last?.role === "assistant" && last.isStreaming) u.pop();
+          u.push(toolCallMsgForUI, ...toolResultsForUI, AIService.createAssistantPlaceholder());
+          return u;
         });
-        break;
+
+        // 更新 API 消息列表（用于下一轮循环）
+        apiMessages.push(
+          { role: "assistant", content: result.content || "", tool_calls: openaiToolCalls },
+          ...toolResultsForAPI,
+        );
       }
 
       setIsStreaming(false);
@@ -242,42 +192,20 @@ export default function useAIChat() {
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       setMessages((prev) => {
-        const updated = [...prev];
-        const last = updated[updated.length - 1];
-        if (last?.role === "assistant") {
-          updated[updated.length - 1] = { ...last, content: "错误: " + (err instanceof Error ? err.message : String(err)), isStreaming: false, isError: true, timestamp: Date.now() };
-        }
-        return updated;
+        const u = [...prev]; const last = u[u.length - 1];
+        if (last?.role === "assistant") u[u.length - 1] = { ...last, content: "错误: " + (err instanceof Error ? err.message : String(err)), isStreaming: false, isError: true, timestamp: Date.now() };
+        return u;
       });
-      setIsStreaming(false);
-      abortRef.current = null;
+      setIsStreaming(false); abortRef.current = null;
     }
   }, [messages, isStreaming, model, enabledFrameworks, news, config, executeChatTurn]);
 
   const stopStreaming = useCallback(() => {
-    abortRef.current?.abort();
-    setIsStreaming(false);
-    setMessages((prev) => {
-      const updated = [...prev];
-      const last = updated[updated.length - 1];
-      if (last?.role === "assistant" && last.isStreaming) {
-        updated[updated.length - 1] = { ...last, isStreaming: false, isInterrupted: true };
-      }
-      return updated;
-    });
+    abortRef.current?.abort(); setIsStreaming(false);
+    setMessages((prev) => { const u = [...prev]; const last = u[u.length - 1]; if (last?.role === "assistant" && last.isStreaming) u[u.length - 1] = { ...last, isStreaming: false, isInterrupted: true }; return u; });
   }, []);
 
-  const clearMessages = useCallback(() => {
-    abortRef.current?.abort();
-    setMessages([]); setIsStreaming(false); setThinkingText(""); setToolCallStatus("");
-  }, []);
+  const clearMessages = useCallback(() => { abortRef.current?.abort(); setMessages([]); setIsStreaming(false); setThinkingText(""); setToolCallStatus(""); }, []);
 
-  return {
-    messages, isStreaming, model, setModel,
-    frameworks, enabledFrameworks, toggleFramework,
-    news, hotStocks,
-    config, saveConfig,
-    thinkingText, toolCallStatus,
-    sendMessage, stopStreaming, clearMessages,
-  };
+  return { messages, isStreaming, model, setModel, frameworks, enabledFrameworks, toggleFramework, news, hotStocks, config, saveConfig, thinkingText, toolCallStatus, sendMessage, stopStreaming, clearMessages };
 }
