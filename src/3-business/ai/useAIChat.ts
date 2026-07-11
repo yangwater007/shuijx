@@ -1,5 +1,6 @@
-/** 业务层 — AI 对话 Hook（数据注入 + DeepSeek 流式分析） */
-
+/**
+ * 业务层 — AI 对话 Hook（数据注入 + DeepSeek 流式分析）
+ */
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { streamDeepSeekChat, fetchCailianNews, fetchKaipanla, fetchBoardLadderForContext } from "@data/repository/ai";
 import AIService from "@service/ai/AIService";
@@ -20,6 +21,7 @@ export default function useAIChat() {
     [frameworks]
   );
 
+  // 初始化加载新闻和热榜
   useEffect(() => {
     void (async () => {
       const [newsData, hotData] = await Promise.all([
@@ -44,7 +46,9 @@ export default function useAIChat() {
     ]);
 
     const parts: string[] = [];
-    if (results[0].status === "fulfilled" && results[0].value) parts.push(results[0].value);
+    if (results[0].status === "fulfilled" && results[0].value) {
+      parts.push(results[0].value);
+    }
 
     return parts.join("\n\n");
   }, []);
@@ -64,7 +68,6 @@ export default function useAIChat() {
       abortRef.current = controller;
 
       try {
-        // 获取最新市场数据
         const marketCtx = await fetchMarketContext();
         const newsCtx = AIService.formatNewsContext(
           news as Array<{ content?: string; brief?: string }>
@@ -110,7 +113,7 @@ export default function useAIChat() {
                 const updated = [...prev];
                 const last = updated[updated.length - 1];
                 if (last && last.role === "assistant") {
-                  updated[updated.length - 1] = { ...last, content: `错误: ${err.message}`, isStreaming: false, isError: true, timestamp: Date.now() };
+                  updated[updated.length - 1] = { ...last, content: "错误: " + err.message, isStreaming: false, isError: true, timestamp: Date.now() };
                 }
                 return updated;
               });
@@ -127,7 +130,7 @@ export default function useAIChat() {
           const updated = [...prev];
           const last = updated[updated.length - 1];
           if (last && last.role === "assistant") {
-            updated[updated.length - 1] = { ...last, content: `错误: ${err instanceof Error ? err.message : String(err)}`, isStreaming: false, isError: true, timestamp: Date.now() };
+            updated[updated.length - 1] = { ...last, content: "错误: " + (err instanceof Error ? err.message : String(err)), isStreaming: false, isError: true, timestamp: Date.now() };
           }
           return updated;
         });
