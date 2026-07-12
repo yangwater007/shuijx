@@ -4,7 +4,7 @@
  * ??/?????quicktiny ladder API + themes graph API
  */
 
-import { TENCENT_KL_API, TENCENT_MINUTE_API, TENCENT_QUOTE_API } from "@infra/config";
+import { TENCENT_KL_API, TENCENT_MINUTE_API, TENCENT_QUOTE_API, LOCAL_BRIDGE_URL } from "@infra/config";
 import type { KLineDataPoint, TimeshareDataPoint } from "@infra/types/chart";
 
 // ??????????????? ???????? ???????????????
@@ -54,7 +54,33 @@ function parseTencentQuote(raw: string): { preClose: number; name: string } | nu
 
 // ??????????????? ?????? ???????????????
 
+
+// ??????????????? ????? (mootdx/???) ???????????????
+
+async function fetchFromBridge<T>(path: string): Promise<T | null> {
+  try {
+    const resp = await fetch(LOCAL_BRIDGE_URL + path, { signal: AbortSignal.timeout(5000) });
+    if (!resp.ok) return null;
+    return await resp.json() as T;
+  } catch {
+    return null; // ?????????
+  }
+}
+
+interface BridgeKLineItem {
+  date: string; open: number; high: number; low: number; close: number; volume: number;
+}
+
 export async function fetchStockKLine(code: string, count = 60): Promise<KLineDataPoint[]> {
+  // 1. ?????
+  const bridgeData = await fetchFromBridge<{ data: BridgeKLineItem[] }>("/kline?code=" + code + "&count=" + count);
+  if (bridgeData?.data?.length) {
+    return bridgeData.data.map((d: BridgeKLineItem) => ({
+      date: d.date, open: d.open, high: d.high, low: d.low, close: d.close, volume: d.volume,
+    }));
+  }
+
+  // 2. ???????
   const market = getTencentMarket(code);
   const url = TENCENT_KL_API + "?param=" + market + code + ",day,,," + count + ",qfq";
   try {
@@ -73,6 +99,18 @@ export async function fetchStockKLine(code: string, count = 60): Promise<KLineDa
 }
 
 export async function fetchStockTimeshare(code: string): Promise<{ data: TimeshareDataPoint[]; preClose: number }> {
+  // 1. ?????
+  const bridgeMin = await fetchFromBridge<{ data: Array<{ time: string; price: number; volume: number }> }>("/minute?code=" + code);
+  const bridgeQuote = await fetchFromBridge<{ data: Array<{ preClose: number }> }>("/quote?codes=" + code);
+  if (bridgeMin?.data?.length) {
+    const preClose = bridgeQuote?.data?.[0]?.preClose ?? 0;
+    return {
+      data: bridgeMin.data.map((d) => ({ time: d.time, price: d.price, volume: d.volume })),
+      preClose,
+    };
+  }
+
+  // 2. ???????
   const market = getTencentMarket(code);
   const minuteUrl = TENCENT_MINUTE_API + "?code=" + market + code;
   const quoteUrl = TENCENT_QUOTE_API + "?q=" + market + code;

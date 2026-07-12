@@ -19,6 +19,9 @@ export const TENCENT_MINUTE_API = "https://ifzq.gtimg.cn/appstock/app/minute/que
 // ???? ???? API
 export const TENCENT_QUOTE_API = "https://qt.gtimg.cn/q";
 
+/** ????? (mootdx ? ???) */
+export const LOCAL_BRIDGE_URL = "http://localhost:8765";
+
 export const TONGHUASHUN_KL_BASE = "https://d.10jqka.com.cn/v2/line";
 
 /** 同花顺 分时 API 基础路径 */
