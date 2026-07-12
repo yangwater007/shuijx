@@ -1,0 +1,9 @@
+﻿# Prefer synced data from daily_limit_up
+    if HAS_PG:
+        dt = _last_trade_date()
+        if dt:
+            rows = _pg_exec("SELECT dlu.code, dlu.continue_num, dlu.limit_type, dlu.turnover_rate, dlu.reason_type, dlu.reason_info, dlu.change_pct, dlu.amount FROM daily_limit_up dlu WHERE dlu.trade_date=%s ORDER BY dlu.continue_num DESC, dlu.change_pct DESC LIMIT 50", (dt,))
+            if rows and len(rows) > 0:
+                stocks = [{"code": r["code"], "name": r["code"], "continueNum": r["continue_num"], "limitType": r["limit_type"], "changePercent": float(r["change_pct"] or 0), "amount": float(r["amount"] or 0), "reasonType": r["reason_type"] or ""} for r in rows]
+                _set(ck, stocks, CACHE['LIMIT'])
+                return jsonify({'data': stocks, 'source': 'synced', 'date': dt})

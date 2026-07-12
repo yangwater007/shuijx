@@ -696,13 +696,15 @@ def limit_up():
     if cached: return jsonify(cached)
     
     stocks = []
-    # DB fallback: top gainers from daily_kline
-    if not stocks:
-        db_stocks = _db_ranking('change_pct', 'DESC', 30)
-        stocks = [s for s in db_stocks if s['changePercent'] >= 9.5]
-        if stocks: 
-            _set(ck, stocks, CACHE['LIMIT'])
-            return jsonify({'data': stocks, 'source': 'database'})
+    # Prefer synced data from daily_limit_up
+    if HAS_PG:
+        dt = _last_trade_date()
+        if dt:
+            rows = _pg_exec("SELECT dlu.code, dlu.continue_num, dlu.limit_type, dlu.turnover_rate, dlu.reason_type, dlu.reason_info, dlu.change_pct, dlu.amount FROM daily_limit_up dlu WHERE dlu.trade_date=%s ORDER BY dlu.continue_num DESC, dlu.change_pct DESC LIMIT 50", (dt,))
+            if rows and len(rows) > 0:
+                stocks = [{"code": r["code"], "name": r["code"], "continueNum": r["continue_num"], "limitType": r["limit_type"], "changePercent": float(r["change_pct"] or 0), "amount": float(r["amount"] or 0), "reasonType": r["reason_type"] or ""} for r in rows]
+                _set(ck, stocks, CACHE['LIMIT'])
+                return jsonify({'data': stocks, 'source': 'synced', 'date': dt})
     if HAS_MOOTDX:
         try:
             sh = _dx.stocks(market=1)
@@ -836,6 +838,101 @@ def fund_sector():
     if not data and HAS_MOOTDX:
         pass
     return jsonify({"data": data})
+
+
+# ─── 涨停同步 ─────────────────────────────
+
+@app.route("/limit/sync")
+def limit_sync():
+    """从 quicktiny ladder API 同步涨停数据到 PG"""
+    if not HAS_PG:
+        return jsonify({"error": "PostgreSQL 不可用"}), 500
+    
+    try:
+        r = requests.get("https://stock.quicktiny.cn/api/ladder", timeout=15,
+                         headers={"User-Agent": "Mozilla/5.0", "Referer": "https://stock.quicktiny.cn/"})
+        r.raise_for_status()
+        data = r.json()
+    except Exception as e:
+        return jsonify({"error": f"API 请求失败: {e}"}), 502
+    
+    dates = data.get("dates", [])
+    if not dates:
+        return jsonify({"error": "无数据"}), 404
+    
+    import psycopg2, datetime as dt_mod
+    conn = psycopg2.connect(host="localhost", port=5432, dbname="quicktiny", user="quicktiny", password="quicktiny123")
+    cur = conn.cursor()
+    
+    result = {"synced_dates": 0, "synced_stocks": 0, "new_stocks": 0, "new_concepts": 0}
+    
+    for day in dates[-3:]:
+        ts = day["date"]
+        td = f"{ts[:4]}-{ts[4:6]}-{ts[6:8]}"
+        day_cnt = 0
+        
+        for board in day.get("boards", []):
+            for s in board.get("stocks", []):
+                code = s.get("code", "")
+                if len(code) != 6: continue
+                
+                try:
+                    # base_stocks
+                    mkt = "SH" if code[0] == "6" else ("SZ" if code[0] in "023" else "BJ")
+                    cur.execute(
+                        "INSERT INTO base_stocks (code, name, market, industry) VALUES (%s,%s,%s,%s) ON CONFLICT (code) DO NOTHING",
+                        (code, s.get("name", code), mkt, s.get("industry", ""))
+                    )
+                    if cur.rowcount > 0: result["new_stocks"] += 1
+                    
+                    # daily_limit_up
+                    fut = s.get("first_limit_up_time", "")
+                    first_t = None
+                    if fut and str(fut).isdigit():
+                        first_t = dt_mod.datetime.fromtimestamp(int(fut)).strftime("%H:%M:%S")
+                    
+                    cur.execute("""
+                        INSERT INTO daily_limit_up (code, trade_date, continue_num, first_limit_time,
+                            seal_amount, open_count, limit_type, turnover_rate, amount, change_pct,
+                            reason_type, reason_info, category)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        ON CONFLICT (code, trade_date) DO NOTHING
+                    """, (code, td,
+                          s.get("continue_num", 1), first_t,
+                          s.get("order_amount", 0), s.get("open_num", 0),
+                          s.get("limit_up_type", ""), s.get("turnover_rate") or s.get("actual_turnover_rate", 0),
+                          s.get("amount", 0), s.get("change_rate", 0),
+                          (s.get("reason_type", "") or "")[:200], (s.get("reason_info", "") or "")[:5000],
+                          s.get("auto_position", "")))
+                    day_cnt += 1
+                    
+                    # stock_concepts via themes
+                    themes = list(set([s.get("primary_theme","")] + (s.get("kpl_theme_tags") or [])))
+                    for tname in themes[:5]:
+                        if not tname: continue
+                        cur.execute(
+                            "INSERT INTO base_concepts (concept_id, concept_name, category) VALUES (COALESCE((SELECT max(concept_id)+1 FROM base_concepts), 90000), %s, %s) ON CONFLICT (concept_name) DO NOTHING",
+                            (tname, "kpl")
+                        )
+                        cur.execute("SELECT concept_id FROM base_concepts WHERE concept_name=%s", (tname,))
+                        row = cur.fetchone()
+                        if row:
+                            cur.execute("INSERT INTO base_stock_concepts (code, concept_id) VALUES (%s,%s) ON CONFLICT DO NOTHING", (code, row[0]))
+                    
+                except Exception as e:
+                    log.warning(f"Sync {code} failed: {e}")
+        
+        conn.commit()
+        result["synced_dates"] += 1
+        result["synced_stocks"] += day_cnt
+        log.info(f"Synced {td}: {day_cnt} stocks")
+    
+    cur.close()
+    conn.close()
+    result["new_concepts"] = result.get("new_concepts", 0)
+    return jsonify(result)
+
+
 
 # ─── 缓存管理 ─────────────────────────────
 
