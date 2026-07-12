@@ -780,9 +780,9 @@ def limit_up():
     if HAS_PG:
         dt = _last_trade_date()
         if dt:
-            rows = _pg_exec("SELECT dlu.code, dlu.continue_num, dlu.limit_type, dlu.turnover_rate, dlu.reason_type, dlu.reason_info, dlu.change_pct, dlu.amount FROM daily_limit_up dlu WHERE dlu.trade_date=%s ORDER BY dlu.continue_num DESC, dlu.change_pct DESC LIMIT 50", (dt,))
+            rows = _pg_exec("SELECT dlu.code, dlu.continue_num, dlu.limit_type, dlu.turnover_rate, dlu.reason_type, dlu.reason_info, dlu.change_pct, dlu.amount, bs.name, bs.industry, COALESCE(dlu.reason_info, string_agg(DISTINCT bc.concept_name, ';' ORDER BY bc.concept_name)) as fallback_reason FROM daily_limit_up dlu LEFT JOIN base_stocks bs ON dlu.code = bs.code LEFT JOIN base_stock_concepts bsc ON dlu.code = bsc.code LEFT JOIN base_concepts bc ON bsc.concept_id = bc.concept_id WHERE dlu.trade_date=%s GROUP BY dlu.code, dlu.continue_num, dlu.limit_type, dlu.turnover_rate, dlu.reason_type, dlu.reason_info, dlu.change_pct, dlu.amount, bs.name, bs.industry ORDER BY dlu.continue_num DESC, dlu.change_pct DESC LIMIT 50", (dt,))
             if rows and len(rows) > 0:
-                stocks = [{"code": r["code"], "name": r["code"], "continueNum": r["continue_num"], "limitType": r["limit_type"], "changePercent": float(r["change_pct"] or 0), "amount": float(r["amount"] or 0), "reasonType": r["reason_type"] or ""} for r in rows]
+                stocks = [{"code": r["code"], "name": r.get("name") or r["code"], "continueNum": r["continue_num"], "limitType": r["limit_type"], "changePercent": float(r["change_pct"] or 0), "amount": float(r["amount"] or 0), "reasonType": r["reason_type"] or "", "reasonInfo": r.get("reason_info") or r.get("fallback_reason") or "", "industry": r.get("industry") or ""} for r in rows]
                 _set(ck, stocks, CACHE['LIMIT'])
                 return jsonify({'data': stocks, 'source': 'synced', 'date': dt})
     if HAS_MOOTDX:

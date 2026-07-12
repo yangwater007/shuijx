@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Bridge Repository — 本地数据桥客户端
  * 映射 MCP 工具名 → 桥 HTTP 端点，桥不可用时回退 MCP
  * 支持动态桥地址：URL参数 ?bridge=xxx 或 localStorage.bridgeUrl
@@ -58,6 +58,14 @@ const TOOL_TO_BRIDGE: Record<string, { path: string; paramMap: (args: Record<str
   },
   broken_limit_up: {
     path: "/limit/stats",
+    paramMap: () => "",
+  },
+  limit_bigloser: {
+    path: "/limit/bigloser",
+    paramMap: () => "",
+  },
+  limit_yesterday_premium: {
+    path: "/limit/yesterday-premium",
     paramMap: () => "",
   },
   limit_down: {
