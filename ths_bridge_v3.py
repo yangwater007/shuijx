@@ -61,6 +61,77 @@ except Exception as e:
     _pg_pool = None; HAS_PG = False
     log.warning(f"PostgreSQL 不可用: {e}")
     def _pg_exec(sql, params=None): return None
+def _last_trade_date():
+    """Get most recent trading day from daily_kline"""
+    try:
+        rows = _pg_exec("SELECT max(trade_date) as d FROM daily_kline")
+        if rows and rows[0]["d"]:
+            d = rows[0]["d"]
+            return d.isoformat() if hasattr(d, "isoformat") else str(d)
+    except: pass
+    return None
+
+def _db_ranking(metric="change_pct", direction="DESC", limit=20):
+    """Generic DB ranking query"""
+    dt = _last_trade_date()
+    if not dt: return []
+    safe_metric = "change_pct" if metric not in ("change_pct","amount","volume") else metric
+    try:
+        rows = _pg_exec(
+            f"SELECT code, change_pct, amount, volume FROM daily_kline WHERE trade_date=%s ORDER BY {safe_metric} {direction} LIMIT %s",
+            (dt, limit)
+        )
+        if rows:
+            return [{"code": r["code"], "changePercent": float(r["change_pct"] or 0), "amount": float(r["amount"] or 0), "volume": int(r["volume"] or 0)} for r in rows]
+    except: pass
+    return []
+
+def _db_sector_ranking():
+    """Sector ranking - own connection for reliability"""
+    if not HAS_PG: return []
+    dt = _last_trade_date()
+    if not dt: return []
+    try:
+        import psycopg2, psycopg2.extras
+        conn = psycopg2.connect(host="localhost", port=5432, dbname="quicktiny", user="quicktiny", password="quicktiny123")
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            WITH sector_perf AS (
+                SELECT COALESCE(bc.concept_name, '其他') as name,
+                       round(avg(dk.change_pct)::numeric, 2) as change_pct,
+                       count(*) as stock_cnt
+                FROM daily_kline dk
+                LEFT JOIN base_stock_concepts bsc ON dk.code = bsc.code
+                LEFT JOIN base_concepts bc ON bsc.concept_id = bc.concept_id
+                WHERE dk.trade_date = %s
+                GROUP BY bc.concept_name
+            )
+            SELECT * FROM sector_perf WHERE name IS NOT NULL ORDER BY change_pct DESC LIMIT 30
+        """, (dt,))
+        rows = cur.fetchall()
+        cur.close(); conn.close()
+        if rows:
+            result = [{"name": r["name"], "changePercent": float(r["change_pct"]), "stockCnt": int(r["stock_cnt"])} for r in rows]
+            log.info(f"DB sector ranking: {len(result)} sectors")
+            return result
+    except Exception as e:
+        log.warning(f"DB sector ranking failed: {e}")
+    return []
+
+def _db_market_overview():
+    """Market overview from daily_kline"""
+    dt = _last_trade_date()
+    if not dt: return None
+    try:
+        rows = _pg_exec(
+            "SELECT count(*) FILTER (WHERE change_pct>0) as up, count(*) FILTER (WHERE change_pct<0) as down, count(*) FILTER (WHERE change_pct=0) as flat FROM daily_kline WHERE trade_date=%s",
+            (dt,)
+        )
+        if rows and rows[0]:
+            r = rows[0]
+            return {"up": r["up"] or 0, "down": r["down"] or 0, "flat": r["flat"] or 0, "total": (r["up"] or 0) + (r["down"] or 0) + (r["flat"] or 0), "date": dt, "source": "database"}
+    except: pass
+    return None
 
 # ─── Flask ────────────────────────────────
 app = Flask(__name__)
@@ -465,12 +536,27 @@ def batch_kline():
 
 # ─── 市场总览 ─────────────────────────────
 
+# DB fallback for market overview
+def _market_overview_fallback():
+    db_data = _db_market_overview()
+    if db_data: return db_data
+    return {"up":0,"down":0,"flat":0,"total":0,"indices":[],"timestamp":datetime.now().isoformat()}
+
+
 @app.route("/market/overview")
 def market_overview():
     ck = "market:overview"
     cached = _get(ck)
     if cached: return jsonify(cached)
     data = _market_overview()
+    if data.get("up",0) + data.get("down",0) == 0:
+        db = _db_market_overview()
+        if db: 
+            data["up"] = db["up"]; data["down"] = db["down"]; data["flat"] = db["flat"]; data["total"] = db["total"]
+    # DB fallback when indices/up-down are empty
+    if not data.get("indices") and data.get("up",0) + data.get("down",0) == 0:
+        db = _db_market_overview()
+        if db: data["up"] = db["up"]; data["down"] = db["down"]; data["flat"] = db["flat"]; data["total"] = db["total"]; data["source"] = "database"
     _set(ck, data, CACHE["LIMIT"])
     return jsonify(data)
 
@@ -498,6 +584,8 @@ def sector_ranking():
     cached = _get(ck)
     if cached: return jsonify(cached)
     data = _sector_fund_flow()
+    if not data:
+        data = _db_sector_ranking()
     if not data and HAS_MOOTDX:
         try:
             blocks = _dx.block(blockname="行业", symbol="")
@@ -528,8 +616,9 @@ def concept_ranking():
     ck = "concept:ranking"
     cached = _get(ck)
     if cached: return jsonify(cached)
-    # Try mootdx first, then ths
     data = _concept_ranking_mootdx()
+    if not data:
+        data = _db_sector_ranking()
     if not data:
         old = _get("concept:ranking:last_trading")
         if old: data = old
@@ -561,6 +650,17 @@ def limit_stats():
     ck = "limit:stats"
     cached = _get(ck)
     if cached: return jsonify(cached)
+    
+    # DB fallback
+    dt = _last_trade_date()
+    if dt and HAS_PG:
+        try:
+            db_rows = _pg_exec("SELECT count(*) FILTER (WHERE change_pct >= 9.8) as up_cnt, count(*) FILTER (WHERE change_pct <= -9.8) as down_cnt FROM daily_kline WHERE trade_date=%s", (dt,))
+            if db_rows:
+                stats = {"up": db_rows[0]["up_cnt"] or 0, "down": db_rows[0]["down_cnt"] or 0, "broken": 0, "sealRate": 0, "date": dt, "source": "database"}
+                _set(ck, stats, CACHE["LIMIT"])
+                return jsonify(stats)
+        except: pass
     
     stats = {"up": 0, "down": 0, "broken": 0, "sealRate": 0, "timestamp": datetime.now().isoformat(), "source": "unavailable"}
     
@@ -596,6 +696,13 @@ def limit_up():
     if cached: return jsonify(cached)
     
     stocks = []
+    # DB fallback: top gainers from daily_kline
+    if not stocks:
+        db_stocks = _db_ranking('change_pct', 'DESC', 30)
+        stocks = [s for s in db_stocks if s['changePercent'] >= 9.5]
+        if stocks: 
+            _set(ck, stocks, CACHE['LIMIT'])
+            return jsonify({'data': stocks, 'source': 'database'})
     if HAS_MOOTDX:
         try:
             sh = _dx.stocks(market=1)
@@ -692,6 +799,18 @@ def fund_flow():
     cached = _get(ck)
     if cached: return jsonify(cached)
     
+    # DB fallback
+    dt = _last_trade_date()
+    if dt and HAS_PG:
+        try:
+            rows = _pg_exec("SELECT sum(amount) as total_amount FROM daily_kline WHERE trade_date=%s", (dt,))
+            if rows and rows[0]["total_amount"]:
+                total = float(rows[0]["total_amount"])
+                flow = {"mainNetInflow": 0, "superLargeNetInflow": 0, "largeNetInflow": 0, "mediumNetInflow": 0, "smallNetInflow": 0, "totalAmount": total, "date": dt, "source": "database"}
+                _set(ck, flow, CACHE["FUND"])
+                return jsonify(flow)
+        except: pass
+    
     flow = {"mainNetInflow": 0, "superLargeNetInflow": 0, "largeNetInflow": 0, "mediumNetInflow": 0, "smallNetInflow": 0, "source": "unavailable"}
     try:
         r = _http("https://push2.eastmoney.com/api/qt/stock/fflow/daykline/get?secid=1.000001&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56,f57&lmt=1", referer="https://data.eastmoney.com/")
@@ -712,7 +831,10 @@ def fund_sector():
     cached = _get(ck)
     if cached: return jsonify(cached)
     data = _sector_fund_flow()
-    _set(ck, data, CACHE["FUND"])
+    if not data:
+        data = _db_sector_ranking()
+    if not data and HAS_MOOTDX:
+        pass
     return jsonify({"data": data})
 
 # ─── 缓存管理 ─────────────────────────────
