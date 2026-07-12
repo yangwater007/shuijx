@@ -4,13 +4,13 @@
  */
 import { WUDAO_API_KEY } from "@infra/config";
 
-const MCP_URL = "https://stock.quicktiny.cn/api/mcp-stream";
+const MCP_URL = (() => { try { const b = localStorage.getItem("mcpBridgeUrl"); if (b) return b + "/mcp"; } catch {} try { return (window as any).__MCP_URL__ || "http://localhost:8766/mcp"; } catch { return "http://localhost:8766/mcp"; } })();
 
 /** 调用单个 MCP 工具 */
 // ????? + ??????
 const _cache = new Map<string, { text: string; ts: number }>();
 const CACHE_TTL = 30 * 60 * 1000; // 30??
-const DAILY_LIMIT = 50;
+const DAILY_LIMIT = 999999; // local MCP: unlimited
 
 function _getTodayKey(): string {
   return "mcp_quota_" + new Date().toISOString().slice(0, 10);

@@ -4,7 +4,7 @@
  */
 import { DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL } from "@infra/config";
 import type { NewsItem, KaipanlaItem } from "@infra/types/ai";
-import { MCP_FUNCTIONS, type FunctionDef } from "@data/repository/mcp";
+import { callMCPTool, MCP_FUNCTIONS, type FunctionDef } from "@data/repository/mcp";
 import { fetchFromBridgeTool } from "@data/repository/bridge";
 
 // ─── 流式回调类型 ──────────────────────────────
@@ -163,12 +163,12 @@ export async function executeToolCall(
 ): Promise<string> {
   try {
     const args = argsStr ? (JSON.parse(argsStr) as Record<string, unknown>) : {};
-    // local bridge - only data source (free, no rate limit)
+    // 1. Bridge (port 8765) ? fast, free, no limits
     const bridgeResult = await fetchFromBridgeTool(name, args);
     if (bridgeResult !== null) return bridgeResult;
 
-    // bridge unavailable
-    return "[bridge] local data bridge unavailable, please start ths_bridge_v3.py (port 8765)";
+    // 2. Local MCP (port 8766) ? structured, AI respects tool results
+    return await callMCPTool(name, args);
   } catch (err) {
     return "[tool call failed] " + (err instanceof Error ? err.message : String(err));
   }
