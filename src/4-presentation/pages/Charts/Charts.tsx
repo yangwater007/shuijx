@@ -2,17 +2,17 @@
  * 数据可视化页面 — 展示各类股票图表
  */
 
-import { useState, useMemo, type FC } from "react";
+import { useState, useMemo, lazy, Suspense, type FC } from "react";
 import PageHeader from "@ui/components/PageHeader";
 import BaseChart from "@ui/components/charts/ECharts/BaseChart";
 import getCandlestickOption from "@ui/components/charts/ECharts/configs/candlestick.config";
 import getTimeshareOption from "@ui/components/charts/ECharts/configs/timeshare.config";
 import getVolumeOption from "@ui/components/charts/ECharts/configs/volume.config";
-import getFundFlowOption from "@ui/components/charts/ECharts/configs/fundflow.config";
 import getPieOption from "@ui/components/charts/ECharts/configs/pie.config";
 import getLineOption from "@ui/components/charts/ECharts/configs/line.config";
-import type { KLineData, TimesharePoint, VolumeData, FundFlowData, PieDataItem, LineData } from "@ui/components/charts/ECharts/configs/types";
+import type { KLineData, TimesharePoint, VolumeData, PieDataItem, LineData } from "@ui/components/charts/ECharts/configs/types";
 import ThemeEvolution from "./components/ThemeEvolution";
+import CapitalFlowView from "./components/CapitalFlowView";
 
 /** 生成 K线 Mock 数据 */
 function mockKLine(days: number): KLineData[] {
@@ -72,23 +72,6 @@ function mockVolume(days: number): VolumeData[] {
   return data;
 }
 
-/** 生成资金流 Mock 数据 */
-function mockFundFlow(days: number): FundFlowData[] {
-  const data: FundFlowData[] = [];
-  for (let i = days; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    data.push({
-      date: `${date.getMonth() + 1}/${date.getDate()}`,
-      mainIn: Math.floor(10000 + Math.random() * 50000),
-      mainOut: Math.floor(8000 + Math.random() * 40000),
-      retailIn: Math.floor(5000 + Math.random() * 30000),
-      retailOut: Math.floor(6000 + Math.random() * 35000),
-    });
-  }
-  return data;
-}
-
 /** 板块涨跌 Mock 饼图数据 */
 const MOCK_PIE: PieDataItem[] = [
   { name: "半导体", value: 35 },
@@ -125,7 +108,6 @@ const Charts: FC = () => {
   const klineData = useMemo(() => mockKLine(40), []);
   const timeshareData = useMemo(() => mockTimeshare(), []);
   const volumeData = useMemo(() => mockVolume(20), []);
-  const fundFlowData = useMemo(() => mockFundFlow(15), []);
 
   const klineOption = useMemo(
     () => getCandlestickOption(klineData, { title: "日K线图", showMA: true }),
@@ -136,7 +118,6 @@ const Charts: FC = () => {
     [timeshareData]
   );
   const volumeOption = useMemo(() => getVolumeOption(volumeData), [volumeData]);
-  const fundFlowOption = useMemo(() => getFundFlowOption(fundFlowData), [fundFlowData]);
   const pieOption = useMemo(() => getPieOption(MOCK_PIE, "板块资金分布"), []);
   const lineOption = useMemo(
     () => getLineOption(MOCK_LINE, { title: "板块涨跌演化", showArea: true }),
@@ -148,7 +129,7 @@ const Charts: FC = () => {
     switch (tab) {
       case "kline": return "K线图、成交量、技术分析";
       case "timeshare": return "分时走势、实时波动";
-      case "fund": return "主力资金、散户资金流向";
+      case "fund": return "大盘资金流、板块资金排行、桑基图";
       case "theme-evo": return "题材发酵路径、桑基图演化";
       default: return "K线、分时、资金流向、板块分析";
     }
@@ -179,8 +160,11 @@ const Charts: FC = () => {
       {/* 题材演化 Tab — 独立全宽布局 */}
       {tab === "theme-evo" && <ThemeEvolution />}
 
-      {/* 图表 Tabs — 原有图表布局 */}
-      {tab !== "theme-evo" && (
+      {/* 资金流向 Tab — 全新独立组件 */}
+      {tab === "fund" && <CapitalFlowView />}
+
+      {/* K线 / 分时图 Tabs */}
+      {tab !== "theme-evo" && tab !== "fund" && (
         <>
           {/* 主图表区 */}
           <div className="mb-6">
@@ -189,9 +173,6 @@ const Charts: FC = () => {
             )}
             {tab === "timeshare" && (
               <BaseChart option={timeshareOption} height={380} />
-            )}
-            {tab === "fund" && (
-              <BaseChart option={fundFlowOption} height={350} />
             )}
           </div>
 

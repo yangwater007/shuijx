@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 ths_bridge_v3.py — A股全数据桥 HTTP 服务 (扩展版)
 ================================================
@@ -366,6 +366,86 @@ def _concept_ranking_ths():
     except: pass
     return None
 
+# ─── 东财 push2delay 公共 API ─────────────
+# push2delay.eastmoney.com 相比 push2 限制少，非交易时间也可获取前日数据
+EM_DELAY = "https://push2delay.eastmoney.com"
+
+def _em_fund_clist(fs, fields, fid="f62", pz=30, sort=1):
+    """通用东财资金流排行查询"""
+    import requests as req
+    try:
+        url = f"{EM_DELAY}/api/qt/clist/get?pn=1&pz={pz}&po={sort}&np=1&fltt=2&invt=2&fid={fid}&fs={fs}&fields={fields}"
+        r = req.get(url, timeout=8,
+                    headers={"User-Agent": "Mozilla/5.0", "Referer": "https://wap.eastmoney.com/"})
+        r.raise_for_status()
+        return r.json().get("data", {}).get("diff", [])
+    except Exception as e:
+        log.warning(f"东财资金流查询失败({fs}): {e}")
+        return []
+
+def _em_fund_flow_market():
+    """大盘主力资金流汇总（按行业板块求和）"""
+    items = _em_fund_clist("m:90+t:2", "f12,f14,f3,f62,f64,f66,f68,f70,f184", "f62", 60)
+    if not items:
+        return None
+    total_main = sum(d.get("f62") or 0 for d in items)
+    total_super = sum(d.get("f64") or 0 for d in items)
+    total_large = sum(d.get("f66") or 0 for d in items)
+    total_medium = sum(d.get("f68") or 0 for d in items)
+    total_small = sum(d.get("f70") or 0 for d in items)
+    total_amount = 0
+    # 从数据库获取总成交额
+    dt = _last_trade_date()
+    if dt and HAS_PG:
+        rows = _pg_exec("SELECT sum(amount) as ta FROM daily_kline WHERE trade_date=%s", (dt,))
+        if rows and rows[0]["ta"]:
+            total_amount = float(rows[0]["ta"])
+    return {
+        "mainNetInflow": total_main, "superLargeNetInflow": total_super,
+        "largeNetInflow": total_large, "mediumNetInflow": total_medium,
+        "smallNetInflow": total_small, "totalAmount": total_amount,
+        "source": "eastmoney_push2delay"
+    }
+
+def _sector_fund_flow_v2():
+    """板块资金流（东财push2delay → DB fallback）"""
+    items = _em_fund_clist("m:90+t:2", "f12,f14,f2,f3,f62,f184,f66,f64,f68,f70", "f62", 40)
+    if items:
+        return [{
+            "code": d.get("f12",""), "name": d.get("f14",""),
+            "changePercent": d.get("f3",0), "mainNetInflow": d.get("f62",0),
+            "superLargeInflow": d.get("f64",0), "largeInflow": d.get("f66",0),
+            "mediumInflow": d.get("f68",0), "smallInflow": d.get("f70",0),
+            "maxInflow": d.get("f184",0),
+        } for d in items]
+    return _db_sector_ranking()
+
+def _concept_fund_flow():
+    """概念板块资金流（桑基图数据源）"""
+    items = _em_fund_clist("m:90+t:3", "f12,f14,f3,f62,f184,f66", "f62", 50)
+    if items:
+        return [{
+            "code": d.get("f12",""), "name": d.get("f14",""),
+            "changePercent": d.get("f3",0), "mainNetInflow": d.get("f62",0),
+            "maxInflow": d.get("f184",0), "largeInflow": d.get("f66",0),
+        } for d in items]
+    return []
+
+def _stock_fund_flow(top_n=50):
+    """个股资金流排行（沪深A股主力净流入Top N）"""
+    fs_all = "m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23"
+    items = _em_fund_clist(fs_all, "f12,f14,f2,f3,f62,f64,f66,f68,f70,f184,f72", "f62", top_n)
+    if items:
+        return [{
+            "code": d.get("f12",""), "name": d.get("f14",""),
+            "price": d.get("f2",0), "changePercent": d.get("f3",0),
+            "mainNetInflow": d.get("f62",0), "superLargeInflow": d.get("f64",0),
+            "largeInflow": d.get("f66",0), "mediumInflow": d.get("f68",0),
+            "smallInflow": d.get("f70",0), "maxInflow": d.get("f184",0),
+            "mainInflowRatio": d.get("f72",0),
+        } for d in items]
+    return []
+
 def _sector_fund_flow():
     """从腾讯获取板块资金流向"""
     try:
@@ -583,7 +663,7 @@ def sector_ranking():
     ck = "sector:ranking"
     cached = _get(ck)
     if cached: return jsonify(cached)
-    data = _sector_fund_flow()
+    data = _sector_fund_flow_v2()
     if not data:
         data = _db_sector_ranking()
     if not data and HAS_MOOTDX:
@@ -796,12 +876,16 @@ def dragon_list():
 
 @app.route("/fund/flow")
 def fund_flow():
-    """大盘资金流向"""
-    ck = "fund:flow"
+    """大盘资金流向 (东财push2delay汇总)"""
+    ck = "fund:flow:v2"
     cached = _get(ck)
     if cached: return jsonify(cached)
-    
-    # DB fallback
+    flow = _em_fund_flow_market()
+    if flow:
+        dt = _last_trade_date()
+        if dt: flow["date"] = dt
+        _set(ck, flow, CACHE["FUND"])
+        return jsonify(flow)
     dt = _last_trade_date()
     if dt and HAS_PG:
         try:
@@ -812,32 +896,63 @@ def fund_flow():
                 _set(ck, flow, CACHE["FUND"])
                 return jsonify(flow)
         except: pass
-    
     flow = {"mainNetInflow": 0, "superLargeNetInflow": 0, "largeNetInflow": 0, "mediumNetInflow": 0, "smallNetInflow": 0, "source": "unavailable"}
-    try:
-        r = _http("https://push2.eastmoney.com/api/qt/stock/fflow/daykline/get?secid=1.000001&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56,f57&lmt=1", referer="https://data.eastmoney.com/")
-        if r:
-            klines = r.json().get("data",{}).get("klines",[])
-            if klines:
-                f = klines[-1].split(",")
-                if len(f) >= 7:
-                    flow = {"mainNetInflow": float(f[4] or 0), "superLargeNetInflow": float(f[5] or 0), "largeNetInflow": float(f[6] or 0), "source": "eastmoney"}
-    except: pass
     _set(ck, flow, CACHE["FUND"])
     return jsonify(flow)
 
 @app.route("/fund/sector")
 def fund_sector():
-    """板块资金流向排名"""
-    ck = "fund:sector"
+    """板块资金流向排名 (东财push2delay)"""
+    ck = "fund:sector:v2"
     cached = _get(ck)
     if cached: return jsonify(cached)
-    data = _sector_fund_flow()
+    data = _sector_fund_flow_v2()
     if not data:
         data = _db_sector_ranking()
-    if not data and HAS_MOOTDX:
-        pass
-    return jsonify({"data": data})
+    resp = {"data": data}
+    if data: _set(ck, resp, CACHE["FUND"])
+    return jsonify(resp)
+
+@app.route("/fund/concept")
+def fund_concept():
+    """概念板块资金流 (桑基图数据源)"""
+    ck = "fund:concept"
+    cached = _get(ck)
+    if cached: return jsonify(cached)
+    data = _concept_fund_flow()
+    resp = {"data": data}
+    if data: _set(ck, resp, CACHE["FUND"])
+    return jsonify(resp)
+
+@app.route("/fund/stock")
+def fund_stock():
+    """个股资金流排行 Top N"""
+    top = min(int(request.args.get("top", 30)), 100)
+    ck = f"fund:stock:{top}"
+    cached = _get(ck)
+    if cached: return jsonify(cached)
+    data = _stock_fund_flow(top)
+    resp = {"data": data}
+    if data: _set(ck, resp, CACHE["FUND"])
+    return jsonify(resp)
+
+@app.route("/fund/industry")
+def fund_industry():
+    """行业板块资金流"""
+    ck = "fund:industry"
+    cached = _get(ck)
+    if cached: return jsonify(cached)
+    items = _em_fund_clist("m:90+t:2", "f12,f14,f2,f3,f62,f64,f66,f68,f70,f184", "f62", 50)
+    data = [{
+        "code": d.get("f12",""), "name": d.get("f14",""),
+        "changePercent": d.get("f3",0), "mainNetInflow": d.get("f62",0),
+        "superLargeInflow": d.get("f64",0), "largeInflow": d.get("f66",0),
+        "mediumInflow": d.get("f68",0), "smallInflow": d.get("f70",0),
+        "maxInflow": d.get("f184",0),
+    } for d in items]
+    resp = {"data": data}
+    if data: _set(ck, resp, CACHE["FUND"])
+    return jsonify(resp)
 
 
 # ─── 涨停同步 ─────────────────────────────
@@ -958,7 +1073,7 @@ if __name__ == "__main__":
 ║   板块: /sector/ranking /sector/stocks    ║
 ║   概念: /concept/ranking /concept/stocks  ║
 ║   涨停: /limit/up /limit/stats            ║
-║   资金: /fund/flow /fund/sector           ║
+║   资金: /fund/flow /fund/stock /fund/sector /fund/concept║
 ║   财务: /finance/valuation               ║
 ║   龙虎: /dragon/list                     ║
 ╚══════════════════════════════════════════╝
