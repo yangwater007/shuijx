@@ -287,37 +287,6 @@ function analyzeTrends(dates: RawApiDate[]): string {
 
 
 /** 3?????????????????????????? */
-export async function fetchSectorRotation(): Promise<string> {
-  try {
-    // ???3??5??10?????
-    const results = await Promise.allSettled([
-      callMCPTool("sector_analysis", { period: 3 } as Record<string, unknown>),
-      callMCPTool("sector_analysis", { period: 5, strengthPeriod: 5 } as Record<string, unknown>),
-    ]);
-    const parts: string[] = ["=== 3??????? ==="];
-    if (results[0].status === "fulfilled") parts.push("?3????" + results[0].value.slice(0, 2000));
-    if (results[1].status === "fulfilled") parts.push("?5????" + results[1].value.slice(0, 1000));
-    return parts.join("\n");
-  } catch { return ""; }
-}
-
-/** ????K????????????5??????? */
-export async function fetchTrendLeaderKlines(topCodes: string[]): Promise<string> {
-  if (!topCodes.length) return "";
-  try {
-    const results = await Promise.allSettled(
-      topCodes.slice(0, 5).map(code => callMCPTool("kline", { code, days: 30, adjust: "qfq" } as Record<string, unknown>))
-    );
-    const lines: string[] = ["=== ????K?(30????) ==="];
-    for (let i = 0; i < results.length; i++) {
-      const r = results[i];
-      if (r && r.status === "fulfilled") {
-        lines.push("?" + (topCodes[i] ?? "?") + "?" + r.value.slice(0, 600));
-      }
-    }
-    return lines.join("\n");
-  } catch { return ""; }
-}
 
 export async function fetchBoardLadderForContext(): Promise<string> {
   const [ladderResult, overviewResult] = await Promise.allSettled([
@@ -326,6 +295,25 @@ export async function fetchBoardLadderForContext(): Promise<string> {
   ]);
   const parts: string[] = [];
   if (overviewResult.status === "fulfilled" && overviewResult.value) parts.push(overviewResult.value);
+  
+  // === ??? & ?? (2?MCP, ???) ===
+  const loserPromise = callMCPTool("stock_rank", { type: "losers", limit: 20 } as Record<string, unknown>).catch(() => "");
+  const limitDownPromise = callMCPTool("limit_down").catch(() => "");
+  
+  
+// ?????
+let _loserCache = "";
+let _limitDownCache = "";
+
+// ????????
+  const [loserData, limitDownData] = await Promise.all([loserPromise, limitDownPromise]);
+  
+  // ??? & ?????? (????????)
+  const _loserText = (loserData && !loserData.includes("?????")) ? loserData.slice(0, 800) : "";
+  const _limitDownText = (limitDownData && !limitDownData.includes("????") && !limitDownData.includes("?????")) ? limitDownData.slice(0, 600) : "";
+  // ??: ????today/yesterday?????
+  _loserCache = _loserText;
+  _limitDownCache = _limitDownText;
   const json = ladderResult.status === "fulfilled" ? ladderResult.value : null;
   if (!json?.dates?.length) return parts.length > 0 ? parts.join("\n\n") : "";
 
@@ -391,15 +379,43 @@ export async function fetchBoardLadderForContext(): Promise<string> {
 
   const trend = analyzeTrends(dates);
   if (trend) { lines.push(""); lines.push(trend); }
-  parts.push(lines.join("\n"));
-    // ??3?????
-  const [rotResult, topCodes] = await Promise.all([
-    fetchSectorRotation().catch(() => ""),
-    Promise.resolve(sorted.slice(0, 5).flatMap(b => b.stocks.slice(0, 2).map(s => s.code))),
-  ]);
-  if (rotResult) parts.push(rotResult);
-  const klineResult = await fetchTrendLeaderKlines(topCodes).catch(() => "");
-  if (klineResult) parts.push(klineResult);
+
+  // === ?????? (?MCP??) ===
+  if (today && yesterday) {
+    const yst = yesterday.boards.flatMap(b => b.stocks);
+    const tdy = today.boards.flatMap(b => b.stocks);
+
+    // ?????? = ??? + ???
+    const pauseCount = Math.round(today.totalStocks * today.pauseRatio / (100 - today.pauseRatio));
+    const touchCount = today.totalStocks + pauseCount;
+    const sealRate = touchCount > 0 ? (today.totalStocks / touchCount * 100) : 0;
+
+    // ??? (???)
+    const y1Count = yst.filter(s => s.continue_num === 1).length;
+    const y2Count = yst.filter(s => s.continue_num === 2).length;
+    const t2Count = tdy.filter(s => s.continue_num === 2).length;
+    const t3Count = tdy.filter(s => s.continue_num === 3).length;
+    const r12 = y1Count > 0 ? (t2Count / y1Count * 100) : 0;
+    const r23 = y2Count > 0 ? (t3Count / y2Count * 100) : 0;
+
+    lines.push("");
+    lines.push("=== ?????? ===");
+    lines.push("???: " + touchCount + " (??" + today.totalStocks + " + ??" + pauseCount + ")");
+    lines.push("???: " + sealRate.toFixed(1) + "%");
+    lines.push("1?2: " + r12.toFixed(1) + "% (" + t2Count + "/" + y1Count + ")");
+    lines.push("2?3: " + r23.toFixed(1) + "% (" + t3Count + "/" + y2Count + ")");
+
+  // === MCP???? (???/??/???) ===
+  const _loser = _loserCache;
+  const _ld = _limitDownCache;
+  if (_loser) lines.push(""); lines.push("=== ???(??>10%) ===\n" + _loser);
+  if (_ld) lines.push(""); lines.push("=== ??? ===\n" + _ld);
+  // ???: ???? vs ?????? (?????????????????????)
+  if (yesterday && _ld) {
+    const yestStocks = yesterday.boards.flatMap(b => b.stocks);
+    lines.push("?????: ????" + yestStocks.length + "????????????");
+  }
+  }
 
   return parts.join("\n\n");
 }
