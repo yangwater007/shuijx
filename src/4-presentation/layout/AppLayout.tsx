@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { path: "/ladder", label: "连板天梯", icon: "📊" },
   { path: "/hot", label: "热榜", icon: "🔥" },
   { path: "/sector-analysis", label: "板块轮动", icon: "🔄" },
+  { path: "/dragon-tiger", label: "龙虎榜", icon: "🐉" },
   { path: "/selector", label: "条件选股", icon: "🔍" },
   { path: "/themes", label: "题材库", icon: "📚" },
   { path: "/charts", label: "可视化", icon: "📈" },

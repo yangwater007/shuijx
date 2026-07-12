@@ -9,6 +9,7 @@ import Selector from "@ui/pages/Selector/Selector";
 import ThemeLibrary from "@ui/pages/ThemeLibrary/ThemeLibrary";
 import Charts from "@ui/pages/Charts/Charts";
 import AIAnalysis from "@ui/pages/AIAnalysis/AIAnalysis";
+import DragonTigerBoard from "@ui/pages/DragonTiger/DragonTigerBoard";
 
 const router = createHashRouter([
   {
@@ -23,6 +24,7 @@ const router = createHashRouter([
       { path: "ai", element: <AIAnalysis /> },
       { path: "charts", element: <Charts /> },
       { path: "sector-analysis", element: <SectorAnalysisPage /> },
+      { path: "dragon-tiger", element: <DragonTigerBoard /> },
     ],
   },
 ]);
