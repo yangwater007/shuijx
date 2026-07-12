@@ -301,25 +301,25 @@ export async function fetchBoardLadderForContext(): Promise<string> {
   ]);
   const parts: string[] = [];
   if (overviewResult.status === "fulfilled" && overviewResult.value) parts.push(overviewResult.value);
-  
-  // === ??? & ?? (2?MCP, ???) ===
-  const loserPromise = fetchFromBridgeTool("stock_rank", { type: "losers", limit: 20 }).then(r => r ?? "", () => callMCPTool("stock_rank", { type: "losers", limit: 20 } as Record<string, unknown>).catch(() => ""));
-  const limitDownPromise = fetchFromBridgeTool("limit_down", {}).then(r => r ?? "", () => callMCPTool("limit_down").catch(() => ""));
-  
-  
-// ?????
-let _loserCache = "";
-let _limitDownCache = "";
 
-// ????????
-  const [loserData, limitDownData] = await Promise.all([loserPromise, limitDownPromise]);
-  
-  // ??? & ?????? (????????)
-  const _loserText = (loserData && !loserData.includes("?????")) ? loserData.slice(0, 800) : "";
-  const _limitDownText = (limitDownData && !limitDownData.includes("????") && !limitDownData.includes("?????")) ? limitDownData.slice(0, 600) : "";
-  // ??: ????today/yesterday?????
-  _loserCache = _loserText;
-  _limitDownCache = _limitDownText;
+  // pre-fetch all core data via Bridge (no MCP, no AI tool-calling needed)
+  const [loserData, limitDownData, bigloserData, premiumData, conceptData, flowData] = await Promise.all([
+    fetchFromBridgeTool("stock_rank", { type: "losers", limit: 20 }),
+    fetchFromBridgeTool("limit_down", {}),
+    fetchFromBridgeTool("limit_bigloser", {}),
+    fetchFromBridgeTool("limit_yesterday_premium", {}),
+    fetchFromBridgeTool("concept_ranking", {}),
+    fetchFromBridgeTool("capital_flow", {}),
+  ]);
+
+  // inject pre-fetched data into context
+  if (loserData && !loserData.includes("unavailable")) parts.push("=== ??? ===\n" + loserData.slice(0, 800));
+  if (limitDownData && !limitDownData.includes("unavailable")) parts.push("=== ??? ===\n" + limitDownData.slice(0, 600));
+  if (bigloserData && !bigloserData.includes("unavailable")) parts.push("=== ???+??? ===\n" + bigloserData.slice(0, 800));
+  if (premiumData && !premiumData.includes("unavailable")) parts.push("=== ????? ===\n" + premiumData.slice(0, 400));
+  if (conceptData && !conceptData.includes("unavailable")) parts.push("=== ???? ===\n" + conceptData.slice(0, 600));
+  if (flowData && !flowData.includes("unavailable")) parts.push("=== ???? ===\n" + flowData.slice(0, 400));
+
   const json = ladderResult.status === "fulfilled" ? ladderResult.value : null;
   if (!json?.dates?.length) return parts.length > 0 ? parts.join("\n\n") : "";
 
@@ -329,99 +329,62 @@ let _limitDownCache = "";
   const dayBefore = dates.length >= 3 ? dates[dates.length - 3] : null;
   const lines: string[] = [];
 
-  lines.push("=== 涨停市场数据 ===");
-  lines.push("日期: " + today.date + " " + today.dayOfWeek + (yesterday ? " 昨:" + yesterday.date : ""));
-  lines.push("涨停: " + today.totalStocks + "只" + (yesterday ? " (昨:" + yesterday.totalStocks + ")" : "") + " 炸板率:" + today.pauseRatio.toFixed(1) + "%");
+  lines.push("=== ?????? ===");
+  lines.push("??: " + today.date + " " + today.dayOfWeek + (yesterday ? " ?:" + yesterday.date : ""));
+  lines.push("??: " + today.totalStocks + "?" + (yesterday ? " (?:" + yesterday.totalStocks + ")" : "") + " ???:" + today.pauseRatio.toFixed(1) + "%");
   const est = today.totalStocks / Math.max(0.01, 1 - today.pauseRatio / 100);
-  lines.push("触板(估):" + Math.round(est) + " 炸板(估):" + Math.round(est - today.totalStocks) + " 封板率:" + (100 - today.pauseRatio).toFixed(1) + "%");
+  lines.push("??(?):" + Math.round(est) + " ??(?):" + Math.round(est - today.totalStocks) + " ???:" + (100 - today.pauseRatio).toFixed(1) + "%");
 
   function sbn(d: RawApiDate, n: number) { return d.boards.flatMap((b) => b.stocks).filter((s) => s.continue_num === n); }
   if (yesterday) {
     const y1 = sbn(yesterday, 1), t2 = sbn(today, 2);
     const r12 = y1.length > 0 ? (t2.length / y1.length * 100) : 0;
-    lines.push("1进2:" + r12.toFixed(1) + "%(" + t2.length + "/" + y1.length + ")" + (r12 >= 25 ? "强" : r12 >= 15 ? "中" : "弱"));
+    lines.push("1?2:" + r12.toFixed(1) + "%(" + t2.length + "/" + y1.length + ")" + (r12 >= 25 ? "?" : r12 >= 15 ? "?" : "?"));
     const y2 = sbn(yesterday, 2), t3 = sbn(today, 3);
     const r23 = y2.length > 0 ? (t3.length / y2.length * 100) : 0;
-    lines.push("2进3:" + r23.toFixed(1) + "%(" + t3.length + "/" + y2.length + ")" + (r23 >= 30 ? "强" : r23 >= 20 ? "中" : "弱"));
+    lines.push("2?3:" + r23.toFixed(1) + "%(" + t3.length + "/" + y2.length + ")" + (r23 >= 30 ? "?" : r23 >= 20 ? "?" : "?"));
     const yHi = yesterday.boards.filter((b) => b.level >= 3).flatMap((b) => b.stocks);
     const tHi2 = today.boards.filter((b) => b.level >= 4).flatMap((b) => b.stocks);
     const hr = yHi.length > 0 ? (tHi2.length / yHi.length * 100) : 0;
-    lines.push("高位晋级:" + hr.toFixed(1) + "%(" + tHi2.length + "/" + yHi.length + ")");
+    lines.push("????:" + hr.toFixed(1) + "%(" + tHi2.length + "/" + yHi.length + ")");
   }
 
   const sorted = [...today.boards].sort((a, b) => b.level - a.level);
   for (const b of sorted) {
-    const d = b.stocks.map((s) => s.name + "(" + s.code.slice(0, 3) + ")[" + s.primary_theme + "] 换手" + s.turnover_rate.toFixed(1) + "% " + s.limit_up_type + " " + (s.reason_info || "")).join(" / ");
-    lines.push(b.level + "板(" + b.stocks.length + "只): " + d);
+    const d = b.stocks.map((s) => s.name + "(" + s.code.slice(0, 3) + ")[" + s.primary_theme + "] ??" + s.turnover_rate.toFixed(1) + "% " + s.limit_up_type + " " + (s.reason_info || "")).join(" / ");
+    lines.push(b.level + "?(" + b.stocks.length + "?): " + d);
   }
 
   const flatT = today.boards.flatMap((b) => b.stocks);
   const tm = new Map<string, { stocks: RawApiStock[] }>();
-  for (const s of flatT) { const t = s.primary_theme || s.industry || "其他"; const e = tm.get(t) || { stocks: [] }; e.stocks.push(s); tm.set(t, e); }
+  for (const s of flatT) { const t = s.primary_theme || s.industry || "??"; const e = tm.get(t) || { stocks: [] }; e.stocks.push(s); tm.set(t, e); }
   const st = [...tm.entries()].sort((a, b) => b[1].stocks.length - a[1].stocks.length);
-  lines.push("题材分布:");
+  lines.push("????:");
   for (const [theme, data] of st) {
     const c = data.stocks.length; const top = data.stocks[0]!;
-    lines.push("  " + theme + " " + (c >= 15 ? "[强]" : c >= 5 ? "[中]" : "[弱]") + " " + c + "只 龙头:" + top.name + "(" + top.continue_num + "板)" + (c > 1 ? " 跟风:" + data.stocks.slice(1, 4).map((s) => s.name).join(",") : ""));
+    lines.push("  " + theme + " " + (c >= 15 ? "[?]" : c >= 5 ? "[?]" : "[?]") + " " + c + "? ??:" + top.name + "(" + top.continue_num + "?)" + (c > 1 ? " ??:" + data.stocks.slice(1, 4).map((s) => s.name).join(",") : ""));
   }
 
-  lines.push(""); lines.push("=== 情绪周期 ===");
+  lines.push(""); lines.push("=== ???? ===");
   const dc = (d: RawApiDate | null, fn: (d: RawApiDate) => string) => d ? fn(d) : "-";
-  lines.push("指标 " + dc(dayBefore, (d) => d.date) + " / " + dc(yesterday, (d) => d.date) + " / " + today.date);
-  lines.push("涨停 " + dc(dayBefore, (d) => String(d.totalStocks)) + " / " + dc(yesterday, (d) => String(d.totalStocks)) + " / " + today.totalStocks);
-  lines.push("炸板率 " + dc(dayBefore, (d) => d.pauseRatio.toFixed(1) + "%") + " / " + dc(yesterday, (d) => d.pauseRatio.toFixed(1) + "%") + " / " + today.pauseRatio.toFixed(1) + "%");
-  lines.push("高度 " + dc(dayBefore, (d) => String(d.boards[0]?.level ?? 0)) + " / " + dc(yesterday, (d) => String(d.boards[0]?.level ?? 0)) + " / " + String(sorted[0]?.level ?? 0));
+  lines.push("?? " + dc(dayBefore, (d) => d.date) + " / " + dc(yesterday, (d) => d.date) + " / " + today.date);
+  lines.push("?? " + dc(dayBefore, (d) => String(d.totalStocks)) + " / " + dc(yesterday, (d) => String(d.totalStocks)) + " / " + today.totalStocks);
+  lines.push("??? " + dc(dayBefore, (d) => d.pauseRatio.toFixed(1) + "%") + " / " + dc(yesterday, (d) => d.pauseRatio.toFixed(1) + "%") + " / " + today.pauseRatio.toFixed(1) + "%");
+  lines.push("?? " + dc(dayBefore, (d) => String(d.boards[0]?.level ?? 0)) + " / " + dc(yesterday, (d) => String(d.boards[0]?.level ?? 0)) + " / " + String(sorted[0]?.level ?? 0));
 
   const total = today.totalStocks, ml = sorted[0]?.level ?? 0;
-  let stage = "未分类";
-  if (total < 30 && today.pauseRatio > 40) stage = "冰点期";
-  else if (total >= 30 && total < 50 && yesterday && total > yesterday.totalStocks && today.pauseRatio < yesterday.pauseRatio) stage = "弱修复";
-  else if (total >= 50 && total < 80 && ml >= 4) stage = "启动期";
-  else if (total >= 80 && total < 100) stage = "发酵期";
-  else if (total >= 100 && ml >= 7) stage = "高潮期";
-  else if (yesterday && total < yesterday.totalStocks && today.pauseRatio > yesterday.pauseRatio) stage = "分歧期";
-  else if (yesterday && today.pauseRatio > 35) stage = "退潮期";
-  lines.push("阶段: " + stage);
+  let stage = "???";
+  if (total < 30 && today.pauseRatio > 40) stage = "???";
+  else if (total >= 30 && total < 50 && yesterday && total > yesterday.totalStocks && today.pauseRatio < yesterday.pauseRatio) stage = "???";
+  else if (total >= 50 && total < 80 && ml >= 4) stage = "???";
+  else if (total >= 80 && total < 100) stage = "???";
+  else if (total >= 100 && ml >= 7) stage = "???";
+  else if (yesterday && total < yesterday.totalStocks && today.pauseRatio > yesterday.pauseRatio) stage = "???";
+  else if (yesterday && today.pauseRatio > 35) stage = "???";
+  lines.push("??: " + stage);
 
   const trend = analyzeTrends(dates);
   if (trend) { lines.push(""); lines.push(trend); }
-
-  // === ?????? (?MCP??) ===
-  if (today && yesterday) {
-    const yst = yesterday.boards.flatMap(b => b.stocks);
-    const tdy = today.boards.flatMap(b => b.stocks);
-
-    // ?????? = ??? + ???
-    const pauseCount = Math.round(today.totalStocks * today.pauseRatio / (100 - today.pauseRatio));
-    const touchCount = today.totalStocks + pauseCount;
-    const sealRate = touchCount > 0 ? (today.totalStocks / touchCount * 100) : 0;
-
-    // ??? (???)
-    const y1Count = yst.filter(s => s.continue_num === 1).length;
-    const y2Count = yst.filter(s => s.continue_num === 2).length;
-    const t2Count = tdy.filter(s => s.continue_num === 2).length;
-    const t3Count = tdy.filter(s => s.continue_num === 3).length;
-    const r12 = y1Count > 0 ? (t2Count / y1Count * 100) : 0;
-    const r23 = y2Count > 0 ? (t3Count / y2Count * 100) : 0;
-
-    lines.push("");
-    lines.push("=== ?????? ===");
-    lines.push("???: " + touchCount + " (??" + today.totalStocks + " + ??" + pauseCount + ")");
-    lines.push("???: " + sealRate.toFixed(1) + "%");
-    lines.push("1?2: " + r12.toFixed(1) + "% (" + t2Count + "/" + y1Count + ")");
-    lines.push("2?3: " + r23.toFixed(1) + "% (" + t3Count + "/" + y2Count + ")");
-
-  // === MCP???? (???/??/???) ===
-  const _loser = _loserCache;
-  const _ld = _limitDownCache;
-  if (_loser) lines.push(""); lines.push("=== ???(??>10%) ===\n" + _loser);
-  if (_ld) lines.push(""); lines.push("=== ??? ===\n" + _ld);
-  // ???: ???? vs ?????? (?????????????????????)
-  if (yesterday && _ld) {
-    const yestStocks = yesterday.boards.flatMap(b => b.stocks);
-    lines.push("?????: ????" + yestStocks.length + "????????????");
-  }
-  }
 
   return parts.join("\n\n");
 }
