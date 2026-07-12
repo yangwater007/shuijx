@@ -71,6 +71,22 @@ def _last_trade_date():
     except: pass
     return None
 
+def _is_trading_day(dt=None):
+    """Check if given date (or today) is a trading day. Weekend = False."""
+    if dt is None:
+        dt = datetime.now()
+    elif isinstance(dt, str):
+        dt = datetime.strptime(dt[:10], "%Y-%m-%d")
+    # Monday=0, Sunday=6 in Python weekday()
+    return dt.weekday() < 5
+
+def _get_effective_date():
+    """Get effective data date: today if trading day, else last trading day."""
+    today = datetime.now()
+    if _is_trading_day(today) and today.hour >= 9:
+        return today.strftime("%Y-%m-%d")  # trading hours
+    return _last_trade_date()  # weekend or pre-market => last trading day
+
 def _db_ranking(metric="change_pct", direction="DESC", limit=20):
     """Generic DB ranking query"""
     dt = _last_trade_date()
@@ -146,7 +162,7 @@ def _get(key):
     _cache.pop(key, None); return None
 def _set(key, data, ttl): _cache[key] = (time.time() + ttl, data)
 
-CACHE = dict(KLINE=300, MINUTE=30, QUOTE=10, SECTOR=120, CONCEPT=300, LIMIT=60, FUND=120, VALUATION=1800, DRAGON=600)
+CACHE = dict(KLINE=300, MINUTE=30, QUOTE=10, SECTOR=120, CONCEPT=300, LIMIT=60, FUND=120, VALUATION=1800, DRAGON=600, REVIEW=900)
 
 # ─── HTTP工具 ──────────────────────────────
 _SESSION = requests.Session()
@@ -776,15 +792,15 @@ def limit_up():
     if cached: return jsonify(cached)
     
     stocks = []
-    # Prefer synced data from daily_limit_up
+    # Prefer synced data from daily_limit_up (works on non-trading days)
     if HAS_PG:
-        dt = _last_trade_date()
+        dt = _get_effective_date()
         if dt:
             rows = _pg_exec("SELECT dlu.code, dlu.continue_num, dlu.limit_type, dlu.turnover_rate, dlu.reason_type, dlu.reason_info, dlu.change_pct, dlu.amount, bs.name, bs.industry, COALESCE(dlu.reason_info, string_agg(DISTINCT bc.concept_name, ';' ORDER BY bc.concept_name)) as fallback_reason FROM daily_limit_up dlu LEFT JOIN base_stocks bs ON dlu.code = bs.code LEFT JOIN base_stock_concepts bsc ON dlu.code = bsc.code LEFT JOIN base_concepts bc ON bsc.concept_id = bc.concept_id WHERE dlu.trade_date=%s GROUP BY dlu.code, dlu.continue_num, dlu.limit_type, dlu.turnover_rate, dlu.reason_type, dlu.reason_info, dlu.change_pct, dlu.amount, bs.name, bs.industry ORDER BY dlu.continue_num DESC, dlu.change_pct DESC LIMIT 50", (dt,))
             if rows and len(rows) > 0:
                 stocks = [{"code": r["code"], "name": r.get("name") or r["code"], "continueNum": r["continue_num"], "limitType": r["limit_type"], "changePercent": float(r["change_pct"] or 0), "amount": float(r["amount"] or 0), "reasonType": r["reason_type"] or "", "reasonInfo": r.get("reason_info") or r.get("fallback_reason") or "", "industry": r.get("industry") or ""} for r in rows]
                 _set(ck, stocks, CACHE['LIMIT'])
-                return jsonify({'data': stocks, 'source': 'synced', 'date': dt})
+                return jsonify({'data': stocks, 'source': 'synced', 'tradeDate': dt, 'isTradingDay': _is_trading_day()})
     if HAS_MOOTDX:
         try:
             sh = _dx.stocks(market=1)

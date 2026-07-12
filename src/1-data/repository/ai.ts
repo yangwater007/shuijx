@@ -303,13 +303,14 @@ export async function fetchBoardLadderForContext(): Promise<string> {
   if (overviewResult.status === "fulfilled" && overviewResult.value) parts.push(overviewResult.value);
 
   // pre-fetch all core data via Bridge (no MCP, no AI tool-calling needed)
-  const [loserData, limitDownData, bigloserData, premiumData, conceptData, flowData] = await Promise.all([
+  const [loserData, limitDownData, bigloserData, premiumData, conceptData, flowData, historyData] = await Promise.all([
     fetchFromBridgeTool("stock_rank", { type: "losers", limit: 20 }),
     fetchFromBridgeTool("limit_down", {}),
     fetchFromBridgeTool("limit_bigloser", {}),
     fetchFromBridgeTool("limit_yesterday_premium", {}),
     fetchFromBridgeTool("concept_ranking", {}),
     fetchFromBridgeTool("capital_flow", {}),
+    (async () => { try { const r = await fetch(getBridgeUrl() + "/review/history?days=20"); if (!r.ok) return null; const j = await r.json(); return "=== 20????? ===\n" + (j.days || []).map((d: {date:string;upCount:number;downCount:number;avgChange:number}) => d.date + " ??" + d.upCount + " ??" + d.downCount + " ??" + d.avgChange + "%").join("\n"); } catch { return null; } })(),
   ]);
 
   // inject pre-fetched data into context
@@ -319,6 +320,7 @@ export async function fetchBoardLadderForContext(): Promise<string> {
   if (premiumData && !premiumData.includes("unavailable")) parts.push("=== ????? ===\n" + premiumData.slice(0, 400));
   if (conceptData && !conceptData.includes("unavailable")) parts.push("=== ???? ===\n" + conceptData.slice(0, 600));
   if (flowData && !flowData.includes("unavailable")) parts.push("=== ???? ===\n" + flowData.slice(0, 400));
+  if (historyData && typeof historyData === "string") parts.push(historyData);
 
   const json = ladderResult.status === "fulfilled" ? ladderResult.value : null;
   if (!json?.dates?.length) return parts.length > 0 ? parts.join("\n\n") : "";
