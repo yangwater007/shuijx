@@ -2,9 +2,9 @@
  * MCP Repository — Wudao Data MCP 工具调用客户端
  * 协议: JSON-RPC 2.0 over HTTP POST
  */
-import { WUDAO_API_KEY } from "@infra/config";
+import { WUDAO_API_KEY, getMCPUrl } from "@infra/config";
 
-const MCP_URL = (() => { try { const b = localStorage.getItem("mcpBridgeUrl"); if (b) return b + "/mcp"; } catch {} try { return (window as any).__MCP_URL__ || "http://localhost:8766/mcp"; } catch { return "http://localhost:8766/mcp"; } })();
+const MCP_URL = (() => { try { return ((window as any).__MCP_URL__) || "http://localhost:8766/mcp"; } catch { return "http://localhost:8766/mcp"; } })();
 
 /** 调用单个 MCP 工具 */
 // ????? + ??????
@@ -41,7 +41,8 @@ export async function callMCPTool(name: string, args: Record<string, unknown> = 
   }
 
   try {
-    const resp = await fetch(MCP_URL, {
+    const mcpUrl = getMCPUrl();
+  const resp = await fetch(mcpUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + WUDAO_API_KEY },
       body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "tools/call", params: { name, arguments: args } }),

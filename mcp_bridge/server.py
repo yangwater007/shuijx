@@ -97,12 +97,159 @@ def health():
 
 # ??? Startup ???
 
+# ??? REST endpoints (for frontend charts ? delegating to Bridge functions) ???
+
+@app.route("/kline")
+def rest_kline():
+    code = request.args.get("code", "").strip()
+    count = min(int(request.args.get("count", 60)), 365)
+    if len(code) != 6: return jsonify({"error": "invalid code"}), 400
+    from ths_bridge_v3 import _fetch_kline_source
+    data, src = _fetch_kline_source(code, count)
+    return jsonify({"code": code, "count": count, "source": src, "data": data})
+
+@app.route("/minute")
+def rest_minute():
+    code = request.args.get("code", "").strip()
+    if len(code) != 6: return jsonify({"error": "invalid code"}), 400
+    from ths_bridge_v3 import _fetch_minute_source
+    data, src = _fetch_minute_source(code)
+    return jsonify({"code": code, "source": src, "data": data})
+
+@app.route("/market/overview")
+def rest_market_overview():
+    from ths_bridge_v3 import _market_overview, _get_effective_date, _is_trading_day
+    data = _market_overview()
+    data["tradeDate"] = _get_effective_date()
+    data["isTradingDay"] = _is_trading_day()
+    return jsonify(data)
+
+@app.route("/sector/ranking")
+def rest_sector_ranking():
+    from ths_bridge_v3 import _get_effective_date, _pg_exec, HAS_PG
+    dt = _get_effective_date()
+    if HAS_PG and dt:
+        rows = _pg_exec(
+            "SELECT bs.industry as name, round(avg(dk.change_pct)::numeric,2) as change_pct, count(*) as stock_cnt "
+            "FROM daily_kline dk LEFT JOIN base_stocks bs ON dk.code=bs.code "
+            "WHERE dk.trade_date=%s AND bs.industry IS NOT NULL AND bs.industry!='' "
+            "GROUP BY bs.industry ORDER BY change_pct DESC LIMIT 30", (dt,))
+        if rows:
+            return jsonify({"data": [dict(r) for r in rows], "tradeDate": dt, "source": "database"})
+    return jsonify({"data": [], "source": "unavailable"})
+
+@app.route("/concept/ranking")
+def rest_concept_ranking():
+    from ths_bridge_v3 import _get_effective_date, _pg_exec, HAS_PG
+    dt = _get_effective_date()
+    if HAS_PG and dt:
+        rows = _pg_exec(
+            "SELECT bc.concept_name as name, round(avg(dk.change_pct)::numeric,2) as change_pct, count(*) as stock_cnt "
+            "FROM daily_kline dk LEFT JOIN base_stock_concepts bsc ON dk.code=bsc.code "
+            "LEFT JOIN base_concepts bc ON bsc.concept_id=bc.concept_id "
+            "WHERE dk.trade_date=%s AND bc.concept_name IS NOT NULL "
+            "GROUP BY bc.concept_name ORDER BY change_pct DESC LIMIT 30", (dt,))
+        if rows:
+            return jsonify({"data": [dict(r) for r in rows], "tradeDate": dt, "source": "database"})
+    return jsonify({"data": [], "source": "unavailable"})
+
+@app.route("/fund/flow")
+def rest_fund_flow():
+    from ths_bridge_v3 import _em_fund_flow_market, _get_effective_date
+    flow = _em_fund_flow_market()
+    if flow: flow["tradeDate"] = _get_effective_date()
+    return jsonify(flow or {"mainNetInflow": 0, "source": "unavailable"})
+
+@app.route("/limit/stats")
+def rest_limit_stats():
+    from ths_bridge_v3 import _get_effective_date, _pg_exec, HAS_PG, _is_trading_day
+    dt = _get_effective_date()
+    if HAS_PG and dt:
+        rows = _pg_exec(
+            "SELECT count(*) FILTER (WHERE change_pct>=9.8) as up, "
+            "count(*) FILTER (WHERE change_pct<=-9.8) as down, "
+            "count(*) FILTER (WHERE change_pct>=5 AND change_pct<9.8) as broken "
+            "FROM daily_kline WHERE trade_date=%s", (dt,))
+        if rows:
+            return jsonify({
+                "up": rows[0]["up"] or 0, "down": rows[0]["down"] or 0,
+                "broken": rows[0]["broken"] or 0, "sealRate": 0,
+                "tradeDate": dt, "isTradingDay": _is_trading_day(), "source": "database"
+            })
+    return jsonify({"up":0,"down":0,"broken":0,"sealRate":0,"source":"unavailable"})
+
+@app.route("/limit/up")
+def rest_limit_up():
+    from ths_bridge_v3 import _get_effective_date, _pg_exec, HAS_PG, _is_trading_day
+    dt = _get_effective_date()
+    if HAS_PG and dt:
+        rows = _pg_exec(
+            "SELECT dlu.code, bs.name, dlu.continue_num, dlu.change_pct, dlu.turnover_rate, "
+            "dlu.reason_type, dlu.reason_info, bs.industry "
+            "FROM daily_limit_up dlu LEFT JOIN base_stocks bs ON dlu.code=bs.code "
+            "WHERE dlu.trade_date=%s ORDER BY dlu.continue_num DESC LIMIT 50", (dt,))
+        if rows:
+            return jsonify({
+                "data": [{k: (float(v) if k in ("change_pct","turnover_rate") else v) for k,v in dict(r).items()} for r in rows],
+                "tradeDate": dt, "isTradingDay": _is_trading_day(), "source": "database"
+            })
+    return jsonify({"data":[],"source":"unavailable"})
+
+@app.route("/limit/bigloser")
+def rest_limit_bigloser():
+    from ths_bridge_v3 import _get_effective_date, _last_trade_date, _pg_exec, HAS_PG
+    dt = _get_effective_date()
+    result = {"bigLosers": [], "nuclearButtons": [], "tradeDate": dt}
+    if HAS_PG and dt:
+        bl = _pg_exec("SELECT dk.code, bs.name, dk.change_pct FROM daily_kline dk LEFT JOIN base_stocks bs ON dk.code=bs.code WHERE dk.trade_date=%s AND dk.change_pct<=-10", (dt,))
+        if bl: result["bigLosers"] = [{"code":r["code"],"name":r.get("name",""),"changePercent":float(r["change_pct"] or 0)} for r in bl]
+        yest = _last_trade_date()
+        if yest and yest != dt:
+            nb = _pg_exec("SELECT dk.code, bs.name, dk.change_pct FROM daily_kline dk LEFT JOIN base_stocks bs ON dk.code=bs.code WHERE dk.trade_date=%s AND dk.change_pct<=-9.8 AND dk.code IN (SELECT code FROM daily_limit_up WHERE trade_date=%s)", (dt, yest))
+            if nb: result["nuclearButtons"] = [{"code":r["code"],"name":r.get("name",""),"changePercent":float(r["change_pct"] or 0)} for r in nb]
+    return jsonify(result)
+
+@app.route("/limit/yesterday-premium")
+def rest_yesterday_premium():
+    from ths_bridge_v3 import _get_effective_date, _pg_exec, HAS_PG
+    dt = _get_effective_date()
+    result = {"avgReturn": 0, "count": 0, "date": dt}
+    if HAS_PG and dt:
+        ye = _pg_exec("SELECT max(trade_date) FROM daily_kline WHERE trade_date<%s", (dt,))
+        if ye:
+            yest = str(ye[0]["max"])
+            rows = _pg_exec("SELECT dk.change_pct FROM daily_kline dk WHERE dk.trade_date=%s AND dk.code IN (SELECT code FROM daily_limit_up WHERE trade_date=%s)", (dt, yest))
+            if rows:
+                rets = [float(r["change_pct"] or 0) for r in rows]
+                result["avgReturn"] = round(sum(rets)/len(rets), 2) if rets else 0
+                result["count"] = len(rets)
+    return jsonify(result)
+
+@app.route("/review/history")
+def rest_review_history():
+    from ths_bridge_v3 import _pg_exec, HAS_PG
+    days = min(int(request.args.get("days", 20)), 60)
+    result = {"days": []}
+    if HAS_PG:
+        rows = _pg_exec(
+            "SELECT trade_date, count(*) FILTER (WHERE change_pct>=9.8) as up, "
+            "count(*) FILTER (WHERE change_pct<=-9.8) as down, "
+            "round(avg(change_pct)::numeric,2) as avg_pct, sum(amount) as amt "
+            "FROM daily_kline WHERE trade_date>=(SELECT max(trade_date) FROM daily_kline)-INTERVAL '%s days' "
+            "GROUP BY trade_date ORDER BY trade_date DESC LIMIT %s", (days*2, days))
+        if rows:
+            result["days"] = [{"date": str(r["trade_date"])[:10], "upCount": int(r["up"] or 0),
+                "downCount": int(r["down"] or 0), "avgChange": float(r["avg_pct"] or 0),
+                "totalAmount": float(r["amt"] or 0)} for r in rows]
+    return jsonify(result)
+
+
 if __name__ == "__main__":
     PORT = 8766
     print(f"""
   MCP Bridge v1.0
   ===============
-  Endpoint: http://localhost:{PORT}/mcp
+  REST+ MCP: http://localhost:{PORT}/mcp
   Health:   http://localhost:{PORT}/health
   Tools:    {len(ALL_TOOLS)} available
     """)

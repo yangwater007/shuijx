@@ -46,6 +46,28 @@ export function getBridgeUrl(): string {
 }
 
 /** 获取当前桥地址 */
+/**
+ * ???? MCP Bridge ?? (DeepSeek function calling ?)
+ * ??: localStorage.mcpBridgeUrl ? URL?? ?mcp=xxx ? Bridge URL/mcp ? localhost:8766
+ */
+export function getMCPUrl(): string {
+  try {
+    const stored = localStorage.getItem("mcpBridgeUrl");
+    if (stored) return stored;
+  } catch {}
+  try {
+    const params = new URLSearchParams(window.location.hash.split("?")[1] || "");
+    const mcpParam = params.get("mcp");
+    if (mcpParam) return mcpParam;
+  } catch {}
+  // Fallback: use bridge URL + /mcp if it looks like a tunnel
+  const bridge = getBridgeUrl();
+  if (bridge && !bridge.includes("localhost") && !bridge.includes("127.0.0.1")) {
+    return bridge + "/mcp";
+  }
+  return "http://localhost:8766/mcp";
+}
+
 export const LOCAL_BRIDGE_URL = typeof window !== "undefined"
   ? getBridgeUrl()
   : "http://localhost:8765";

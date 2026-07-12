@@ -163,12 +163,19 @@ export async function executeToolCall(
 ): Promise<string> {
   try {
     const args = argsStr ? (JSON.parse(argsStr) as Record<string, unknown>) : {};
-    // 1. Bridge (port 8765) ? fast, free, no limits
+    // 1. Local MCP (port 8766) ? PG-backed, 100% accurate, no weekend issues
+    try {
+      const mcpResult = await callMCPTool(name, args);
+      if (mcpResult && !mcpResult.startsWith("[") && !mcpResult.includes("unavailable")) {
+        return mcpResult;
+      }
+    } catch { /* MCP unreachable, try Bridge */ }
+
+    // 2. Bridge REST ? fallback for direct API access
     const bridgeResult = await fetchFromBridgeTool(name, args);
     if (bridgeResult !== null) return bridgeResult;
 
-    // 2. Local MCP (port 8766) ? structured, AI respects tool results
-    return await callMCPTool(name, args);
+    return "[data] no data source available for " + name;
   } catch (err) {
     return "[tool call failed] " + (err instanceof Error ? err.message : String(err));
   }
