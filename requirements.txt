@@ -1,0 +1,4 @@
+﻿flask>=3.0
+flask-cors>=4.0
+mootdx>=1.0
+requests>=2.31

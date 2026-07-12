@@ -1,10 +1,11 @@
-/**
+﻿/**
  * AI Repository — DeepSeek 对话 + MCP工具调用 + 市场上下文
  * 数据源: quicktiny ladder + 同花顺 + MCP(Wudao Data)
  */
 import { DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL } from "@infra/config";
 import type { NewsItem, KaipanlaItem } from "@infra/types/ai";
 import { callMCPTool, MCP_FUNCTIONS, type FunctionDef } from "@data/repository/mcp";
+import { fetchFromBridgeTool } from "@data/repository/bridge";
 
 // ─── 流式回调类型 ──────────────────────────────
 
@@ -162,9 +163,14 @@ export async function executeToolCall(
 ): Promise<string> {
   try {
     const args = argsStr ? (JSON.parse(argsStr) as Record<string, unknown>) : {};
+    // 1. 优先走本地桥(免费, 无次数限制)
+    const bridgeResult = await fetchFromBridgeTool(name, args);
+    if (bridgeResult !== null) return bridgeResult;
+
+    // 2. 桥不可用 → 回退 MCP
     return await callMCPTool(name, args);
   } catch (err) {
-    return "工具调用失败: " + (err instanceof Error ? err.message : String(err));
+    return "[工具调用失败] " + (err instanceof Error ? err.message : String(err));
   }
 }
 
@@ -297,8 +303,8 @@ export async function fetchBoardLadderForContext(): Promise<string> {
   if (overviewResult.status === "fulfilled" && overviewResult.value) parts.push(overviewResult.value);
   
   // === ??? & ?? (2?MCP, ???) ===
-  const loserPromise = callMCPTool("stock_rank", { type: "losers", limit: 20 } as Record<string, unknown>).catch(() => "");
-  const limitDownPromise = callMCPTool("limit_down").catch(() => "");
+  const loserPromise = fetchFromBridgeTool("stock_rank", { type: "losers", limit: 20 }).then(r => r ?? "", () => callMCPTool("stock_rank", { type: "losers", limit: 20 } as Record<string, unknown>).catch(() => ""));
+  const limitDownPromise = fetchFromBridgeTool("limit_down", {}).then(r => r ?? "", () => callMCPTool("limit_down").catch(() => ""));
   
   
 // ?????

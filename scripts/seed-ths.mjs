@@ -17,10 +17,10 @@ const { Pool } = pg;
 
 const POOL = new Pool({
   host: "localhost",
-  port: 5433,
+  port: 5432,
   database: "quicktiny",
-  user: "postgres",
-  password: "postgres",
+  user: "quicktiny",
+  password: "quicktiny123",
 });
 
 const THS_KL_BASE = "https://d.10jqka.com.cn/v2/line";
@@ -86,8 +86,8 @@ async function seedKLine(code, name) {
   try {
     // upsert stock
     await client.query(
-      `INSERT INTO stocks (code, name, market) VALUES ($1,$2,$3)
-       ON CONFLICT (code) DO UPDATE SET name=$2, updated_at=now()`,
+      `INSERT INTO base_stocks (code, name, market) VALUES ($1,$2,$3)
+       ON CONFLICT (code) DO UPDATE SET name=EXCLUDED.name=$2, updated_at=now()`,
       [code, name, code.startsWith("6") ? "SH" : "SZ"]
     );
 
@@ -97,7 +97,7 @@ async function seedKLine(code, name) {
     ).join(",");
 
     await client.query(
-      `INSERT INTO kline_daily (code, trade_date, open, high, low, close, volume, amount)
+      `INSERT INTO daily_kline (code, trade_date, open, high, low, close, volume, amount)
        VALUES ${values}
        ON CONFLICT (code, trade_date) DO NOTHING`,
       [code]
