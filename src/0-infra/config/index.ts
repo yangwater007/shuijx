@@ -9,30 +9,22 @@ export const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
 export const DEEPSEEK_CHAT_MODEL = "deepseek-chat";
 
 /** 东方财富 K线 API 路径（dev: Vite代理, prod: 需服务端代理） */
-export const EASTMONEY_KL_API = import.meta.env.DEV
-  ? "/api/em/kline"
-  : "https://push2his.eastmoney.com/api/qt/stock/kline/get";
-
 /** 东方财富 分时 API 路径 */
-export const EASTMONEY_TS_API = import.meta.env.DEV
-  ? "/api/em/trends"
-  : "https://push2.eastmoney.com/api/qt/stock/trends2/get";
-
 /** 东方财富 CORS 安全 Referer */
-export const EASTMONEY_REFERER = "https://quote.eastmoney.com/";
-
 /** 同花顺 K线 API 基础路径 */
+// ???? K? API (HTTPS + CORS *, ????????/??)
+export const TENCENT_KL_API = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get";
+// ???? ?? API
+export const TENCENT_MINUTE_API = "https://ifzq.gtimg.cn/appstock/app/minute/query";
+// ???? ???? API
+export const TENCENT_QUOTE_API = "https://qt.gtimg.cn/q";
+
 export const TONGHUASHUN_KL_BASE = "https://d.10jqka.com.cn/v2/line";
 
 /** 同花顺 分时 API 基础路径 */
 export const TONGHUASHUN_TS_BASE = "https://d.10jqka.com.cn/v2/time";
 
 /** 同花顺 K线周期映射 */
-export const TONGHUASHUN_KL_PERIOD: Record<string, string> = {
-  daily: "01",
-  weekly: "11",
-  monthly: "02",
-};
 
 /** 股票涨跌颜色 */
 export const STOCK_UP = "#ef4444";
