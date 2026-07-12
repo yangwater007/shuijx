@@ -1,10 +1,14 @@
 ﻿/**
  * Bridge Repository — 本地数据桥客户端
  * 映射 MCP 工具名 → 桥 HTTP 端点，桥不可用时回退 MCP
+ * 支持动态桥地址：URL参数 ?bridge=xxx 或 localStorage.bridgeUrl
  */
-import { LOCAL_BRIDGE_URL } from "@infra/config";
+import { getBridgeUrl } from "@infra/config";
 
-const BRIDGE_BASE = LOCAL_BRIDGE_URL;
+/** 获取当前桥地址（运行时动态） */
+function getBase(): string {
+  return getBridgeUrl();
+}
 
 /** 工具名 → 桥端点映射表 */
 const TOOL_TO_BRIDGE: Record<string, { path: string; paramMap: (args: Record<string, unknown>) => string }> = {
@@ -38,10 +42,10 @@ const TOOL_TO_BRIDGE: Record<string, { path: string; paramMap: (args: Record<str
   },
   capital_flow: {
     path: "/fund/flow",
-    paramMap: (args) => args.type === "sector" ? "" : "", // sector flow uses /fund/sector
+    paramMap: () => "",
   },
   stock_rank: {
-    path: "/limit/up", // 涨幅榜用涨停池近似
+    path: "/limit/up",
     paramMap: () => "",
   },
   valuation_snapshot: {
@@ -53,23 +57,23 @@ const TOOL_TO_BRIDGE: Record<string, { path: string; paramMap: (args: Record<str
     paramMap: () => "",
   },
   broken_limit_up: {
-    path: "/limit/stats", // 炸板统计在stats里
+    path: "/limit/stats",
     paramMap: () => "",
   },
   limit_down: {
-    path: "/limit/stats", // 跌停统计在stats里
+    path: "/limit/stats",
     paramMap: () => "",
   },
   stock_screener: {
-    path: "",  // 桥不支持
+    path: "",
     paramMap: () => "",
   },
   stock_search: {
-    path: "",  // 桥不支持
+    path: "",
     paramMap: () => "",
   },
   research_reports: {
-    path: "",  // 桥不支持
+    path: "",
     paramMap: () => "",
   },
 };
@@ -166,32 +170,47 @@ function formatBridgeResult(name: string, data: unknown): string {
   }
 }
 
+/** ngrok 请求头（绕过浏览器警告页） */
+function getBridgeHeaders(): Record<string, string> {
+  const base = getBase();
+  if (base.includes("ngrok")) {
+    return { "ngrok-skip-browser-warning": "1" };
+  }
+  return {};
+}
+
 /**
  * 尝试通过本地桥获取数据
  * @returns 格式化文本，或 null 表示桥不可用
  */
 export async function fetchFromBridgeTool(name: string, args: Record<string, unknown>): Promise<string | null> {
   const mapping = TOOL_TO_BRIDGE[name];
-  if (!mapping || !mapping.path) return null; // 桥不支持此工具
+  if (!mapping || !mapping.path) return null;
   
   try {
     const query = mapping.paramMap(args);
-    const url = `${BRIDGE_BASE}${mapping.path}${query ? "?" + query : ""}`;
+    const url = `${getBase()}${mapping.path}${query ? "?" + query : ""}`;
     
-    const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    const resp = await fetch(url, {
+      signal: AbortSignal.timeout(8000),
+      headers: getBridgeHeaders(),
+    });
     if (!resp.ok) return null;
     
     const json = await resp.json() as unknown;
     return formatBridgeResult(name, json);
   } catch {
-    return null; // 桥不可用，静默回退
+    return null;
   }
 }
 
 /** 桥可用性检测 */
 export async function isBridgeAvailable(): Promise<boolean> {
   try {
-    const resp = await fetch(`${BRIDGE_BASE}/health`, { signal: AbortSignal.timeout(3000) });
+    const resp = await fetch(`${getBase()}/health`, {
+      signal: AbortSignal.timeout(3000),
+      headers: getBridgeHeaders(),
+    });
     if (!resp.ok) return false;
     const json = await resp.json() as { status: string };
     return json.status === "ok";

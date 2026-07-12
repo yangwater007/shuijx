@@ -1,12 +1,10 @@
 ﻿/**
- * useCapitalFlow — 资金流向数据 Hook (v2 — 东财push2delay真实数据)
+ * useCapitalFlow — 资金流向数据 Hook (v2 东财push2delay真实数据)
  */
-
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { LOCAL_BRIDGE_URL } from "@infra/config";
+import { getBridgeUrl } from "@infra/config";
 import type { SectorFlowItem } from "@ui/components/charts/ECharts/configs/fundflow.config";
 
-/** 大盘资金概览 */
 interface FundOverview {
   mainNetInflow: number;
   superLargeInflow: number;
@@ -18,27 +16,24 @@ interface FundOverview {
   source: string;
 }
 
-/** 桑基图节点 */
 interface SankeyNodeItem {
   name: string;
   itemStyle: { color: string };
 }
 
-/** 桑基图边 */
 interface SankeyLinkItem {
   source: string;
   target: string;
   value: number;
 }
 
-/** 排序字段 */
 type SortField = "changePercent" | "stockCnt" | "mainInflow";
 
 interface UseCapitalFlowResult {
   overview: FundOverview | null;
   sectors: SectorFlowItem[];
-  stockFlows: SectorFlowItem[];      // 个股资金流
-  conceptFlows: SectorFlowItem[];    // 概念板块资金流
+  stockFlows: SectorFlowItem[];
+  conceptFlows: SectorFlowItem[];
   sankeyNodes: SankeyNodeItem[];
   sankeyLinks: SankeyLinkItem[];
   loading: boolean;
@@ -48,20 +43,39 @@ interface UseCapitalFlowResult {
   refresh: () => void;
 }
 
-const BRIDGE = LOCAL_BRIDGE_URL;
+function bridgeFetch(path: string): Promise<unknown> {
+  const base = getBridgeUrl();
+  const headers: Record<string, string> = {};
+  if (base.includes("ngrok")) {
+    headers["ngrok-skip-browser-warning"] = "1";
+  }
+  return fetch(base + path, { signal: AbortSignal.timeout(10000), headers })
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+}
 
-/** 大类配色 */
 const CAT_COLORS: Record<string, string> = {
   "航天军工": "#ef4444", "军工": "#ef4444",
-  "央企国企": "#f97316", "国企改革": "#f97316",
   "科技": "#3b82f6", "芯片": "#3b82f6", "AI": "#3b82f6",
-  "医药": "#22c55e", "医药消费": "#22c55e",
+  "医药": "#22c55e",
   "智造": "#8b5cf6", "机器人": "#8b5cf6",
-  "周期": "#f59e0b", "化工": "#f59e0b", "有色": "#f59e0b",
+  "周期": "#f59e0b", "化工": "#f59e0b",
   "新能源": "#06b6d4", "光伏": "#06b6d4",
-  "金融地产": "#ec4899", "券商": "#ec4899",
-  "消费": "#14b8a6", "基建": "#6366f1",
-  "汽车": "#a855f7", "通信": "#e11d48",
+  "金融": "#ec4899",
+  "央企国企": "#f97316",
+  "汽车": "#a855f7", "消费": "#14b8a6",
+};
+
+const KEYWORDS: Record<string, string> = {
+  "航天": "航天军工", "军工": "航天军工", "卫星": "航天军工", "无人机": "航天军工", "低空": "航天军工",
+  "芯片": "科技", "AI": "科技", "算力": "科技", "DeepSeek": "科技", "半导体": "科技",
+  "医药": "医药", "医疗": "医药", "药": "医药",
+  "机器人": "智造", "制造": "智造",
+  "化工": "周期", "有色": "周期",
+  "光伏": "新能源", "锂电": "新能源", "储能": "新能源",
+  "国企": "央企国企", "央企": "央企国企",
+  "消费": "消费", "汽车": "汽车",
+  "券商": "金融", "金融": "金融",
 };
 
 export default function useCapitalFlow(): UseCapitalFlowResult {
@@ -78,53 +92,51 @@ export default function useCapitalFlow(): UseCapitalFlowResult {
     setError(null);
     try {
       const [fundResp, sectorResp, stockResp, conceptResp] = await Promise.all([
-        fetch(BRIDGE + "/fund/flow", { signal: AbortSignal.timeout(10000) }).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(BRIDGE + "/fund/sector", { signal: AbortSignal.timeout(10000) }).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(BRIDGE + "/fund/stock?top=30", { signal: AbortSignal.timeout(10000) }).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(BRIDGE + "/fund/concept", { signal: AbortSignal.timeout(10000) }).then(r => r.ok ? r.json() : null).catch(() => null),
+        bridgeFetch("/fund/flow"),
+        bridgeFetch("/fund/sector"),
+        bridgeFetch("/fund/stock?top=30"),
+        bridgeFetch("/fund/concept"),
       ]);
 
-      if (fundResp && fundResp.source !== "unavailable") {
+      if (fundResp && (fundResp as Record<string,unknown>).source !== "unavailable") {
+        const f = fundResp as Record<string,unknown>;
         setOverview({
-          mainNetInflow: fundResp.mainNetInflow ?? 0,
-          superLargeInflow: fundResp.superLargeNetInflow ?? 0,
-          largeInflow: fundResp.largeNetInflow ?? 0,
-          mediumInflow: fundResp.mediumNetInflow ?? 0,
-          smallInflow: fundResp.smallNetInflow ?? 0,
-          totalAmount: fundResp.totalAmount ?? 0,
-          date: fundResp.date ?? "",
-          source: fundResp.source ?? "unknown",
-        });
-      } else if (fundResp) {
-        setOverview({
-          mainNetInflow: 0, superLargeInflow: 0, largeInflow: 0,
-          mediumInflow: 0, smallInflow: 0, totalAmount: fundResp.totalAmount ?? 0,
-          date: fundResp.date ?? "", source: "database",
+          mainNetInflow: (f.mainNetInflow as number) ?? 0,
+          superLargeInflow: (f.superLargeNetInflow as number) ?? 0,
+          largeInflow: (f.largeNetInflow as number) ?? 0,
+          mediumInflow: (f.mediumNetInflow as number) ?? 0,
+          smallInflow: (f.smallNetInflow as number) ?? 0,
+          totalAmount: (f.totalAmount as number) ?? 0,
+          date: (f.date as string) ?? "",
+          source: (f.source as string) ?? "unknown",
         });
       }
 
-      if (sectorResp?.data) {
-        setSectors(sectorResp.data.map((s: Record<string, unknown>) => ({
+      if (sectorResp) {
+        const items = ((sectorResp as Record<string,unknown>).data as Array<Record<string,unknown>>) || [];
+        setSectors(items.map((s) => ({
           name: s.name as string,
-          changePercent: s.changePercent as number ?? 0,
-          stockCnt: s.stockCnt as number ?? 0,
+          changePercent: (s.changePercent as number) ?? 0,
+          stockCnt: (s.stockCnt as number) ?? 0,
           mainInflow: (s.mainNetInflow as number) ?? 0,
         })));
       }
 
-      if (stockResp?.data) {
-        setStockFlows(stockResp.data.map((s: Record<string, unknown>) => ({
+      if (stockResp) {
+        const items = ((stockResp as Record<string,unknown>).data as Array<Record<string,unknown>>) || [];
+        setStockFlows(items.map((s) => ({
           name: (s.name as string) || (s.code as string) || "",
-          changePercent: s.changePercent as number ?? 0,
+          changePercent: (s.changePercent as number) ?? 0,
           stockCnt: 1,
           mainInflow: (s.mainNetInflow as number) ?? 0,
         })));
       }
 
-      if (conceptResp?.data) {
-        setConceptFlows(conceptResp.data.map((c: Record<string, unknown>) => ({
-          name: c.name as string ?? "",
-          changePercent: c.changePercent as number ?? 0,
+      if (conceptResp) {
+        const items = ((conceptResp as Record<string,unknown>).data as Array<Record<string,unknown>>) || [];
+        setConceptFlows(items.map((c) => ({
+          name: (c.name as string) ?? "",
+          changePercent: (c.changePercent as number) ?? 0,
           stockCnt: 0,
           mainInflow: (c.mainNetInflow as number) ?? 0,
         })));
@@ -146,7 +158,6 @@ export default function useCapitalFlow(): UseCapitalFlowResult {
     });
   }, [sectors, sortField]);
 
-  /** 构建桑基图：概念板块资金流 Top 8 → 大类 */
   const { sankeyNodes, sankeyLinks } = useMemo(() => {
     const items = conceptFlows.length > 0 ? conceptFlows : sectors;
     if (items.length === 0) return { sankeyNodes: [], sankeyLinks: [] };
@@ -159,38 +170,23 @@ export default function useCapitalFlow(): UseCapitalFlowResult {
       if (!nameSet.has(name)) { nameSet.add(name); nodes.push({ name, itemStyle: { color } }); }
     };
 
-    // 归类
     const catMap: Record<string, { inflow: number; color: string; subs: typeof top }> = {};
-    const KEYWORDS: Record<string, string> = {
-      "航天": "航天军工", "军工": "航天军工", "卫星": "航天军工", "无人机": "航天军工", "低空": "航天军工",
-      "芯片": "科技", "AI": "科技", "算力": "科技", "DeepSeek": "科技", "半导体": "科技",
-      "医药": "医药", "医疗": "医药", "药": "医药",
-      "机器人": "智造", "制造": "智造",
-      "化工": "周期", "有色": "周期", "钢铁": "周期", "煤炭": "周期",
-      "光伏": "新能源", "锂电": "新能源", "储能": "新能源", "新能源": "新能源",
-      "国企": "央企国企", "央企": "央企国企",
-      "消费": "消费", "汽车": "汽车",
-      "券商": "金融", "金融": "金融", "银行": "金融",
-    };
-
     for (const item of top) {
       let cat = "其他";
-      let color = "#6b7280";
       for (const [kw, cn] of Object.entries(KEYWORDS)) {
         if (item.name.includes(kw)) { cat = cn; break; }
       }
-      color = CAT_COLORS[cat] ?? "#6b7280";
+      const color = CAT_COLORS[cat] ?? "#6b7280";
       if (!catMap[cat]) catMap[cat] = { inflow: 0, color, subs: [] };
       catMap[cat].inflow += Math.abs(item.mainInflow ?? 0);
       catMap[cat].subs.push(item);
     }
 
-    // 全市场资金 源节点
     addNode("全市场", "#f6b26b");
     for (const item of top) {
-      addNode(item.name, CAT_COLORS[Object.entries(KEYWORDS).find(([kw]) => item.name.includes(kw))?.[1] ?? "其他"] ?? "#6b7280");
-      const val = Math.max(Math.abs(item.mainInflow ?? 0), 100000);
-      links.push({ source: "全市场", target: item.name, value: val });
+      const cat = Object.entries(KEYWORDS).find(([kw]) => item.name.includes(kw))?.[1] ?? "其他";
+      addNode(item.name, CAT_COLORS[cat] ?? "#6b7280");
+      links.push({ source: "全市场", target: item.name, value: Math.max(Math.abs(item.mainInflow ?? 0), 100000) });
     }
 
     for (const [cat, info] of Object.entries(catMap)) {

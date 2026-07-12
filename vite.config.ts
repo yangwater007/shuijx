@@ -26,19 +26,11 @@ export default defineConfig({
         rewrite: (p: string) => p.replace(/^\/api\/quicktiny/, "/api"),
         headers: { Referer: "https://stock.quicktiny.cn/" },
       },
-      // 东方财富 K线 API 代理
-      "/api/em/kline": {
-        target: "https://push2his.eastmoney.com",
+      // 本地桥代理（dev免CORS）
+      "/api/bridge": {
+        target: "http://localhost:8765",
         changeOrigin: true,
-        rewrite: (p: string) => p.replace(/^\/api\/em\/kline/, "/api/qt/stock/kline/get"),
-        headers: { Referer: "https://quote.eastmoney.com/" },
-      },
-      // 东方财富 分时 API 代理
-      "/api/em/trends": {
-        target: "https://push2.eastmoney.com",
-        changeOrigin: true,
-        rewrite: (p: string) => p.replace(/^\/api\/em\/trends/, "/api/qt/stock/trends2/get"),
-        headers: { Referer: "https://quote.eastmoney.com/" },
+        rewrite: (p: string) => p.replace(/^\/api\/bridge/, ""),
       },
     },
   },

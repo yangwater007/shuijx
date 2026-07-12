@@ -1,4 +1,4 @@
-/** 基础设施层 — 全局配置常量 */
+﻿/** 基础基础设施层 — 全局配置常量 */
 
 /** 后端 API 地址 */
 export const API_BASE_URL = "https://stock.quicktiny.cn/api";
@@ -8,26 +8,47 @@ export const DEEPSEEK_API_KEY = "sk-096d707e86e24dc19a070650c6c0f6cc";
 export const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
 export const DEEPSEEK_CHAT_MODEL = "deepseek-chat";
 
-/** 东方财富 K线 API 路径（dev: Vite代理, prod: 需服务端代理） */
-/** 东方财富 分时 API 路径 */
-/** 东方财富 CORS 安全 Referer */
-/** 同花顺 K线 API 基础路径 */
-// ???? K? API (HTTPS + CORS *, ????????/??)
+/** 腾讯 K线 API */
 export const TENCENT_KL_API = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get";
-// ???? ?? API
+/** 腾讯 分时 API */
 export const TENCENT_MINUTE_API = "https://ifzq.gtimg.cn/appstock/app/minute/query";
-// ???? ???? API
+/** 腾讯 报价 API */
 export const TENCENT_QUOTE_API = "https://qt.gtimg.cn/q";
 
-/** ????? (mootdx ? ???) */
-export const LOCAL_BRIDGE_URL = "http://localhost:8765";
-
+/** 同花顺 K线 API */
 export const TONGHUASHUN_KL_BASE = "https://d.10jqka.com.cn/v2/line";
-
-/** 同花顺 分时 API 基础路径 */
+/** 同花顺 分时 API */
 export const TONGHUASHUN_TS_BASE = "https://d.10jqka.com.cn/v2/time";
 
-/** 同花顺 K线周期映射 */
+/** 桥服务地址
+ *  - 本地: http://localhost:8765
+ *  - ngrok隧道: 设置环境变量 VITE_BRIDGE_URL 或运行时URL参数 ?bridge=xxx
+ *  - 也可以在浏览器控制台设置: localStorage.bridgeUrl = "https://xxx.ngrok-free.app"
+ */
+export function getBridgeUrl(): string {
+  // 1. URL 参数 ?bridge=xxx（优先级最高）
+  if (typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    const urlParam = params.get("bridge");
+    if (urlParam) return urlParam;
+    // 2. localStorage
+    const stored = localStorage.getItem("bridgeUrl");
+    if (stored) return stored;
+  }
+  // 3. 环境变量（Vite）
+  // @ts-ignore
+  if (typeof import.meta !== "undefined" && import.meta.env?.VITE_BRIDGE_URL) {
+    // @ts-ignore
+    return import.meta.env.VITE_BRIDGE_URL;
+  }
+  // 4. 默认本地
+  return "http://localhost:8765";
+}
+
+/** 获取当前桥地址 */
+export const LOCAL_BRIDGE_URL = typeof window !== "undefined"
+  ? getBridgeUrl()
+  : "http://localhost:8765";
 
 /** 股票涨跌颜色 */
 export const STOCK_UP = "#ef4444";
@@ -42,7 +63,6 @@ export const BOARD_BORDER = "#334155";
 /** 连板天梯最大显示层级 */
 export const MAX_BOARD_LEVEL = 15;
 
-// AI analysis: REST API data injection
 /** Wudao Data MCP 配置 */
 export const WUDAO_API_KEY = "lb_3013ad2ba0aca0c769b34eab2192f52d50809313c02a1a7db787a7980ecff112";
 export const MCP_BASE_URL = "https://stock.quicktiny.cn/api/mcp-stream";
