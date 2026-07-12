@@ -748,17 +748,17 @@ def limit_stats():
     if cached: return jsonify(cached)
     
     # DB fallback
-    dt = _last_trade_date()
+    dt = _get_effective_date()
     if dt and HAS_PG:
         try:
             db_rows = _pg_exec("SELECT count(*) FILTER (WHERE change_pct >= 9.8) as up_cnt, count(*) FILTER (WHERE change_pct <= -9.8) as down_cnt FROM daily_kline WHERE trade_date=%s", (dt,))
             if db_rows:
-                stats = {"up": db_rows[0]["up_cnt"] or 0, "down": db_rows[0]["down_cnt"] or 0, "broken": 0, "sealRate": 0, "date": dt, "source": "database"}
+                stats = {"up": db_rows[0]["up_cnt"] or 0, "down": db_rows[0]["down_cnt"] or 0, "broken": 0, "sealRate": 0, "tradeDate": dt, "isTradingDay": _is_trading_day(), "source": "database"}
                 _set(ck, stats, CACHE["LIMIT"])
                 return jsonify(stats)
         except: pass
     
-    stats = {"up": 0, "down": 0, "broken": 0, "sealRate": 0, "timestamp": datetime.now().isoformat(), "source": "unavailable"}
+    stats = {"up": 0, "down": 0, "broken": 0, "sealRate": 0, "tradeDate": dt, "isTradingDay": _is_trading_day(), "source": "unavailable"}
     
     # 从腾讯获取涨停/跌停数(用涨幅/跌幅筛选)
     if HAS_MOOTDX:
@@ -1077,6 +1077,127 @@ def cache_clear():
     return jsonify({"cleared": n})
 
 # ═══════════════════════════════════════════
+
+# --- Review History & Daily ---
+
+@app.route("/review/history")
+def review_history():
+    """20-day trading history summary for AI analysis"""
+    days = min(int(request.args.get("days", 20)), 60)
+    ck = f"review:history:{days}"
+    cached = _get(ck)
+    if cached: return jsonify(cached)
+
+    result = {"days": [], "source": "unavailable"}
+
+    if HAS_PG:
+        try:
+            rows = _pg_exec(
+                "SELECT trade_date, "
+                "count(*) FILTER (WHERE change_pct >= 9.8) as up_cnt, "
+                "count(*) FILTER (WHERE change_pct <= -9.8) as down_cnt, "
+                "round(avg(change_pct)::numeric, 2) as avg_pct, "
+                "sum(amount) as total_amount "
+                "FROM daily_kline "
+                "WHERE trade_date >= (SELECT max(trade_date) FROM daily_kline) - INTERVAL '%s days' "
+                "GROUP BY trade_date ORDER BY trade_date DESC LIMIT %s",
+                (days * 2, days))
+
+            if rows:
+                for r in rows:
+                    d = r["trade_date"]
+                    date_str = d.isoformat() if hasattr(d, "isoformat") else str(d)
+                    result["days"].append({
+                        "date": date_str,
+                        "upCount": int(r["up_cnt"] or 0),
+                        "downCount": int(r["down_cnt"] or 0),
+                        "avgChange": float(r["avg_pct"] or 0),
+                        "totalAmount": float(r["total_amount"] or 0),
+                    })
+                result["source"] = "database"
+        except Exception as e:
+            log.warning(f"review history failed: {e}")
+
+    _set(ck, result, CACHE.get("REVIEW", 600))
+    return jsonify(result)
+
+
+@app.route("/review/daily")
+def review_daily():
+    """Single day full review: ladder + concepts + emotion for AI"""
+    target_date = request.args.get("date", "").strip()
+    ck = f"review:daily:{target_date}"
+    cached = _get(ck)
+    if cached: return jsonify(cached)
+
+    if not target_date:
+        target_date = _get_effective_date()
+
+    result = {"date": target_date, "ladder": [], "concepts": [], "emotion": {}, "source": "unavailable"}
+
+    if HAS_PG and target_date:
+        try:
+            emo_rows = _pg_exec(
+                "SELECT count(*) FILTER (WHERE change_pct >= 9.8) as up_cnt, "
+                "count(*) FILTER (WHERE change_pct <= -9.8) as down_cnt, "
+                "sum(amount) as total_amount "
+                "FROM daily_kline WHERE trade_date = %s",
+                (target_date,))
+            if emo_rows:
+                result["emotion"] = {
+                    "upCount": int(emo_rows[0]["up_cnt"] or 0),
+                    "downCount": int(emo_rows[0]["down_cnt"] or 0),
+                    "totalAmount": float(emo_rows[0]["total_amount"] or 0),
+                }
+
+            ladder_rows = _pg_exec(
+                "SELECT dlu.code, dlu.continue_num, dlu.limit_type, dlu.change_pct, "
+                "dlu.turnover_rate, dlu.reason_info, bs.name, bs.industry "
+                "FROM daily_limit_up dlu "
+                "LEFT JOIN base_stocks bs ON dlu.code = bs.code "
+                "WHERE dlu.trade_date = %s "
+                "ORDER BY dlu.continue_num DESC LIMIT 100",
+                (target_date,))
+            if ladder_rows:
+                ladder_map = {}
+                for r in ladder_rows:
+                    lv = r["continue_num"] or 1
+                    if lv not in ladder_map:
+                        ladder_map[lv] = {"level": lv, "count": 0, "stocks": []}
+                    ladder_map[lv]["count"] += 1
+                    ladder_map[lv]["stocks"].append({
+                        "code": r["code"], "name": r.get("name", r["code"]),
+                        "changePercent": float(r["change_pct"] or 0),
+                        "turnoverRate": float(r["turnover_rate"] or 0),
+                        "reasonInfo": r.get("reason_info") or "",
+                        "industry": r.get("industry") or "",
+                    })
+                result["ladder"] = sorted(ladder_map.values(), key=lambda x: -x["level"])
+
+            concept_rows = _pg_exec(
+                "SELECT bc.concept_name as name, round(avg(dk.change_pct)::numeric, 2) as change_pct, "
+                "count(*) as stock_cnt "
+                "FROM daily_kline dk "
+                "LEFT JOIN base_stock_concepts bsc ON dk.code = bsc.code "
+                "LEFT JOIN base_concepts bc ON bsc.concept_id = bc.concept_id "
+                "WHERE dk.trade_date = %s AND bc.concept_name IS NOT NULL "
+                "GROUP BY bc.concept_name ORDER BY change_pct DESC LIMIT 15",
+                (target_date,))
+            if concept_rows:
+                result["concepts"] = [{
+                    "name": r["name"],
+                    "changePercent": float(r["change_pct"] or 0),
+                    "stockCount": r["stock_cnt"],
+                } for r in concept_rows]
+
+            result["source"] = "database"
+        except Exception as e:
+            log.warning(f"review daily failed: {e}")
+
+    _set(ck, result, CACHE.get("REVIEW", 600))
+    return jsonify(result)
+
+
 
 if __name__ == "__main__":
     print(f"""
