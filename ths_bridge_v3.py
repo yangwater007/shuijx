@@ -240,7 +240,32 @@ def _fetch_kline_source(code, count):
             kl = sd.get("qfqday") or sd.get("day") or []
             return ([{"date":row[0],"open":float(row[1]),"close":float(row[2]),"high":float(row[3]),"low":float(row[4]),"volume":int(float(row[5]))} for row in kl if len(row)>=6], "tencent")
     except: pass
-    return ([], "none")
+        # ????
+    try:
+        mkt_sina = "sh" if code[0] == "6" else ("sz" if code[0] in "023" else "bj")
+        r = _http(f"https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol={mkt_sina}{code}&scale=240&ma=no&datalen={count}",
+                  referer="https://finance.sina.com.cn/")
+        if r and r.status_code == 200:
+            try:
+                raw = r.json()
+                if isinstance(raw, list) and len(raw) > 0:
+                    result = []
+                    for d in raw:
+                        result.append({
+                            "date": d.get("day", ""),
+                            "open": float(d.get("open", 0)),
+                            "high": float(d.get("high", 0)),
+                            "low": float(d.get("low", 0)),
+                            "close": float(d.get("close", 0)),
+                            "volume": int(float(d.get("volume", 0))),
+                            "amount": 0
+                        })
+                    if result:
+                        return (result[-count:], "sina")
+            except: pass
+    except: pass
+    
+    #     return ([], "none")
 
 def _fetch_minute_source(code):
     if HAS_MOOTDX:

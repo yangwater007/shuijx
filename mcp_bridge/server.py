@@ -118,10 +118,26 @@ def rest_minute():
 
 @app.route("/market/overview")
 def rest_market_overview():
-    from ths_bridge_v3 import _market_overview, _get_effective_date, _is_trading_day
+    from ths_bridge_v3 import _market_overview, _get_effective_date, _is_trading_day, _pg_exec, HAS_PG
     data = _market_overview()
-    data["tradeDate"] = _get_effective_date()
+    dt = _get_effective_date()
+    data["tradeDate"] = dt
     data["isTradingDay"] = _is_trading_day()
+    # Fill up/down/flat from PG (accurate, works on non-trading days)
+    if HAS_PG and dt:
+        try:
+            rows = _pg_exec(
+                "SELECT count(*) FILTER (WHERE change_pct > 0) as up, "
+                "count(*) FILTER (WHERE change_pct < 0) as down, "
+                "count(*) FILTER (WHERE change_pct = 0) as flat "
+                "FROM daily_kline WHERE trade_date=%s", (dt,))
+            if rows:
+                data["up"] = rows[0]["up"] or 0
+                data["down"] = rows[0]["down"] or 0
+                data["flat"] = rows[0]["flat"] or 0
+                data["total"] = (rows[0]["up"] or 0) + (rows[0]["down"] or 0) + (rows[0]["flat"] or 0)
+        except Exception as e:
+            log.warning(f"market_overview PG fallback: {e}")
     return jsonify(data)
 
 @app.route("/sector/ranking")
