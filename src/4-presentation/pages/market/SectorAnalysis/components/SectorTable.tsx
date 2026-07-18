@@ -45,7 +45,7 @@ const COLUMNS: { key: SortField; label: string; width: string; align: "left" | "
 
 const SectorTable: FC<Props> = ({
   sectors, selectedSector, onSelect, sortField, sortDir, onSort, loading,
-  hideQuadrantCol = false, accentColor,
+  accentColor,
 }) => {
   const handleSort = (field: SortField) => {
     onSort(field, field === sortField ? (sortDir === "asc" ? "desc" : "asc") : "desc");
@@ -81,7 +81,7 @@ const SectorTable: FC<Props> = ({
           </tr>
         </thead>
         <tbody>
-          {sectors.map((item, idx) => {
+          {sectors.map((item) => {
             const isSel = selectedSector === item.name;
             return (
               <tr key={item.name}

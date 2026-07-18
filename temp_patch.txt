@@ -1,0 +1,21 @@
+﻿*** Begin Patch
+*** Update File: D:\quicktiny\src\2-service\ai\AIService.ts
+@@ function toAPIMessages(messages: ChatMessage[], systemPrompt: string): Array<{ role: string; content: string; tool_call_id?: string; tool_calls?: unknown[] }> {
+@@   for (const msg of messages) {
+@@     const e: { role: string; content: string; tool_call_id?: string; tool_calls?: unknown[] } = { role: msg.role, content: msg.content };
+@@     if (msg.role === "tool" && msg.toolCallId) e.tool_call_id = msg.toolCallId;
+-      if (msg.toolCalls && msg.toolCalls.length > 0) {
+-        e.tool_calls = msg.toolCalls;
+-        e.content = msg.content || "";
+-      }
++      if (msg.toolCalls && msg.toolCalls.length > 0) {
++        e.tool_calls = msg.toolCalls.map((tc) => ({
++          id: tc.id,
++          type: "function" as const,
++          function: { name: tc.name, arguments: tc.arguments },
++        }));
++        e.content = msg.content || "";
++      } else {
++        e.content = msg.content || "";
++      }
+*** End Patch
