@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: quicktiny-bridge
+    runtime: docker
+    dockerfilePath: apps/bridge/Dockerfile
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: DEEPSEEK_BASE_URL
+        value: https://api.deepseek.com
