@@ -1,0 +1,37 @@
+# ???bridge ????
+node_modules/
+dist/
+.vite/
+*.ts
+*.tsx
+!*.py
+
+# Python ??
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Git & IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# ?????????
+.env
+.env.local
+
+# ?? & ??
+*.md
+*.test.*
+tests/
+coverage/
+
+# ????
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.yml
+.dockerignore
+pgdata/

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 服务层 — AI 对话 System Prompt + 消息编排
  */
 import type { ChatMessage, AnalysisFramework } from "@infra/types/ai";
@@ -64,15 +64,18 @@ function toAPIMessages(messages: ChatMessage[], systemPrompt: string): Array<{ r
   const result: Array<{ role: string; content: string; tool_call_id?: string; tool_calls?: unknown[] }> = [{ role: "system", content: systemPrompt }];
   for (const msg of messages) {
     if (msg.role === "system") continue;
-    const e: { role: string; content: string; tool_call_id?: string; tool_calls?: unknown[] } = { role: msg.role, content: msg.content };
+    const e: { role: string; content: string; tool_call_id?: string; tool_calls?: unknown[] } = { role: msg.role, content: msg.content || "" };
     if (msg.role === "tool" && msg.toolCallId) e.tool_call_id = msg.toolCallId;
     if (msg.toolCalls && msg.toolCalls.length > 0) {
-      e.tool_calls = msg.toolCalls;
-      e.content = msg.content || "";
+      e.tool_calls = msg.toolCalls.map((tc) => ({
+        id: tc.id,
+        type: "function",
+        function: { name: tc.name, arguments: tc.arguments },
+      }));
     }
     result.push(e as typeof result[number]);
   }
-  // ?????????: ??????tool???tool_calls
+  // 清理孤立的 tool_calls（没有对应 tool 响应的）
   const toolCallIds = new Set<string>();
   for (const r of result) {
     if (r.role === "tool" && r.tool_call_id) toolCallIds.add(r.tool_call_id);

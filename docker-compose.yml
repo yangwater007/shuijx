@@ -1,15 +1,53 @@
-﻿services:
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: quicktiny-pgadmin
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@quicktiny.cn
-      PGADMIN_DEFAULT_PASSWORD: admin123
-    ports:
-      - "5050:80"
-    networks:
-      - qt-net
+﻿# 本地开发环境
+# 启动: docker compose up -d
+# 停止: docker compose down
 
-networks:
-  qt-net:
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: quicktiny
+      POSTGRES_PASSWORD: quicktiny123
+      POSTGRES_DB: quicktiny
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quicktiny"]
+      interval: 5s
+      retries: 5
+
+  # FastAPI Bridge 后端
+  bridge:
+    build:
+      context: .
+      dockerfile: apps/bridge/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://quicktiny:quicktiny123@postgres:5432/quicktiny
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: https://api.deepseek.com
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 前端开发服务器
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+
+volumes:
+  pgdata:

@@ -163,7 +163,7 @@ def rest_concept_ranking():
             "SELECT bc.concept_name as name, round(avg(dk.change_pct)::numeric,2) as change_pct, count(*) as stock_cnt "
             "FROM daily_kline dk LEFT JOIN base_stock_concepts bsc ON dk.code=bsc.code "
             "LEFT JOIN base_concepts bc ON bsc.concept_id=bc.concept_id "
-            "WHERE dk.trade_date=%s AND bc.concept_name IS NOT NULL "
+            "WHERE dk.trade_date=%s AND bc.concept_name IS NOT NULL AND bc.category='em' "
             "GROUP BY bc.concept_name ORDER BY change_pct DESC LIMIT 30", (dt,))
         if rows:
             return jsonify({"data": [dict(r) for r in rows], "tradeDate": dt, "source": "database"})
@@ -181,17 +181,16 @@ def rest_limit_stats():
     from ths_bridge_v3 import _get_effective_date, _pg_exec, HAS_PG, _is_trading_day
     dt = _get_effective_date()
     if HAS_PG and dt:
-        rows = _pg_exec(
-            "SELECT count(*) FILTER (WHERE change_pct>=9.8) as up, "
-            "count(*) FILTER (WHERE change_pct<=-9.8) as down, "
-            "count(*) FILTER (WHERE change_pct>=5 AND change_pct<9.8) as broken "
-            "FROM daily_kline WHERE trade_date=%s", (dt,))
-        if rows:
-            return jsonify({
-                "up": rows[0]["up"] or 0, "down": rows[0]["down"] or 0,
-                "broken": rows[0]["broken"] or 0, "sealRate": 0,
-                "tradeDate": dt, "isTradingDay": _is_trading_day(), "source": "database"
-            })
+        up_rows = _pg_exec("SELECT count(*) as c FROM daily_limit_up WHERE trade_date=%s", (dt,))
+        up = up_rows[0]["c"] if up_rows else 0
+        down_rows = _pg_exec("SELECT count(*) FILTER (WHERE change_pct<=-9.8) as down_cnt FROM daily_kline WHERE trade_date=%s", (dt,))
+        down = down_rows[0]["down_cnt"] if down_rows else 0
+        broken_rows = _pg_exec("SELECT count(*) as c FROM daily_limit_up WHERE trade_date=%s AND open_count>0", (dt,))
+        broken = broken_rows[0]["c"] if broken_rows else 0
+        return jsonify({
+            "up": up, "down": down, "broken": broken, "sealRate": round((up/(up+broken)*100),1) if (up+broken)>0 else 0,
+            "tradeDate": dt, "isTradingDay": _is_trading_day(), "source": "database"
+        })
     return jsonify({"up":0,"down":0,"broken":0,"sealRate":0,"source":"unavailable"})
 
 @app.route("/limit/up")

@@ -1,9 +1,8 @@
+﻿"""Market data tools: overview, kline, minute, stock_rank, valuation"""
+import sys, os
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
-"""Market data tools: overview, kline, minute, stock_rank, valuation"""
-import json, sys, os
-sys.path.insert(0, r"D:\quicktiny")
-
-# Reuse bridge internals
 from ths_bridge_v3 import (
     _market_overview, _fetch_kline_source, _fetch_minute_source,
     _fetch_quote_source, _last_trade_date, _get_effective_date, _is_trading_day,
@@ -14,7 +13,6 @@ from ths_bridge_v3 import (
 def handle_market_overview(args):
     dt = _get_effective_date()
     up = down = flat = 0
-    indices = []
     if HAS_PG and dt:
         rows = _pg_exec(
             "SELECT count(*) FILTER (WHERE change_pct > 0) as up, "
@@ -31,23 +29,23 @@ def handle_market_overview(args):
     lines.append(f"上涨 {up}家 / 下跌 {down}家 / 平盘 {flat}家")
     for idx in indices:
         sign = "+" if float(idx.get("changePercent", 0)) >= 0 else ""
-        lines.append(f"{idx.get("name")}: {idx.get("price")} {sign}{idx.get("changePercent")}%")
+        lines.append(f"{idx.get('name')}: {idx.get('price')} {sign}{idx.get('changePercent')}%")
     return "\n".join(lines)
 
 def handle_kline(args):
     code = args.get("code", "")
     count = int(args.get("days", 60))
     data, src = _fetch_kline_source(code, count)
-    if not data: return f"[{src}] K?????"
+    if not data: return f"[{src}] K线无数据"
     last = data[-1]
-    return f"[{src}] {code} K?({len(data)}?): ?? OHLC={last.get('open')}/{last.get('high')}/{last.get('low')}/{last.get('close')} ?={last.get('volume')}"
+    return f"[{src}] {code} K线({len(data)}条): OHLC={last.get('open')}/{last.get('high')}/{last.get('low')}/{last.get('close')} vol={last.get('volume')}"
 
 def handle_minute_data(args):
     code = args.get("code", "")
     data, src = _fetch_minute_source(code)
-    if not data: return f"[{src}] ??????"
+    if not data: return f"[{src}] 暂无分时数据"
     last = data[-1]
-    return f"[{src}] {code} ??({len(data)}?): ???={last.get('price')} ??={last.get('time')}"
+    return f"[{src}] {code} 分时({len(data)}条): 最新价={last.get('price')} 时间={last.get('time')}"
 
 def handle_stock_rank(args):
     rank_type = args.get("type", "gainers")
@@ -63,7 +61,7 @@ def handle_stock_rank(args):
         if rows:
             items = [f"{r['name']}({r['code']}) {float(r['change_pct'] or 0):+.2f}%" for r in rows]
             return f"[{dt}] {rank_type}: " + " | ".join(items)
-    return f"[{rank_type}] ?????"
+    return f"[{rank_type}] 暂无数据"
 
 def handle_valuation_snapshot(args):
     code = args.get("code", "")
@@ -74,29 +72,29 @@ def handle_valuation_snapshot(args):
             inner = r.text.split('="', 1)[1].rstrip('";\n')
             flds = inner.split("~")
             if len(flds) > 45:
-                return f"[??] {code} PE={flds[39]} PB={flds[46] if len(flds)>46 else '-'} ??={flds[45]}?"
+                return f"[腾讯] {code} PE={flds[39]} PB={flds[46] if len(flds)>46 else '-'} 市值={flds[45]}亿"
     except: pass
-    return f"[??] {code} ?????"
+    return f"[腾讯] {code} 暂无估值数据"
 
 MARKET_TOOLS = {
     "market_overview": {
-        "description": "[??] ??????????????(??/??/???/??50)??????????",
+        "description": "[行情] 全市场行情总览：涨跌家数(来自PG全市场覆盖)、四大指数(上证/深证/创业板/科创50)",
         "handler": handle_market_overview,
     },
     "kline": {
-        "description": "[??] ?????K?(OHLC+???+???), ????????????????: code(????), days(??,??60), adjust(none/qfq)",
+        "description": "[行情] 个股日线K线(OHLC+成交量+成交额), 四级回退数据源。参数: code(股票代码), days(天数,默认60)",
         "handler": handle_kline,
     },
     "minute_data": {
-        "description": "[??] ??????????????????: code(????)",
+        "description": "[行情] 个股当日分时数据(实时价格+时间)。参数: code(股票代码)",
         "handler": handle_minute_data,
     },
     "stock_rank": {
-        "description": "[??] ???????/???/?????type: gainers/losers/amount, limit: ????10",
+        "description": "[行情] 个股涨幅/跌幅/成交额排行。type: gainers/losers/amount, limit: 默认10",
         "handler": handle_stock_rank,
     },
     "valuation_snapshot": {
-        "description": "[??] ????????: PE/PB/?????: code(????)",
+        "description": "[行情] 个股估值快照: PE/PB/市值。参数: code(股票代码)",
         "handler": handle_valuation_snapshot,
     },
 }

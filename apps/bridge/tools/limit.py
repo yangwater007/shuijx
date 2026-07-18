@@ -1,7 +1,8 @@
-
-"""Limit up/down tools: stats, ladder, bigloser, premium"""
+﻿"""Limit up/down tools: stats, ladder, broken, down, bigloser, premium"""
 import sys, os
-sys.path.insert(0, r"D:\quicktiny")
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
+
 from ths_bridge_v3 import (
     _last_trade_date, _get_effective_date, _is_trading_day,
     _pg_exec, HAS_PG, HAS_MOOTDX, _dx, log
@@ -25,8 +26,8 @@ def handle_limit_stats(args):
             "SELECT count(*) as c FROM daily_limit_up "
             "WHERE trade_date=%s AND open_count > 0", (dt,))
         broken = broken_rows[0]["c"] if broken_rows else 0
-        return f"[{dt}] ??{up}? / ??{down}? / ??{broken}?(??>0)"
-    return f"[{dt}] ????,???"
+        return f"[{dt}] 涨停{up}只 / 跌停{down}只 / 炸板{broken}只(开板>0)"
+    return f"[{dt}] 非交易日,无数据"
 
 def handle_limit_up_ladder(args):
     dt = _get_effective_date()
@@ -48,16 +49,16 @@ def handle_limit_up_ladder(args):
                 ladder[lv]["stocks"].append(
                     f"{r.get('name', r['code'])}({r['code']}) "
                     f"{_fmt_pct(r.get('change_pct', 0))} "
-                    f"??{float(r.get('turnover_rate',0) or 0):.1f}% "
+                    f"换{float(r.get('turnover_rate',0) or 0):.1f}% "
                     f"{r.get('limit_type','')} "
                     f"{r.get('reason_info') or ''}"
                 )
-            lines = [f"=== {dt} ???? ==="]
+            lines = [f"=== {dt} 涨停梯队 ==="]
             for lv in sorted(ladder.keys(), reverse=True):
                 l = ladder[lv]
-                lines.append(f"{lv}?({l['count']}?): " + " | ".join(l["stocks"][:8]))
+                lines.append(f"{lv}板({l['count']}只): " + " | ".join(l["stocks"][:8]))
             return "\n".join(lines)
-    return f"[{dt}] ???????"
+    return f"[{dt}] 非交易日,无涨停数据"
 
 def handle_broken_limit_up(args):
     dt = _get_effective_date()
@@ -67,10 +68,10 @@ def handle_broken_limit_up(args):
             "WHERE trade_date=%s AND open_count > 0 ORDER BY open_count DESC LIMIT 20", (dt,))
         if broken_rows:
             total = len(broken_rows)
-            items = [f"{r['code']}(??{r['open_count']}?)" for r in broken_rows[:10]]
-            return f"[{dt}] ???{total}?: " + " | ".join(items)
-        return f"[{dt}] ??: 0?(?????)"
-    return "????,???"
+            items = [f"{r['code']}(开板{r['open_count']}次)" for r in broken_rows[:10]]
+            return f"[{dt}] 炸板共{total}只: " + " | ".join(items)
+        return f"[{dt}] 炸板: 0只(无开板记录)"
+    return "非交易日,无数据"
 
 def handle_limit_down(args):
     dt = _get_effective_date()
@@ -81,24 +82,22 @@ def handle_limit_down(args):
             "WHERE dk.trade_date=%s AND dk.change_pct <= -9.8 LIMIT 30", (dt,))
         if rows:
             items = [f"{r['name']}({r['code']}) {_fmt_pct(r['change_pct'])}" for r in rows]
-            return f"[{dt}] ???({len(items)}?): " + " | ".join(items)
-    return "???????"
+            return f"[{dt}] 跌停({len(items)}只): " + " | ".join(items)
+    return "暂无跌停数据"
 
 def handle_limit_bigloser(args):
     dt = _get_effective_date()
     result = []
     if HAS_PG and dt:
-        # big losers (>10% drop)
         bl = _pg_exec(
             "SELECT dk.code, bs.name, dk.change_pct FROM daily_kline dk "
             "LEFT JOIN base_stocks bs ON dk.code = bs.code "
             "WHERE dk.trade_date=%s AND dk.change_pct <= -10", (dt,))
         if bl:
             items = [f"{r['name']}({r['code']}) {_fmt_pct(r['change_pct'])}" for r in bl]
-            result.append(f"???(?>10%): " + " | ".join(items[:10]) if items else "0?")
+            result.append(f"大面股(跌>10%): " + (" | ".join(items[:10]) if items else "0只"))
         else:
-            result.append("???: 0?")
-        # nuclear buttons
+            result.append("大面股: 0只")
         yest = _last_trade_date()
         if yest and yest != dt:
             nb = _pg_exec(
@@ -108,10 +107,10 @@ def handle_limit_bigloser(args):
                 "AND dk.code IN (SELECT code FROM daily_limit_up WHERE trade_date=%s)", (dt, yest))
             if nb:
                 items = [f"{r['name']}({r['code']}) {_fmt_pct(r['change_pct'])}" for r in nb]
-                result.append("???(??????): " + " | ".join(items[:10]))
+                result.append("核按钮(昨日涨停今日跌停): " + (" | ".join(items[:10])))
             else:
-                result.append("???: 0?")
-    return "\n".join(result) if result else "???/????????"
+                result.append("核按钮: 0只")
+    return "\n".join(result) if result else "大面股/核按钮: 暂无数据"
 
 def handle_limit_yesterday_premium(args):
     dt = _get_effective_date()
@@ -129,33 +128,33 @@ def handle_limit_yesterday_premium(args):
                 avg = sum(returns) / len(returns) if returns else 0
                 top = sorted(returns, reverse=True)[:5]
                 bot = sorted(returns)[:5]
-                return (f"[{dt}] ???({yest})?????: {avg:+.2f}% ({len(returns)}?)\n"
-                        f"??: {top}\n??: {bot}")
-    return "??????????"
+                return (f"[{dt}] 昨涨停({yest})今日溢价: {avg:+.2f}% ({len(returns)}只)\n"
+                        f"最佳: {top}\n最差: {bot}")
+    return "昨涨停溢价: 暂无数据"
 
 LIMIT_TOOLS = {
     "limit_stats": {
-        "description": "[??] ???????: ???/???/??????????",
+        "description": "[涨停] 涨停生态统计: 封住涨停数/跌停数/炸板数(开板>0),来源daily_limit_up+daily_kline",
         "handler": handle_limit_stats,
     },
     "limit_up_ladder": {
-        "description": "[??] ??????: ?????(6?/5?/4?...)???????,?????????????",
+        "description": "[涨停] 涨停梯队: 按连板数降序(6板/5板/4板...)列出股票代码+涨停原因+题材",
         "handler": handle_limit_up_ladder,
     },
     "broken_limit_up": {
-        "description": "[??] ?????: ???????????,?????????",
+        "description": "[涨停] 炸板池: 涨停打开过的股票,包含开板次数,用于判断封板强度",
         "handler": handle_broken_limit_up,
     },
     "limit_down": {
-        "description": "[??] ?????: ????????,???????",
+        "description": "[涨停] 跌停池: 当日跌停股票列表,标注跌幅",
         "handler": handle_limit_down,
     },
     "limit_bigloser": {
-        "description": "[??] ?????(??>10%)????(????????)????????????",
+        "description": "[涨停] 大面股(跌幅>10%)和核按钮(昨日涨停今日跌停),反映亏钱效应",
         "handler": handle_limit_bigloser,
     },
     "limit_yesterday_premium": {
-        "description": "[??] ???????????????????: >2%???, <0%??????????",
+        "description": "[涨停] 昨日涨停今日溢价: 接力环境核心指标, >2%强势, <0%亏钱效应明显",
         "handler": handle_limit_yesterday_premium,
     },
 }

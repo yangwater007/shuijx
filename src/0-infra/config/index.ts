@@ -4,7 +4,7 @@
 export const API_BASE_URL = "https://stock.quicktiny.cn/api";
 
 /** DeepSeek API 配置 */
-export const DEEPSEEK_API_KEY = "sk-096d707e86e24dc19a070650c6c0f6cc";
+export const DEEPSEEK_API_KEY = typeof import.meta !== "undefined" ? (import.meta as any).env?.VITE_DEEPSEEK_API_KEY ?? "" : "";
 export const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
 export const DEEPSEEK_CHAT_MODEL = "deepseek-chat";
 
@@ -60,10 +60,15 @@ export function getMCPUrl(): string {
     const mcpParam = params.get("mcp");
     if (mcpParam) return mcpParam;
   } catch {}
+  // @ts-ignore
+  if (typeof import.meta !== "undefined" && import.meta.env?.VITE_MCP_URL) {
+    // @ts-ignore
+    return import.meta.env.VITE_MCP_URL;
+  }
   // Fallback: use bridge URL + /mcp if it looks like a tunnel
   const bridge = getBridgeUrl();
   if (bridge && !bridge.includes("localhost") && !bridge.includes("127.0.0.1")) {
-    return bridge + "/mcp";
+    return bridge.replace(/\/+$/, "") + "/mcp";
   }
   return "http://localhost:8766/mcp";
 }
@@ -86,5 +91,5 @@ export const BOARD_BORDER = "#334155";
 export const MAX_BOARD_LEVEL = 15;
 
 /** Wudao Data MCP 配置 */
-export const WUDAO_API_KEY = "lb_3013ad2ba0aca0c769b34eab2192f52d50809313c02a1a7db787a7980ecff112";
+export const WUDAO_API_KEY = typeof import.meta !== "undefined" ? (import.meta as any).env?.VITE_WUDAO_API_KEY ?? "" : "";
 export const MCP_BASE_URL = "https://stock.quicktiny.cn/api/mcp-stream";

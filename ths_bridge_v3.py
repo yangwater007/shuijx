@@ -23,6 +23,13 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import time, threading, requests, json, logging, re
 from datetime import datetime, timedelta
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env from project root
+_ENV_PATH = Path(__file__).resolve().parent / ".env"
+if _ENV_PATH.exists():
+    load_dotenv(_ENV_PATH)
 
 logging.basicConfig(level=logging.INFO, format="[BRIDGE] %(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("bridge")
@@ -38,14 +45,11 @@ except Exception as e:
     log.warning(f"mootdx 不可用: {e}")
 # ─── PostgreSQL ────────────────────────────
 try:
-    import psycopg2, psycopg2.pool, psycopg2.extras
-    _pg_pool = psycopg2.pool.ThreadedConnectionPool(
-        2, 5,
-        host="localhost", port=5432,
-        dbname="quicktiny", user="quicktiny", password="quicktiny123",
-    )
+    import os, psycopg2, psycopg2.pool, psycopg2.extras
+    _DB_URL = os.getenv("DATABASE_URL", "postgresql://quicktiny:quicktiny123@localhost:5432/quicktiny")
+    _pg_pool = psycopg2.pool.ThreadedConnectionPool(2, 5, dsn=_DB_URL)
     HAS_PG = True
-    log.info("PostgreSQL 已连接")
+    log.info(f"PostgreSQL 已连接 ({'Supabase' if 'supabase' in _DB_URL else 'Docker'})")
     def _pg_exec(sql, params=None):
         conn = _pg_pool.getconn()
         try:
@@ -109,7 +113,7 @@ def _db_sector_ranking():
     if not dt: return []
     try:
         import psycopg2, psycopg2.extras
-        conn = psycopg2.connect(host="localhost", port=5432, dbname="quicktiny", user="quicktiny", password="quicktiny123")
+        conn = psycopg2.connect(dsn=_DB_URL)
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("""
             WITH sector_perf AS (
@@ -1017,7 +1021,7 @@ def limit_sync():
         return jsonify({"error": "无数据"}), 404
     
     import psycopg2, datetime as dt_mod
-    conn = psycopg2.connect(host="localhost", port=5432, dbname="quicktiny", user="quicktiny", password="quicktiny123")
+    conn = psycopg2.connect(dsn=_DB_URL)
     cur = conn.cursor()
     
     result = {"synced_dates": 0, "synced_stocks": 0, "new_stocks": 0, "new_concepts": 0}
@@ -1221,6 +1225,120 @@ def review_daily():
 
     _set(ck, result, CACHE.get("REVIEW", 600))
     return jsonify(result)
+
+
+
+# ??? ????? ???
+
+@app.route("/sync/full-market")
+def sync_full_market():
+    """Sync all A-share stocks to PG: base_stocks + latest daily_kline"""
+    if not HAS_MOOTDX:
+        return jsonify({"error": "mootdx unavailable"}), 500
+    if not HAS_PG:
+        return jsonify({"error": "PostgreSQL unavailable"}), 500
+
+    result = {"stocks": 0, "kline": 0, "errors": 0, "source": "mootdx"}
+
+    try:
+        # 1. Get all stock codes
+        all_codes = []
+        for mkt in [1, 0]:  # SH, SZ
+            try:
+                stocks = _dx.stocks(market=mkt)
+                if stocks is not None and len(stocks):
+                    codes = [str(s) for s in stocks["code"].tolist()]
+                    names = [str(s) for s in stocks["name"].tolist()]
+                    for c, n in zip(codes, names):
+                        if len(c) == 6:
+                            all_codes.append((c, n, "SH" if mkt == 1 else "SZ"))
+            except Exception as e:
+                log.warning(f"mootdx stocks(market={mkt}) failed: {e}")
+
+        log.info(f"Full market sync: {len(all_codes)} stocks found")
+
+        # 2. Insert base_stocks
+        for code, name, mkt in all_codes:
+            try:
+                _pg_exec(
+                    "INSERT INTO base_stocks (code, name, market) VALUES (%s,%s,%s) ON CONFLICT (code) DO UPDATE SET name=EXCLUDED.name",
+                    (code, name, mkt)
+                )
+                result["stocks"] += 1
+            except:
+                result["errors"] += 1
+
+        # 3. Batch fetch quotes for latest trading day
+        dt = _last_trade_date() or datetime.now().strftime("%Y-%m-%d")
+        batch_size = 80
+        kline_inserted = 0
+
+        for i in range(0, len(all_codes), batch_size):
+            batch = all_codes[i:i+batch_size]
+            codes = [c for c, _, _ in batch]
+
+            try:
+                quotes = _dx.quotes(symbols=codes)
+                if quotes is not None and len(quotes):
+                    cols = list(quotes.columns)
+                    for _, row in quotes.iterrows():
+                        code = str(row.get("code", ""))
+                        if not code or len(code) != 6:
+                            continue
+                        try:
+                            price = float(row.get("price", 0) or 0)
+                            pct = float(row.get("pct_chg", 0) or 0)
+                            vol = int(float(row.get("volume", 0) or 0))
+                            amt = float(row.get("amount", 0) or 0)
+                            open_p = float(row.get("open", 0) or 0)
+                            high = float(row.get("high", 0) or 0)
+                            low = float(row.get("low", 0) or 0)
+
+                            if price > 0:
+                                _pg_exec(
+                                    "INSERT INTO daily_kline (code, trade_date, open, high, low, close, volume, amount, change_pct) "
+                                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+                                    "ON CONFLICT (code, trade_date) DO UPDATE SET "
+                                    "open=EXCLUDED.open, high=EXCLUDED.high, low=EXCLUDED.low, close=EXCLUDED.close, "
+                                    "volume=EXCLUDED.volume, amount=EXCLUDED.amount, change_pct=EXCLUDED.change_pct",
+                                    (code, dt, open_p, high, low, price, vol, amt, pct)
+                                )
+                                kline_inserted += 1
+                        except:
+                            pass
+            except Exception as e:
+                log.warning(f"Batch {i//batch_size} failed: {e}")
+
+            # Progress every 10 batches
+            if (i // batch_size) % 10 == 0:
+                log.info(f"Sync progress: {min(i+batch_size, len(all_codes))}/{len(all_codes)}")
+
+        result["kline"] = kline_inserted
+        result["date"] = dt
+        log.info(f"Full market sync done: {result['stocks']} stocks, {kline_inserted} kline rows")
+
+    except Exception as e:
+        log.error(f"Full market sync failed: {e}")
+        result["error"] = str(e)
+
+    return jsonify(result)
+
+
+@app.route("/sync/status")
+def sync_status():
+    """Check sync status"""
+    if not HAS_PG:
+        return jsonify({"stocks": 0, "kline": 0, "kline_date": None})
+
+    sc = _pg_exec("SELECT count(*) as c FROM base_stocks")
+    kc = _pg_exec("SELECT count(DISTINCT code) as c FROM daily_kline")
+    kd = _pg_exec("SELECT max(trade_date) as d FROM daily_kline")
+
+    return jsonify({
+        "stocks": sc[0]["c"] if sc else 0,
+        "kline_stocks": kc[0]["c"] if kc else 0,
+        "kline_date": str(kd[0]["d"])[:10] if kd and kd[0]["d"] else None,
+    })
 
 
 
