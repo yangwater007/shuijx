@@ -70,7 +70,7 @@ export function getMCPUrl(): string {
   if (bridge && !bridge.includes("localhost") && !bridge.includes("127.0.0.1")) {
     return bridge.replace(/\/+$/, "") + "/mcp";
   }
-  return "http://localhost:8766/mcp";
+    return MCP_BASE_URL;  // Supabase Edge Function
 }
 
 export const LOCAL_BRIDGE_URL = typeof window !== "undefined"

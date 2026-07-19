@@ -1,4 +1,4 @@
-﻿import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+﻿import { createClient } from "npm:@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://qzqpymvboltyvddpmpct.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""; // set SUPABASE_SERVICE_ROLE_KEY env var
@@ -347,9 +347,27 @@ Deno.serve(async (req) => {
   const params = (body.params ?? {}) as Record<string, unknown>;
 
   if (method === "tools/list") {
+    const TOOL_SCHEMAS: Record<string, any> = {
+        "market_overview": "{\"type\":\"object\",\"properties\":{}}",
+        "kline": "{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\",\"description\":\"股票代码，如000001\"},\"days\":{\"type\":\"number\",\"description\":\"天数，默认60\"},\"adjust\":{\"type\":\"string\",\"description\":\"复权类型，none或qfq\",\"enum\":[\"none\",\"qfq\"]}},\"required\":[\"code\"]}",
+        "minute_data": "{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\",\"description\":\"股票代码，如000001\"}},\"required\":[\"code\"]}",
+        "stock_rank": "{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"排行类型\",\"enum\":[\"gainers\",\"losers\",\"amount\"]},\"limit\":{\"type\":\"number\",\"description\":\"数量，默认10\"}}}",
+        "valuation_snapshot": "{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\",\"description\":\"股票代码\"}},\"required\":[\"code\"]}",
+        "limit_stats": "{\"type\":\"object\",\"properties\":{}}",
+        "limit_up_ladder": "{\"type\":\"object\",\"properties\":{}}",
+        "broken_limit_up": "{\"type\":\"object\",\"properties\":{}}",
+        "limit_down": "{\"type\":\"object\",\"properties\":{}}",
+        "limit_bigloser": "{\"type\":\"object\",\"properties\":{}}",
+        "limit_yesterday_premium": "{\"type\":\"object\",\"properties\":{}}",
+        "capital_flow": "{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"可选sector返回板块资金排行\",\"enum\":[\"sector\"]}}}",
+        "concept_ranking": "{\"type\":\"object\",\"properties\":{}}",
+        "sector_analysis": "{\"type\":\"object\",\"properties\":{}}",
+        "review_history": "{\"type\":\"object\",\"properties\":{\"days\":{\"type\":\"number\",\"description\":\"天数，默认20，最大60\"}}}",
+        "review_daily": "{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"日期YYYY-MM-DD，默认最新交易日\"}}}"
+    };
     const tools = Object.entries(ALL_TOOLS).map(([name, t]) => ({
       name, description: t.description,
-      inputSchema: { type: "object", properties: {} },
+      inputSchema: TOOL_SCHEMAS[name] ? JSON.parse(TOOL_SCHEMAS[name]) : { type: "object", properties: {} },
     }));
     return Response.json({ jsonrpc: "2.0", id: msgId, result: { tools } });
   }

@@ -36,3 +36,4 @@ pgdata/
 # 测试
 coverage/
 .nyc_output/
+.vercel

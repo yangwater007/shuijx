@@ -1,0 +1,1 @@
+{"slug": "bare-mcp", "name": "bare-mcp", "body": "Deno.serve(() => new Response(JSON.stringify({ok:true}), {headers:{\"Content-Type\":\"application/json\"}}));", "verify_jwt": false}

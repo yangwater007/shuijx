@@ -1,0 +1,1 @@
+{"slug": "hello", "name": "hello", "body": "Deno.serve((req) => new Response(JSON.stringify({ok:true}), {headers:{\"Content-Type\":\"application/json\"}}));", "verify_jwt": false}

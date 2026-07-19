@@ -1,0 +1,1 @@
+{"key": "VITE_MCP_URL", "value": "https://qzqpymvboltyvddpmpct.supabase.co/functions/v1/mcp", "type": "plain", "target": ["production", "preview", "development"]}

@@ -167,36 +167,9 @@ export const MCP_FUNCTIONS: FunctionDef[] = [
     },
   },
   {
-    name: "dragon_tiger",
-    description: "龙虎榜买卖席位详情。支持按游资名(branchSearch)或股票代码(stockCode)查询。",
-    parameters: {
-      type: "object",
-      properties: {
-        stockCode: { type: "string", description: "股票代码" },
-        branchSearch: { type: "string", description: "游资/营业部名称" },
-        startDate: { type: "string", description: "开始日期(YYYYMMDD)" },
-        endDate: { type: "string", description: "结束日期(YYYYMMDD)" },
-      },
-    },
-  },
-  {
-    name: "research_reports",
-    description: "获取个股研报摘要和评级。",
-    parameters: {
-      type: "object",
-      properties: { code: { type: "string", description: "股票代码" }, limit: { type: "number", description: "数量，默认5" } },
-      required: ["code"],
-    },
-  },
-  {
     name: "valuation_snapshot",
     description: "获取个股估值快照：PE/PB/PS/市值。",
     parameters: { type: "object", properties: { code: { type: "string", description: "股票代码" } }, required: ["code"] },
-  },
-  {
-    name: "stock_search",
-    description: "通过名称/代码/拼音模糊搜索股票。",
-    parameters: { type: "object", properties: { keyword: { type: "string", description: "搜索关键词" } }, required: ["keyword"] },
   },
   {
     name: "limit_bigloser",
@@ -207,17 +180,5 @@ export const MCP_FUNCTIONS: FunctionDef[] = [
     name: "limit_yesterday_premium",
     description: "??????????,??????????????????????:???????,?????????",
     parameters: { type: "object", properties: {} },
-  },
-  {
-    name: "stock_screener",
-    description: "多维度筛选股票（市值/市盈率/涨跌幅/换手率等）。",
-    parameters: {
-      type: "object",
-      properties: {
-        pct_change_min: { type: "number", description: "最小涨跌幅" },
-        turnover_min: { type: "number", description: "最小换手率" },
-        limit: { type: "number", description: "数量，默认20" },
-      },
-    },
-  },
+  }
 ];
