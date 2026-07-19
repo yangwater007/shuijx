@@ -1,4 +1,4 @@
-ï»¿/// <reference types="vitest/config" />
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -19,18 +19,25 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     proxy: {
-      // Quicktiny åŽç«¯ API ä»£ç†
+      // Quicktiny ºó¶Ë API ´úÀí
       "/api/quicktiny": {
         target: "https://stock.quicktiny.cn",
         changeOrigin: true,
         rewrite: (p: string) => p.replace(/^\/api\/quicktiny/, "/api"),
         headers: { Referer: "https://stock.quicktiny.cn/" },
       },
-      // æœ¬åœ°æ¡¥ä»£ç†ï¼ˆdevå…CORSï¼‰
+      // ±¾µØÇÅ´úÀí£¨devÃâCORS£©
       "/api/bridge": {
         target: "http://localhost:8765",
         changeOrigin: true,
         rewrite: (p: string) => p.replace(/^\/api\/bridge/, ""),
+      },
+
+      // MCP ´úÀí ¡ú Supabase Edge Function
+      "/api/mcp": {
+        target: "https://qzqpymvboltyvddpmpct.supabase.co",
+        changeOrigin: true,
+        rewrite: (p: string) => p.replace(/^\/api\/mcp/, "/functions/v1/mcp"),
       },
     },
   },

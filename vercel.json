@@ -2,5 +2,10 @@
   "buildCommand": "npx vite build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "framework": "vite"
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/api/mcp/(.*)", "destination": "https://qzqpymvboltyvddpmpct.supabase.co/functions/v1/mcp/$1" },
+    { "source": "/api/mcp", "destination": "https://qzqpymvboltyvddpmpct.supabase.co/functions/v1/mcp" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
 }
