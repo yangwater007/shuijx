@@ -5,7 +5,7 @@
 import { type FC } from "react";
 import PageHeader from "@ui/components/PageHeader";
 import useDragonTiger from "@business/visualization/useDragonTiger";
-import { STOCK_UP, STOCK_DOWN, STOCK_FLAT } from "@infra/config";
+import { STOCK_UP, STOCK_DOWN } from "@infra/config";
 
 function fmtYi(val: number): string {
   if (!val || Math.abs(val) < 1) return "—";

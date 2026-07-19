@@ -2,7 +2,7 @@
  * 数据可视化页面 — 展示各类股票图表
  */
 
-import { useState, useMemo, lazy, Suspense, type FC } from "react";
+import { useState, useMemo, type FC } from "react";
 import PageHeader from "@ui/components/PageHeader";
 import BaseChart from "@ui/components/charts/ECharts/BaseChart";
 import getCandlestickOption from "@ui/components/charts/ECharts/configs/candlestick.config";

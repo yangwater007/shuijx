@@ -82,7 +82,7 @@ function toAPIMessages(messages: ChatMessage[], systemPrompt: string): Array<{ r
   }
   for (const r of result) {
     if (r.tool_calls && Array.isArray(r.tool_calls)) {
-      r.tool_calls = r.tool_calls.filter((tc: { id: string }) => toolCallIds.has(tc.id));
+      r.tool_calls = (r.tool_calls as { id: string }[]).filter((tc) => toolCallIds.has(tc.id));
       if (r.tool_calls.length === 0) delete r.tool_calls;
     }
   }

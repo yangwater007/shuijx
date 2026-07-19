@@ -217,16 +217,16 @@ const CapitalFlowView: FC = () => {
                       {fmtAmount(s.mainInflow ?? 0)}
                     </td>
                     <td className="py-2.5 px-3 text-right text-slate-300">
-                      {fmtAmount((s as Record<string, unknown>).superLargeInflow as number ?? 0)}
+                      {fmtAmount((s as unknown as Record<string, unknown>).superLargeInflow as number ?? 0)}
                     </td>
                     <td className="py-2.5 px-3 text-right text-slate-300">
-                      {fmtAmount((s as Record<string, unknown>).largeInflow as number ?? 0)}
+                      {fmtAmount((s as unknown as Record<string, unknown>).largeInflow as number ?? 0)}
                     </td>
                     <td className="py-2.5 px-3 text-right text-slate-300">
-                      {fmtAmount((s as Record<string, unknown>).mediumInflow as number ?? 0)}
+                      {fmtAmount((s as unknown as Record<string, unknown>).mediumInflow as number ?? 0)}
                     </td>
                     <td className="py-2.5 px-3 text-right text-slate-300">
-                      {fmtAmount((s as Record<string, unknown>).smallInflow as number ?? 0)}
+                      {fmtAmount((s as unknown as Record<string, unknown>).smallInflow as number ?? 0)}
                     </td>
                   </tr>
                 ))}

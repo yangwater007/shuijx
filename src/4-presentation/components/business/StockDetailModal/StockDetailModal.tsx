@@ -82,13 +82,13 @@ function fmtVol(n: number): string {
   return String(n);
 }
 
-function isTradingHours(): boolean {
-  const now = new Date();
-  const day = now.getDay();
-  if (day === 0 || day === 6) return false;
-  const m = now.getHours() * 60 + now.getMinutes();
-  return (m >= 570 && m <= 690) || (m >= 780 && m <= 900);
-}
+// function isTradingHours(): boolean {
+//   const now = new Date();
+//   const day = now.getDay();
+//   if (day === 0 || day === 6) return false;
+//   const m = now.getHours() * 60 + now.getMinutes();
+//   return (m >= 570 && m <= 690) || (m >= 780 && m <= 900);
+// }
 
 function getLimitPct(code: string): number {
   if (code.startsWith("30") || code.startsWith("68")) return 0.20;
@@ -112,7 +112,7 @@ function timeToMin(t: string): number {
 /** 距离开盘的分钟数 -> 在240分钟交易日中的比例 */
 const TRADING_DAY_MIN = 240; // 9:30-11:30(120) + 13:00-15:00(120)
 const LUNCH_START_MIN = 120; // 11:30
-const LUNCH_END_MIN = 120;   // 13:00 (same after gap subtraction)
+// const _LUNCH_END_MIN = 120;   // 13:00 (same after gap subtraction)
 
 const TimeshareTab: FC<{ code: string; preClose: number }> = ({ code, preClose: fallbackPreClose }) => {
   const { timeshareData, preClose: tsPreClose, tsLoading, tsDate } = useStockChart(code);

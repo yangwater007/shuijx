@@ -178,8 +178,8 @@ export default function useCapitalFlow(): UseCapitalFlowResult {
       }
       const color = CAT_COLORS[cat] ?? "#6b7280";
       if (!catMap[cat]) catMap[cat] = { inflow: 0, color, subs: [] };
-      catMap[cat].inflow += Math.abs(item.mainInflow ?? 0);
-      catMap[cat].subs.push(item);
+      catMap[cat]!.inflow += Math.abs(item.mainInflow ?? 0);
+      catMap[cat]!.subs.push(item);
     }
 
     addNode("全市场", "#f6b26b");

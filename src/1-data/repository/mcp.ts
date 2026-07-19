@@ -4,6 +4,7 @@
  */
 import { WUDAO_API_KEY, getMCPUrl } from "@infra/config";
 
+// @ts-ignore - reused externally
 const MCP_URL = (() => { try { return ((window as any).__MCP_URL__) || "http://localhost:8766/mcp"; } catch { return "http://localhost:8766/mcp"; } })();
 
 /** 调用单个 MCP 工具 */

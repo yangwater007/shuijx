@@ -114,10 +114,11 @@ const QUICK_ACTIONS = [
 const AIAnalysis: FC = () => {
   const {
     messages, isStreaming, model, setModel,
-    frameworks, toggleFramework,
-    news, hotStocks,
+//     frameworks, toggleFramework,
+//     news, hotStocks,
     config, saveConfig,
-    thinkingText, toolCallStatus,
+//     thinkingText,
+      toolCallStatus,
     sendMessage, stopStreaming, clearMessages,
   } = useAIChat();
 

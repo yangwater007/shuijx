@@ -2,7 +2,7 @@
  * AI Repository — DeepSeek 对话 + MCP工具调用 + 市场上下文
  * 数据源: quicktiny ladder + 同花顺 + MCP(Wudao Data)
  */
-import { DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL } from "@infra/config";
+import { DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, getBridgeUrl } from "@infra/config";
 import type { NewsItem, KaipanlaItem } from "@infra/types/ai";
 import { callMCPTool, MCP_FUNCTIONS, type FunctionDef } from "@data/repository/mcp";
 import { fetchFromBridgeTool } from "@data/repository/bridge";
@@ -375,7 +375,7 @@ export async function fetchBoardLadderForContext(): Promise<string> {
   }
 
   lines.push(""); lines.push("=== ???? ===");
-  const dc = (d: RawApiDate | null, fn: (d: RawApiDate) => string) => d ? fn(d) : "-";
+  const dc = (d: RawApiDate | null | undefined, fn: (d: RawApiDate) => string) => d ? fn(d) : "-";
   lines.push("?? " + dc(dayBefore, (d) => d.date) + " / " + dc(yesterday, (d) => d.date) + " / " + today.date);
   lines.push("?? " + dc(dayBefore, (d) => String(d.totalStocks)) + " / " + dc(yesterday, (d) => String(d.totalStocks)) + " / " + today.totalStocks);
   lines.push("??? " + dc(dayBefore, (d) => d.pauseRatio.toFixed(1) + "%") + " / " + dc(yesterday, (d) => d.pauseRatio.toFixed(1) + "%") + " / " + today.pauseRatio.toFixed(1) + "%");
