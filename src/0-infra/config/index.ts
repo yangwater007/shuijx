@@ -92,4 +92,4 @@ export const MAX_BOARD_LEVEL = 15;
 
 /** Wudao Data MCP 配置 */
 export const WUDAO_API_KEY = typeof import.meta !== "undefined" ? (import.meta as any).env?.VITE_WUDAO_API_KEY ?? "" : "";
-export const MCP_BASE_URL = "https://stock.quicktiny.cn/api/mcp-stream";
+export const MCP_BASE_URL = "https://qzqpymvboltyvddpmpct.supabase.co/functions/v1/mcp";
