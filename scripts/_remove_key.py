@@ -8,7 +8,7 @@ for filename in ["index.ts", "index_single.ts"]:
     
     # Replace the fallback key with empty string
     content = content.replace(
-        '?? "sb_secret_IO9Xck5CpaTFXEd01UazoQ_4OBUSNcR";',
+        '?? "REDACTED";',
         '?? ""; // set SUPABASE_SERVICE_ROLE_KEY env var'
     )
     
