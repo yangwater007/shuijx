@@ -1,4 +1,4 @@
-ï»¿import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://qzqpymvboltyvddpmpct.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""; // set SUPABASE_SERVICE_ROLE_KEY env var
@@ -30,38 +30,49 @@ function todayStr(): string {
 // === Market Tools ===
 const MARKET_TOOLS: Record<string, ToolDef> = {
   market_overview: {
-    description: "[å¸‚åœº] è·å–å…¨å¸‚åœºæ¦‚å†µ(ä¸Šè¯/æ·±è¯/åˆ›ä¸šæ¿/ç§‘åˆ›50)",
+    description: "[ÊĞ³¡] »ñÈ¡È«ÊĞ³¡¸Å¿ö(ÕÇµø¼ÒÊı+Í³¼Æ)",
     handler: async ({ supabase }) => {
       const dt = await lastTradeDate() ?? todayStr();
-      const { data: rows } = await supabase.rpc("get_market_overview", { trade_date: dt });
-      const { data: upDown } = await supabase
-        .from("daily_kline").select("change_pct", { count: "exact" }).eq("trade_date", dt);
-      const up = upDown?.filter((r) => r.change_pct > 0).length ?? 0;
-      const down = upDown?.filter((r) => r.change_pct < 0).length ?? 0;
-      const flat = (upDown?.length ?? 0) - up - down;
-      let lines = [`=== Aè‚¡æ¦‚å†µ (${dt}) ===`, `ä¸Šæ¶¨ ${up}å®¶ / ä¸‹è·Œ ${down}å®¶ / å¹³ç›˜ ${flat}å®¶`];
-      for (const row of (rows ?? [])) {
-        const sign = (row.change_pct ?? 0) >= 0 ? "+" : "";
-        lines.push(`${row.name}: ${Number(row.price).toFixed(2)} ${sign}${Number(row.change_pct).toFixed(2)}% O${Number(row.open).toFixed(2)} H${Number(row.high).toFixed(2)} L${Number(row.low).toFixed(2)}`);
-      }
+      
+      // Use stats_market_sentiment for accurate counts (no 1000-row limit)
+      const { data: stats } = await supabase
+        .from("stats_market_sentiment").select("*").eq("trade_date", dt).single();
+      
+      const up = stats?.up_cnt ?? 0;
+      const down = stats?.down_cnt ?? 0;
+      const limitUp = stats?.limit_up_cnt ?? 0;
+      const limitDown = stats?.limit_down_cnt ?? 0;
+      const maxBoard = stats?.max_board ?? 0;
+      const sealRate = stats?.seal_rate ?? 0;
+      
+      let lines = [
+        `=== A¹É¸Å¿ö (${dt}) ===`,
+        `ÉÏÕÇ ${up}¼Ò / ÏÂµø ${down}¼Ò`,
+        `ÕÇÍ£ ${limitUp}¼Ò / µøÍ£ ${limitDown}¼Ò`,
+        `×î¸ßÁ¬°å: ${maxBoard}°å | ·â°åÂÊ: ${sealRate}%`,
+      ];
+      
+      // Promo rates
+      if (stats?.promo_1to2) lines.push(`1½ø2: ${stats.promo_1to2}% | 2½ø3: ${stats.promo_2to3 ?? "N/A"}%`);
+      
       return lines.join("\n");
     },
   },
   kline: {
-    description: "[ä¸ªè‚¡] è·å–æ—¥Kçº¿(OHLC+æˆäº¤é‡+æ¶¨è·Œå¹…)", args: "code,days,adjust",
+    description: "[¸ö¹É] »ñÈ¡ÈÕKÏß(OHLC+³É½»Á¿+ÕÇµø·ù)", args: "code,days,adjust",
     handler: async ({ supabase, args }) => {
       const code = (args.code as string) || "";
       const days = Number(args.days) || 60;
-      if (!code) return "[kline] è¯·æä¾›è‚¡ç¥¨ä»£ç ";
+      if (!code) return "[kline] ÇëÌá¹©¹ÉÆ±´úÂë";
       const { data, error } = await supabase
         .from("daily_kline").select("*").eq("code", code).order("trade_date", { ascending: false }).limit(days);
-      if (error) return `[kline] æŸ¥è¯¢å¤±è´¥: ${error.message}`;
-      if (!data?.length) return `[kline] æœªæ‰¾åˆ° ${code} çš„Kçº¿æ•°æ®`;
+      if (error) return `[kline] ²éÑ¯Ê§°Ü: ${error.message}`;
+      if (!data?.length) return `[kline] Î´ÕÒµ½ ${code} µÄKÏßÊı¾İ`;
       const bars = data.reverse();
       const first = bars[0], last = bars[bars.length - 1];
       let lines = [
-        `[Supabase] Kçº¿ ${code}: ${bars.length}æ¡ (${first.trade_date} -> ${last.trade_date})`,
-        "æ—¥æœŸ     å¼€ç›˜   æœ€é«˜   æœ€ä½   æ”¶ç›˜   æˆäº¤é‡     æ¶¨è·Œå¹…",
+        `[Supabase] KÏß ${code}: ${bars.length}Ìõ (${first.trade_date} -> ${last.trade_date})`,
+        "ÈÕÆÚ     ¿ªÅÌ   ×î¸ß   ×îµÍ   ÊÕÅÌ   ³É½»Á¿     ÕÇµø·ù",
       ];
       for (const b of bars.slice(-30)) {
         lines.push(`${b.trade_date} ${Number(b.open).toFixed(2).padStart(7)} ${Number(b.high).toFixed(2).padStart(7)} ${Number(b.low).toFixed(2).padStart(7)} ${Number(b.close).toFixed(2).padStart(7)} ${String(b.volume).padStart(10)} ${Number(b.change_pct ?? 0).toFixed(2).padStart(7)}%`);
@@ -70,45 +81,132 @@ const MARKET_TOOLS: Record<string, ToolDef> = {
     },
   },
   minute_data: {
-    description: "[ä¸ªè‚¡] è·å–åˆ†æ—¶æ•°æ®(ä»·æ ¼+å‡ä»·)", args: "code",
+    description: "[¸ö¹É] »ñÈ¡·ÖÊ±Êı¾İ(¼Û¸ñ+¾ù¼Û)", args: "code",
     handler: async ({ supabase, args }) => {
       const code = (args.code as string) || "";
-      if (!code) return "[minute] è¯·æä¾›è‚¡ç¥¨ä»£ç ";
+      if (!code) return "[minute] ÇëÌá¹©¹ÉÆ±´úÂë";
       const dt = await lastTradeDate();
       const { data } = await supabase
-        .from("realtime_timeshare").select("*").eq("code", code).eq("trade_date", dt).order("time", { ascending: true }).limit(242);
-      if (!data?.length) return `[minute] æœªæ‰¾åˆ° ${code} çš„åˆ†æ—¶æ•°æ®`;
-      const lines = [`[Supabase] ${code} åˆ†æ—¶æ•°æ® (${dt}): ${data.length}æ¡`];
-      for (const p of data) lines.push(`${p.time} ${Number(p.price).toFixed(2)}`);
+        .from("realtime_timeshare").select("*").eq("code", code).eq("trade_date", dt).order("trade_time", { ascending: true }).limit(242);
+      if (!data?.length) return `[minute] Î´ÕÒµ½ ${code} µÄ·ÖÊ±Êı¾İ`;
+      const lines = [`[Supabase] ${code} ·ÖÊ±Êı¾İ (${dt}): ${data.length}Ìõ`];
+      for (const p of data) lines.push(`${p.trade_time} ${Number(p.price).toFixed(2)}`);
       return lines.join("\n");
     },
   },
+
+  fill_timeshare: {
+    description: "[Êı¾İ] Ìî³ä·ÖÊ±Êı¾İ: ´ÓÍ¬»¨Ë³API»ñÈ¡²¢Ğ´Èërealtime_timeshare",
+    handler: async ({ supabase, args }) => {
+      const code = (args.code as string) || "";
+      if (!code) return "[fill_ts] ÇëÌá¹©¹ÉÆ±´úÂë(code)";
+      const dt = (args.date as string) || await lastTradeDate() || todayStr();
+      
+      // ÅĞ¶ÏÊĞ³¡Ç°×º
+      const market = code.startsWith("6") ? "hs" : "sz";
+      const url = `https://d.10jqka.com.cn/v2/time/${market}_${code}/last.js`;
+      
+      let text: string;
+      try {
+        const resp = await fetch(url, {
+          headers: { "User-Agent": "Mozilla/5.0", "Referer": "https://www.10jqka.com.cn/" }
+        });
+        if (!resp.ok) return `[fill_ts] Í¬»¨Ë³API·µ»Ø ${resp.status}`;
+        text = await resp.text();
+      } catch (e) {
+        return `[fill_ts] Í¬»¨Ë³APIÇëÇóÊ§°Ü: ${e}`;
+      }
+      
+      // ½âÎö JSONP
+      const jsonMatch = text.match(/^[^(]*\(([\s\S]*)\)\s*$/);
+      if (!jsonMatch) return `[fill_ts] JSONP½âÎöÊ§°Ü`;
+      const obj = JSON.parse(jsonMatch[1]);
+      const stockKey = Object.keys(obj)[0];
+      const stock = obj[stockKey];
+      if (!stock?.data) return `[fill_ts] ÎŞÊı¾İ (·Ç½»Ò×ÈÕ?)`;
+      
+      // ½âÎö·ÖÊ±Êı¾İĞĞ
+      const rawRows = stock.data.split(";").filter(Boolean);
+      if (rawRows.length === 0) return `[fill_ts] Êı¾İÎª¿Õ`;
+      
+      // Ğ£ÑéºÍ×ª»»: time,price,volume,avg_price,amount
+      const rows = [];
+      let errors = 0;
+      for (const line of rawRows) {
+        const p = line.split(",");
+        if (p.length < 5) { errors++; continue; }
+        const time = p[0]; // "0930"
+        const price = parseFloat(p[1]);
+        const avgPrice = parseFloat(p[3]);
+        
+        // Ó²¹æÔòĞ£Ñé
+        if (isNaN(price) || price <= 0) { errors++; continue; }
+        if (!/^\d{4}$/.test(time)) { errors++; continue; }
+        
+        const hh = time.slice(0, 2), mm = time.slice(2, 4);
+        const t = parseInt(hh) * 100 + parseInt(mm);
+        if (!((t >= 930 && t <= 1130) || (t >= 1300 && t <= 1500))) {
+          // Ìø¹ı·Ç½»Ò×Ê±¼ä(Èç¼¯ºÏ¾º¼Û)
+          if (t > 1500) break;
+          continue;
+        }
+        
+        rows.push({
+          code,
+          trade_date: dt,
+          trade_time: `${hh}:${mm}:00`,
+          price: Math.round(price * 10000) / 10000,
+          avg_price: isNaN(avgPrice) ? 0 : Math.round(avgPrice * 10000) / 10000,
+        });
+      }
+      
+      if (rows.length < 200) {
+        return `[fill_ts] ${code} ${dt}: ½ö${rows.length}ÌõÓĞĞ§Êı¾İ (Ô­Ê¼${rawRows.length}Ìõ, Ìø¹ı${errors}Ìõ), ²»×ã200Ìõ²»Ğ´Èë`;
+      }
+      
+      // ÅúÁ¿ upsert
+      let inserted = 0;
+      const batchSize = 50;
+      for (let i = 0; i < rows.length; i += batchSize) {
+        const batch = rows.slice(i, i + batchSize);
+        const { error } = await supabase
+          .from("realtime_timeshare")
+          .upsert(batch, { onConflict: "code, trade_date, trade_time" });
+        if (error) {
+          return `[fill_ts] ${code} ${dt}: DBĞ´ÈëÊ§°Ü @ batch ${Math.floor(i/batchSize)}: ${error.message}`;
+        }
+        inserted += batch.length;
+      }
+      
+      return `[fill_ts] ${code} ${dt}: ? ${inserted}ÌõĞ´Èë³É¹¦ (Ô­Ê¼${rawRows.length}Ìõ, Ìø¹ı${errors}Ìõ)`;
+    },
+  },
   stock_rank: {
-    description: "[æ’è¡Œ] æ¶¨å¹…/è·Œå¹…/æˆäº¤é¢æ’è¡Œ", args: "type(gainers/losers/amount),limit",
+    description: "[ÅÅĞĞ] ÕÇ·ù/µø·ù/³É½»¶îÅÅĞĞ", args: "type(gainers/losers/amount),limit",
     handler: async ({ supabase, args }) => {
       const type = (args.type as string) || "gainers";
       const limit = Number(args.limit) || 10;
       const dt = await lastTradeDate();
-      let orderCol = "change_pct", ascending = false, label = "æ¶¨å¹…";
-      if (type === "losers") { ascending = true; label = "è·Œå¹…"; }
-      else if (type === "amount") { orderCol = "amount"; label = "æˆäº¤é¢"; }
+      let orderCol = "change_pct", ascending = false, label = "ÕÇ·ù";
+      if (type === "losers") { ascending = true; label = "µø·ù"; }
+      else if (type === "amount") { orderCol = "amount"; label = "³É½»¶î"; }
       const { data } = await supabase
-        .from("daily_kline").select("code, change_pct, amount").eq("trade_date", dt).order(orderCol, { ascending }).limit(limit);
-      if (!data?.length) return "[æ’è¡Œ] æš‚æ— æ•°æ®";
-      return [`=== ${label}æ¦œ TOP${limit} (${dt}) ===`].concat(
-        data.map((r, i) => `${i + 1}. ${r.code} ${type === "amount" ? (Number(r.amount) / 1e8).toFixed(2) + "äº¿" : Number(r.change_pct ?? 0).toFixed(2) + "%"}`)
+        .from("daily_kline").select("code, change_pct, amount").eq("trade_date", dt).order(orderCol, { ascending }).limit(100);
+      if (!data?.length) return "[ÅÅĞĞ] ÔİÎŞÊı¾İ";
+      return [`=== ${label}°ñ TOP${limit} (${dt}) ===`].concat(
+        data.map((r, i) => `${i + 1}. ${r.code} ${type === "amount" ? (Number(r.amount) / 1e8).toFixed(2) + "ÒÚ" : Number(r.change_pct ?? 0).toFixed(2) + "%"}`)
       ).join("\n");
     },
   },
   valuation_snapshot: {
-    description: "[ä¼°å€¼] è‚¡ç¥¨ä¼°å€¼å¿«ç…§: PE/PB/è¡Œä¸š/ä¸Šå¸‚æ—¥æœŸ", args: "code",
+    description: "[¹ÀÖµ] ¹ÉÆ±¹ÀÖµ¿ìÕÕ: PE/PB/ĞĞÒµ/ÉÏÊĞÈÕÆÚ", args: "code",
     handler: async ({ supabase, args }) => {
       const code = (args.code as string) || "";
-      if (!code) return "[ä¼°å€¼] è¯·æä¾›è‚¡ç¥¨ä»£ç ";
+      if (!code) return "[¹ÀÖµ] ÇëÌá¹©¹ÉÆ±´úÂë";
       const { data } = await supabase.from("base_stocks").select("*").eq("code", code).limit(1);
-      if (!data?.length) return `[ä¼°å€¼] æœªæ‰¾åˆ° ${code}`;
+      if (!data?.length) return `[¹ÀÖµ] Î´ÕÒµ½ ${code}`;
       const s = data[0];
-      return [`[Supabase] ${s.code} ${s.name}`, `è¡Œä¸š: ${s.industry || "æœªçŸ¥"}`, `ä¸Šå¸‚æ—¥æœŸ: ${s.list_date || "æœªçŸ¥"}`, `ST: ${s.is_st ? "æ˜¯" : "å¦"}`].join("\n");
+      return [`[Supabase] ${s.code} ${s.name}`, `ĞĞÒµ: ${s.industry || "Î´Öª"}`, `ÉÏÊĞÈÕÆÚ: ${s.list_date || "Î´Öª"}`, `ST: ${s.is_st ? "ÊÇ" : "·ñ"}`].join("\n");
     },
   },
 };
@@ -116,70 +214,85 @@ const MARKET_TOOLS: Record<string, ToolDef> = {
 // === Limit Tools ===
 const LIMIT_TOOLS: Record<string, ToolDef> = {
   limit_stats: {
-    description: "[æ¶¨åœ] æ¶¨åœç»Ÿè®¡: æ¶¨åœæ•°é‡/è·Œåœæ•°/ç‚¸æ¿æ•°",
+    description: "[ÕÇÍ£] ÕÇÍ£Í³¼Æ: ÕÇÍ£ÊıÁ¿/µøÍ£Êı/Õ¨°åÊı(º¬½ü20ÈÕ¾ùÖµ¶Ô±È)",
     handler: async ({ supabase }) => {
       const dt = await lastTradeDate();
-      if (!dt) return "[æ¶¨åœç»Ÿè®¡] æ— æ•°æ®";
+      if (!dt) return "[ÕÇÍ£Í³¼Æ] ÎŞÊı¾İ";
+      
       const { count: up } = await supabase.from("daily_kline").select("*", { count: "exact", head: true }).eq("trade_date", dt).gte("change_pct", 9.8);
       const { count: down } = await supabase.from("daily_kline").select("*", { count: "exact", head: true }).eq("trade_date", dt).lte("change_pct", -9.8);
       const { count: broken } = await supabase.from("daily_limit_up").select("*", { count: "exact", head: true }).eq("trade_date", dt).gt("open_count", 0);
       const sealRate = (up ?? 0) + (broken ?? 0) > 0 ? (((up ?? 0) / ((up ?? 0) + (broken ?? 0))) * 100).toFixed(1) : "0";
-      return [`[Supabase] ${dt} æ¶¨åœç»Ÿè®¡:`, `æ¶¨åœ: ${up ?? 0}å®¶ | è·Œåœ: ${down ?? 0}å®¶ | ç‚¸æ¿: ${broken ?? 0}å®¶`, `å°æ¿ç‡: ${sealRate}%`].join("\n");
+      
+      // Benchmark: 20-day average from stats_market_sentiment
+      let avg20 = "N/A";
+      const { data: hist } = await supabase.from("stats_market_sentiment")
+        .select("limit_up_cnt").lt("trade_date", dt).order("trade_date", { ascending: false }).limit(20);
+      if (hist && hist.length > 0) {
+        avg20 = (hist.reduce((s: number, r: any) => s + (r.limit_up_cnt || 0), 0) / hist.length).toFixed(0);
+      }
+      
+      const upNum = up ?? 0;
+      const vsAvg = avg20 !== "N/A" 
+        ? (upNum > Number(avg20) * 1.3 ? "\ud83d\udd25 Ô¶³¬¾ùÖµ" : upNum < Number(avg20) * 0.6 ? "\u2744\ufe0f ±ùµãÆÚ" : "\u2192 Õı³£·¶Î§") 
+        : "";
+      
+      return [`[Supabase] ${dt} ÕÇÍ£Í³¼Æ:`, `ÕÇÍ£: ${upNum}¼Ò(½ü20ÈÕ¾ùÖµ:${avg20}¼Ò) ${vsAvg} | µøÍ£: ${down ?? 0}¼Ò | Õ¨°å: ${broken ?? 0}¼Ò`, `·â°åÂÊ: ${sealRate}%`].join("\n");
     },
   },
   limit_up_ladder: {
-    description: "[è¿æ¿] è¿æ¿å¤©æ¢¯: æŒ‰è¿æ¿æ•°åˆ†ç»„å±•ç¤ºæ¶¨åœè‚¡+åŸå› +æ¢æ‰‹",
+    description: "[Á¬°å] Á¬°åÌìÌİ: °´Á¬°åÊı·Ö×éÕ¹Ê¾ÕÇÍ£¹É+Ô­Òò+»»ÊÖ",
     handler: async ({ supabase }) => {
       const dt = await lastTradeDate();
-      if (!dt) return "[è¿æ¿å¤©æ¢¯] æ— æ•°æ®";
+      if (!dt) return "[Á¬°åÌìÌİ] ÎŞÊı¾İ";
       const { data } = await supabase
         .from("daily_limit_up").select("code, name:base_stocks!inner(name), continue_num, change_pct, turnover_rate, reason_type, reason_info").eq("trade_date", dt).order("continue_num", { ascending: false }).limit(50);
-      if (!data?.length) return "[è¿æ¿å¤©æ¢¯] å½“æ—¥æ— æ¶¨åœè‚¡ç¥¨";
+      if (!data?.length) return "[Á¬°åÌìÌİ] µ±ÈÕÎŞÕÇÍ£¹ÉÆ±";
       const byLevel = new Map<number, string[]>();
       for (const s of data) {
         const n = s.continue_num ?? 1;
         if (!byLevel.has(n)) byLevel.set(n, []);
         const name = (s as any).name?.name ?? s.code;
-        byLevel.get(n)!.push(`${name}(${s.code}) ${s.change_pct}% æ¢${((s.turnover_rate ?? 0) as number).toFixed(1)}% ${s.reason_info || ""}`);
+        byLevel.get(n)!.push(`${name}(${s.code}) ${s.change_pct}% »»${((s.turnover_rate ?? 0) as number).toFixed(1)}% ${s.reason_info || ""}`);
       }
-      const lines: string[] = [`=== è¿æ¿å¤©æ¢¯ (${dt}) ===`, `æ€»æ•°: ${data.length}å®¶`];
+      const lines: string[] = [`=== Á¬°åÌìÌİ (${dt}) ===`, `×ÜÊı: ${data.length}¼Ò`];
       for (const [level, stocks] of [...byLevel.entries()].sort((a, b) => Number(b[0]) - Number(a[0]))) {
-        lines.push(`${level}æ¿ (${stocks.length}åª): ${stocks.join(" | ")}`);
+        lines.push(`${level}°å (${stocks.length}Ö»): ${stocks.join(" | ")}`);
       }
       return lines.join("\n");
     },
   },
   broken_limit_up: {
-    description: "[ç‚¸æ¿] ç‚¸æ¿è‚¡ç¥¨: è§¦åŠæ¶¨åœåæ‰“å¼€çš„è‚¡ç¥¨",
+    description: "[Õ¨°å] Õ¨°å¹ÉÆ±: ´¥¼°ÕÇÍ£ºó´ò¿ªµÄ¹ÉÆ±",
     handler: async ({ supabase }) => {
       const dt = await lastTradeDate();
-      if (!dt) return "[ç‚¸æ¿] æ— æ•°æ®";
+      if (!dt) return "[Õ¨°å] ÎŞÊı¾İ";
       const { data } = await supabase
         .from("daily_limit_up").select("code, name:base_stocks!inner(name), open_count, change_pct, reason_info").eq("trade_date", dt).gt("open_count", 0).order("open_count", { ascending: false });
-      if (!data?.length) return "[ç‚¸æ¿] ä»Šæ—¥æ— ç‚¸æ¿";
-      return [`=== ç‚¸æ¿ (${dt}) ===`].concat(
-        data.map((s, i) => `${i + 1}. ${(s as any).name?.name ?? s.code}(${s.code}) ç‚¸${s.open_count}æ¬¡ ${s.change_pct}% ${s.reason_info || ""}`)
+      if (!data?.length) return "[Õ¨°å] ½ñÈÕÎŞÕ¨°å";
+      return [`=== Õ¨°å (${dt}) ===`].concat(
+        data.map((s, i) => `${i + 1}. ${(s as any).name?.name ?? s.code}(${s.code}) Õ¨${s.open_count}´Î ${s.change_pct}% ${s.reason_info || ""}`)
       ).join("\n");
     },
   },
   limit_down: {
-    description: "[è·Œåœ] è·Œåœåˆ—è¡¨: å½“æ—¥è·Œåœè‚¡ç¥¨",
+    description: "[µøÍ£] µøÍ£ÁĞ±í: µ±ÈÕµøÍ£¹ÉÆ±",
     handler: async ({ supabase }) => {
       const dt = await lastTradeDate();
-      if (!dt) return "[è·Œåœ] æ— æ•°æ®";
+      if (!dt) return "[µøÍ£] ÎŞÊı¾İ";
       const { data } = await supabase
         .from("daily_kline").select("code, change_pct, turnover").eq("trade_date", dt).lte("change_pct", -9.8).order("change_pct", { ascending: true }).limit(30);
-      if (!data?.length) return "[è·Œåœ] ä»Šæ—¥æ— è·Œåœ";
-      return [`=== è·Œåœ (${dt}) ===`].concat(
-        data.map((s, i) => `${i + 1}. ${s.code} ${s.change_pct}% æ¢æ‰‹${((s.turnover ?? 0) as number).toFixed(1)}%`)
+      if (!data?.length) return "[µøÍ£] ½ñÈÕÎŞµøÍ£";
+      return [`=== µøÍ£ (${dt}) ===`].concat(
+        data.map((s, i) => `${i + 1}. ${s.code} ${s.change_pct}% »»ÊÖ${((s.turnover ?? 0) as number).toFixed(1)}%`)
       ).join("\n");
     },
   },
   limit_bigloser: {
-    description: "[å¤§é¢] å¤§é¢è‚¡(è·Œå¹…>10%)+æ ¸æŒ‰é’®(æ˜¨æ—¥æ¶¨åœä»Šæ—¥è·Œåœ)",
+    description: "[´óÃæ] ´óÃæ¹É(µø·ù>10%)+ºË°´Å¥(×òÈÕÕÇÍ£½ñÈÕµøÍ£)",
     handler: async ({ supabase }) => {
       const dt = await lastTradeDate();
-      if (!dt) return "[å¤§é¢] æ— æ•°æ®";
+      if (!dt) return "[´óÃæ] ÎŞÊı¾İ";
       const { data: bigLosers } = await supabase
         .from("daily_kline").select("code, name:base_stocks!inner(name), change_pct").eq("trade_date", dt).lte("change_pct", -10).order("change_pct", { ascending: true });
       const { data: yesterdayUp } = await supabase
@@ -203,58 +316,148 @@ const LIMIT_TOOLS: Record<string, ToolDef> = {
     },
   },
   limit_yesterday_premium: {
-    description: "[æº¢ä»·] æ˜¨æ—¥æ¶¨åœæº¢ä»·ç‡: æ˜¨æ—¥æ¶¨åœè‚¡ä»Šæ—¥å¹³å‡æ¶¨å¹…",
+    description: "[Òç¼Û] ×òÈÕÕÇÍ£Òç¼ÛÂÊ: ×òÈÕÕÇÍ£¹É½ñÈÕÆ½¾ùÕÇ·ù",
     handler: async ({ supabase }) => {
       const dt = await lastTradeDate();
-      if (!dt) return "[æº¢ä»·] æ— æ•°æ®";
+      if (!dt) return "[Òç¼Û] ÎŞÊı¾İ";
       const { data: yestRow } = await supabase
         .from("daily_kline").select("trade_date").lt("trade_date", dt).order("trade_date", { ascending: false }).limit(1);
       const yesterday = yestRow?.[0]?.trade_date;
-      if (!yesterday) return "[æº¢ä»·] æ— æ˜¨æ—¥æ•°æ®";
+      if (!yesterday) return "[Òç¼Û] ÎŞ×òÈÕÊı¾İ";
       const { data: yestCodes } = await supabase.from("daily_limit_up").select("code").eq("trade_date", yesterday);
-      if (!yestCodes?.length) return "[æº¢ä»·] æ˜¨æ—¥æ— æ¶¨åœ";
+      if (!yestCodes?.length) return "[Òç¼Û] ×òÈÕÎŞÕÇÍ£";
       const codes = yestCodes.map((r) => r.code);
       const { data: today } = await supabase.from("daily_kline").select("change_pct").eq("trade_date", dt).in("code", codes);
-      if (!today?.length) return "[æº¢ä»·] ä»Šæ—¥æ— æ•°æ®";
+      if (!today?.length) return "[Òç¼Û] ½ñÈÕÎŞÊı¾İ";
       const rets = today.map((r) => Number(r.change_pct ?? 0));
       const avg = (rets.reduce((a, b) => a + b, 0) / rets.length).toFixed(2);
-      return `[æ˜¨æ—¥æ¶¨åœæº¢ä»·] ${yesterday}æ¶¨åœ${codes.length}åª -> ä»Šæ—¥å¹³å‡${avg}% (${rets.length}åªæœ‰æ•ˆæ•°æ®) | ${Number(avg) >= 2 ? "å¼º" : Number(avg) >= 0 ? "å¹³" : "å¼±"}`;
+      return `[×òÈÕÕÇÍ£Òç¼Û] ${yesterday}ÕÇÍ£${codes.length}Ö» -> ½ñÈÕÆ½¾ù${avg}% (${rets.length}Ö»ÓĞĞ§Êı¾İ) | ${Number(avg) >= 2 ? "Ç¿" : Number(avg) >= 0 ? "Æ½" : "Èõ"}`;
     },
   },
 };
 
 // === Capital Tools ===
 const CAPITAL_TOOLS: Record<string, ToolDef> = {
-  capital_flow: {
-    description: "[èµ„é‡‘] å¸‚åœº/æ¿å—/ä¸ªè‚¡èµ„é‡‘æµå‘",
-    handler: async ({ args }) => {
-      return `[èµ„é‡‘] èµ„é‡‘æµå‘æ•°æ®æš‚æœªå…¥åº“ï¼Œè¯·ä½¿ç”¨æ¦‚å¿µæ’å(concept_ranking)å’Œæ¿å—åˆ†æ(sector_analysis)å·¥å…·`;
+capital_flow: {
+    description: "[¶«²Æ] °å¿é/´óÅÌ×Ê½ğÁ÷Ïò(Ö÷Á¦¾»Á÷Èë)",
+    handler: async ({ supabase, args }) => {
+      const type = (args.type as string) || "market";
+      const limit = Math.min(Number(args.limit) || 30, 100);
+      const wantJson = (args.format as string) === "json";
+      
+      const { data: dtRow } = await supabase.from("sector_capital_flow").select("trade_date").order("trade_date", { ascending: false }).limit(1);
+      const dt = dtRow?.[0]?.trade_date;
+      if (!dt) return wantJson ? "[]" : "[×Ê½ğ] ÔİÎŞ°å¿é×Ê½ğÁ÷Êı¾İ£¬ÇëÏÈÔËĞĞ sync_capital_flow.py";
+      
+      if (type === "sector") {
+        const { data } = await supabase.from("sector_capital_flow").select("*").eq("trade_date", dt).order("main_net_in", { ascending: false }).limit(limit);
+        if (!data?.length) return wantJson ? "[]" : "[×Ê½ğ] ÔİÎŞÊı¾İ";
+        if (wantJson) return JSON.stringify(data);
+        const lines = [`=== °å¿é×Ê½ğÁ÷Ïò (${dt}) ===`];
+        for (const s of data as any[]) {
+          lines.push(`${s.sector_name}: ${(Number(s.main_net_in)/1e8).toFixed(2)}ÒÚ ${Number(s.main_net_in_pct).toFixed(1)}% ${Number(s.change_pct).toFixed(2)}%`);
+        }
+        return lines.join("\n");
+      }
+      
+      const { data } = await supabase.from("sector_capital_flow").select("main_net_in").eq("trade_date", dt);
+      const total = (data ?? []).reduce((sum: number, s: any) => sum + Number(s.main_net_in ?? 0), 0);
+      return `[¶«²Æ] ´óÅÌÖ÷Á¦×Ê½ğ (${dt}): ${total>=0?"Á÷Èë":"Á÷³ö"} ${(Math.abs(total)/1e8).toFixed(2)}ÒÚ`;
+    },
+  },  fill_sector: {
+    description: "[Êı¾İ] Ìî³ä°å¿éÊı¾İ: ´ÓKÏß+¸ÅÄî¹éÊô¼ÆËã°å¿é±íÏÖ,Ğ´Èëdaily_sector",
+    handler: async ({ supabase, args }) => {
+      const dt = (args.date as string) || await lastTradeDate() || todayStr();
+      
+      // 1. »ñÈ¡¸ÅÄî¡ú¹ÉÆ±Ó³Éä
+      const { data: mappings } = await supabase
+        .from("base_stock_concepts")
+        .select("concept_id, code, concept:base_concepts!inner(concept_name)");
+      if (!mappings?.length) return "[fill_sector] ÎŞ¸ÅÄîÓ³ÉäÊı¾İ";
+      
+      // 2. »ñÈ¡µ±ÈÕKÏß
+      const { data: klines } = await supabase
+        .from("daily_kline")
+        .select("code, change_pct, amount")
+        .eq("trade_date", dt);
+      if (!klines?.length) return `[fill_sector] ${dt} ÎŞKÏßÊı¾İ`;
+      
+      // Build lookup
+      const chgMap = new Map<string, number>();
+      const amtMap = new Map<string, number>();
+      for (const k of klines) {
+        chgMap.set(k.code, Number(k.change_pct ?? 0));
+        amtMap.set(k.code, Number(k.amount ?? 0));
+      }
+      
+      // 3. °´¸ÅÄî¾ÛºÏ
+      const sectors = new Map<string, {
+        name: string; codes: Set<string>;
+        sum_chg: number; sum_amt: number; limit_up: number; count: number;
+      }>();
+      
+      for (const m of mappings) {
+        const cid = String(m.concept_id);
+        const name = (m as any).concept?.concept_name || `concept_${cid}`;
+        const code = m.code as string;
+        const chg = chgMap.get(code);
+        if (chg === undefined) continue;
+        
+        if (!sectors.has(cid)) {
+          sectors.set(cid, { name, codes: new Set(), sum_chg: 0, sum_amt: 0, limit_up: 0, count: 0 });
+        }
+        const sec = sectors.get(cid)!;
+        if (sec.codes.has(code)) continue; // dedup
+        sec.codes.add(code);
+        sec.sum_chg += chg;
+        sec.sum_amt += amtMap.get(code) ?? 0;
+        if (chg >= 9.8) sec.limit_up++;
+        sec.count++;
+      }
+      
+      // 4. Ğ´Èë daily_sector
+      let inserted = 0, errors = 0;
+      for (const [cid, sec] of sectors) {
+        if (sec.count < 5) continue; // skip tiny sectors
+        const avg_chg = Math.round(sec.sum_chg / sec.count * 100) / 100;
+        const { error } = await supabase.from("daily_sector").upsert({
+          sector_code: `GN_${cid}`,
+          trade_date: dt,
+          sector_name: sec.name,
+          change_pct: avg_chg,
+          limit_up_cnt: sec.limit_up,
+          main_inflow: Math.round(sec.sum_amt),
+        }, { onConflict: "sector_code, trade_date" });
+        if (error) { errors++; } else { inserted++; }
+      }
+      
+      return `[fill_sector] ${dt}: ${inserted} sectors inserted, ${errors} errors`;
     },
   },
   concept_ranking: {
-    description: "[æ¦‚å¿µ] æ¦‚å¿µæ¿å—æ’å(æŒ‰è‚¡ç¥¨æ•°é‡)",
+    description: "[¸ÅÄî] ¸ÅÄî°å¿éÅÅÃû(°´¹ÉÆ±ÊıÁ¿)",
     handler: async ({ supabase }) => {
       const { data } = await supabase.from("base_concepts").select("concept_id, concept_name, category").order("concept_id").limit(100);
-      if (!data?.length) return "[æ¦‚å¿µæ’å] è¯·å…ˆæ‰§è¡Œ sync_concepts åŒæ­¥æ¦‚å¿µæ•°æ®";
-      const lines: string[] = ["=== æ¦‚å¿µæ’å ==="];
+      if (!data?.length) return "[¸ÅÄîÅÅÃû] ÇëÏÈÖ´ĞĞ sync_concepts Í¬²½¸ÅÄîÊı¾İ";
+      const lines: string[] = ["=== ¸ÅÄîÅÅÃû ==="];
       for (const c of data) {
         const { count } = await supabase.from("base_stock_concepts").select("*", { count: "exact", head: true }).eq("concept_id", c.concept_id);
-        lines.push(`${c.concept_name} (${count ?? 0}åª) [${c.category ?? "em"}]`);
+        lines.push(`${c.concept_name} (${count ?? 0}Ö») [${c.category ?? "em"}]`);
       }
       return lines.join("\n");
     },
   },
   sector_analysis: {
-    description: "[æ¿å—] æ¿å—åˆ†æ(æ¶¨è·Œå¹…+ä¸»åŠ›å‡€æµå…¥)",
+    description: "[°å¿é] °å¿é·ÖÎö(ÕÇµø·ù+Ö÷Á¦¾»Á÷Èë)",
     handler: async ({ supabase }) => {
       const { data: dtRow } = await supabase.from("daily_sector").select("trade_date").order("trade_date", { ascending: false }).limit(1);
       const dt = dtRow?.[0]?.trade_date;
-      if (!dt) return "[æ¿å—åˆ†æ] æ— æ•°æ®";
+      if (!dt) return "[°å¿é·ÖÎö] ÎŞÊı¾İ";
       const { data } = await supabase.from("daily_sector").select("*").eq("trade_date", dt).order("change_pct", { ascending: false }).limit(30);
-      if (!data?.length) return "[æ¿å—åˆ†æ] æ— æ•°æ®";
-      const lines: string[] = [`=== æ¿å—åˆ†æ (${dt}) ===`];
+      if (!data?.length) return "[°å¿é·ÖÎö] ÎŞÊı¾İ";
+      const lines: string[] = [`=== °å¿é·ÖÎö (${dt}) ===`];
       for (const s of data) {
-        const inflow = s.main_net_inflow ? ` ä¸»åŠ›å‡€${(Number(s.main_net_inflow) / 1e8).toFixed(2)}äº¿` : "";
+        const inflow = s.main_inflow ? ` Ö÷Á¦¾»${(Number(s.main_inflow) / 1e8).toFixed(2)}ÒÚ` : "";
         lines.push(`${s.sector_name}: ${Number(s.change_pct ?? 0).toFixed(2)}%${inflow}`);
       }
       return lines.join("\n");
@@ -265,14 +468,14 @@ const CAPITAL_TOOLS: Record<string, ToolDef> = {
 // === Review Tools ===
 const REVIEW_TOOLS: Record<string, ToolDef> = {
   review_history: {
-    description: "[å¤ç›˜] è¿‘Næ—¥(é»˜è®¤20å¤©)å¤ç›˜: æ¶¨åœæ•°/è·Œåœæ•°/å¹³å‡æ¶¨å¹…",
+    description: "[¸´ÅÌ] ½üNÈÕ(Ä¬ÈÏ20Ìì)¸´ÅÌ: ÕÇÍ£Êı/µøÍ£Êı/Æ½¾ùÕÇ·ù",
     handler: async ({ supabase, args }) => {
       const days = Math.min(Number(args.days) || 20, 60);
       const dt = await lastTradeDate();
-      if (!dt) return "[å¤ç›˜å†å²] æ— æ•°æ®";
+      if (!dt) return "[¸´ÅÌÀúÊ·] ÎŞÊı¾İ";
       const { data } = await supabase
         .from("daily_kline").select("trade_date, change_pct, amount").gte("trade_date", `${dt}::date - interval '${days * 2} days'`).order("trade_date", { ascending: false });
-      if (!data?.length) return "[å¤ç›˜å†å²] æ— æ•°æ®";
+      if (!data?.length) return "[¸´ÅÌÀúÊ·] ÎŞÊı¾İ";
       const byDate = new Map<string, { up: number; down: number; total: number; sumPct: number; sumAmt: number }>();
       for (const r of data) {
         const d = r.trade_date;
@@ -286,38 +489,38 @@ const REVIEW_TOOLS: Record<string, ToolDef> = {
         g.sumAmt += Number(r.amount ?? 0);
       }
       const sorted = [...byDate.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, days);
-      const lines: string[] = ["=== å¤ç›˜å†å² ===", "æ—¥æœŸ        | æ¶¨åœ | è·Œåœ | å¹³å‡æ¶¨è·Œå¹… | æˆäº¤é¢"];
+      const lines: string[] = ["=== ¸´ÅÌÀúÊ· ===", "ÈÕÆÚ        | ÕÇÍ£ | µøÍ£ | Æ½¾ùÕÇµø·ù | ³É½»¶î"];
       for (const [d, g] of sorted) {
         const avgPct = g.total > 0 ? (g.sumPct / g.total).toFixed(2) : "0.00";
         const amt = (g.sumAmt / 1e8).toFixed(0);
-        lines.push(`${d} | ${String(g.up).padStart(4)} | ${String(g.down).padStart(4)} | ${avgPct.padStart(6)}% | ${amt}äº¿`);
+        lines.push(`${d} | ${String(g.up).padStart(4)} | ${String(g.down).padStart(4)} | ${avgPct.padStart(6)}% | ${amt}ÒÚ`);
       }
       return lines.join("\n");
     },
   },
   review_daily: {
-    description: "[å¤ç›˜] æ¯æ—¥å¤ç›˜: å¸‚åœºæ¦‚å†µ+æ¶¨åœTOP+çƒ­é—¨ä¸»é¢˜",
+    description: "[¸´ÅÌ] Ã¿ÈÕ¸´ÅÌ: ÊĞ³¡¸Å¿ö+ÕÇÍ£TOP+ÈÈÃÅÖ÷Ìâ",
     handler: async ({ supabase, args }) => {
       const date = (args.date as string) || "";
       const dt = date || await lastTradeDate();
-      if (!dt) return "[æ¯æ—¥å¤ç›˜] æ— æ•°æ®";
-      const lines: string[] = [`=== æ¯æ—¥å¤ç›˜ (${dt}) ===`];
+      if (!dt) return "[Ã¿ÈÕ¸´ÅÌ] ÎŞÊı¾İ";
+      const lines: string[] = [`=== Ã¿ÈÕ¸´ÅÌ (${dt}) ===`];
       const { count: up } = await supabase.from("daily_kline").select("*", { count: "exact", head: true }).eq("trade_date", dt).gte("change_pct", 9.8);
       const { count: down } = await supabase.from("daily_kline").select("*", { count: "exact", head: true }).eq("trade_date", dt).lte("change_pct", -9.8);
-      lines.push(`æ¶¨åœæ•°: ${up ?? 0}å®¶ / è·Œåœæ•°: ${down ?? 0}å®¶`);
+      lines.push(`ÕÇÍ£Êı: ${up ?? 0}¼Ò / µøÍ£Êı: ${down ?? 0}¼Ò`);
       const { data: topUp } = await supabase
         .from("daily_limit_up").select("code, name:base_stocks!inner(name), continue_num, reason_info").eq("trade_date", dt).order("continue_num", { ascending: false }).limit(10);
       if (topUp?.length) {
-        lines.push("\næ¶¨åœ TOP10:");
-        for (const s of topUp) lines.push(`  ${s.continue_num}æ¿ ${(s as any).name?.name ?? s.code}(${s.code}) ${s.reason_info || ""}`);
+        lines.push("\nÕÇÍ£ TOP10:");
+        for (const s of topUp) lines.push(`  ${s.continue_num}°å ${(s as any).name?.name ?? s.code}(${s.code}) ${s.reason_info || ""}`);
       }
       const { data: themes } = await supabase.from("daily_limit_up").select("reason_type, code").eq("trade_date", dt);
       if (themes?.length) {
         const themeCount = new Map<string, number>();
-        for (const t of themes) { const th = t.reason_type || "å…¶ä»–"; themeCount.set(th, (themeCount.get(th) ?? 0) + 1); }
+        for (const t of themes) { const th = t.reason_type || "ÆäËû"; themeCount.set(th, (themeCount.get(th) ?? 0) + 1); }
         const sorted = [...themeCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
-        lines.push("\nçƒ­é—¨ä¸»é¢˜:");
-        for (const [th, cnt] of sorted) lines.push(`  ${th}: ${cnt}å®¶`);
+        lines.push("\nÈÈÃÅÖ÷Ìâ:");
+        for (const [th, cnt] of sorted) lines.push(`  ${th}: ${cnt}¼Ò`);
       }
       return lines.join("\n");
     },
@@ -333,13 +536,31 @@ const ALL_TOOLS: Record<string, ToolDef> = {
   ...REVIEW_TOOLS,
 };
 
+function corsResponse(body: unknown, init?: ResponseInit): Response {
+  const headers = new Headers(init?.headers);
+  headers.set("Access-Control-Allow-Origin", "*");
+  return new Response(JSON.stringify(body), { ...init, headers });
+}
+
 // === Server ===
 Deno.serve(async (req) => {
+  // CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Max-Age": "86400",
+      },
+    });
+  }
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
 
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch {
-    return Response.json({ jsonrpc: "2.0", error: { code: -32700, message: "Parse error" }, id: null }, { status: 400 });
+    return corsResponse({ jsonrpc: "2.0", error: { code: -32700, message: "Parse error" }, id: null }, { status: 400 });
   }
 
   const msgId = body.id ?? 0;
@@ -349,45 +570,47 @@ Deno.serve(async (req) => {
   if (method === "tools/list") {
     const TOOL_SCHEMAS: Record<string, any> = {
         "market_overview": "{\"type\":\"object\",\"properties\":{}}",
-        "kline": "{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\",\"description\":\"è‚¡ç¥¨ä»£ç ï¼Œå¦‚000001\"},\"days\":{\"type\":\"number\",\"description\":\"å¤©æ•°ï¼Œé»˜è®¤60\"},\"adjust\":{\"type\":\"string\",\"description\":\"å¤æƒç±»å‹ï¼Œnoneæˆ–qfq\",\"enum\":[\"none\",\"qfq\"]}},\"required\":[\"code\"]}",
-        "minute_data": "{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\",\"description\":\"è‚¡ç¥¨ä»£ç ï¼Œå¦‚000001\"}},\"required\":[\"code\"]}",
-        "stock_rank": "{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"æ’è¡Œç±»å‹\",\"enum\":[\"gainers\",\"losers\",\"amount\"]},\"limit\":{\"type\":\"number\",\"description\":\"æ•°é‡ï¼Œé»˜è®¤10\"}}}",
-        "valuation_snapshot": "{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\",\"description\":\"è‚¡ç¥¨ä»£ç \"}},\"required\":[\"code\"]}",
+        "kline": "{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\",\"description\":\"¹ÉÆ±´úÂë£¬Èç000001\"},\"days\":{\"type\":\"number\",\"description\":\"ÌìÊı£¬Ä¬ÈÏ60\"},\"adjust\":{\"type\":\"string\",\"description\":\"¸´È¨ÀàĞÍ£¬none»òqfq\",\"enum\":[\"none\",\"qfq\"]}},\"required\":[\"code\"]}",
+        "minute_data": "{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\",\"description\":\"¹ÉÆ±´úÂë£¬Èç000001\"}},\"required\":[\"code\"]}",
+        "fill_timeshare": "{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\",\"description\":\"¹ÉÆ±´úÂë£¬Èç000001\"},\"date\":{\"type\":\"string\",\"description\":\"ÈÕÆÚYYYY-MM-DD£¬Ä¬ÈÏ×îĞÂ½»Ò×ÈÕ\"}},\"required\":[\"code\"]}",
+        "fill_sector": "{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"ÈÕÆÚYYYY-MM-DD£¬Ä¬ÈÏ×îĞÂ½»Ò×ÈÕ\"}}}",
+        "stock_rank": "{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"ÅÅĞĞÀàĞÍ\",\"enum\":[\"gainers\",\"losers\",\"amount\"]},\"limit\":{\"type\":\"number\",\"description\":\"ÊıÁ¿£¬Ä¬ÈÏ10\"}}}",
+        "valuation_snapshot": "{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\",\"description\":\"¹ÉÆ±´úÂë\"}},\"required\":[\"code\"]}",
         "limit_stats": "{\"type\":\"object\",\"properties\":{}}",
         "limit_up_ladder": "{\"type\":\"object\",\"properties\":{}}",
         "broken_limit_up": "{\"type\":\"object\",\"properties\":{}}",
         "limit_down": "{\"type\":\"object\",\"properties\":{}}",
         "limit_bigloser": "{\"type\":\"object\",\"properties\":{}}",
         "limit_yesterday_premium": "{\"type\":\"object\",\"properties\":{}}",
-        "capital_flow": "{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"å¯é€‰sectorè¿”å›æ¿å—èµ„é‡‘æ’è¡Œ\",\"enum\":[\"sector\"]}}}",
+        "capital_flow": "{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"¿ÉÑ¡sector·µ»Ø°å¿é×Ê½ğÅÅĞĞ\",\"enum\":[\"sector\"]}}}",
         "concept_ranking": "{\"type\":\"object\",\"properties\":{}}",
         "sector_analysis": "{\"type\":\"object\",\"properties\":{}}",
-        "review_history": "{\"type\":\"object\",\"properties\":{\"days\":{\"type\":\"number\",\"description\":\"å¤©æ•°ï¼Œé»˜è®¤20ï¼Œæœ€å¤§60\"}}}",
-        "review_daily": "{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"æ—¥æœŸYYYY-MM-DDï¼Œé»˜è®¤æœ€æ–°äº¤æ˜“æ—¥\"}}}"
+        "review_history": "{\"type\":\"object\",\"properties\":{\"days\":{\"type\":\"number\",\"description\":\"ÌìÊı£¬Ä¬ÈÏ20£¬×î´ó60\"}}}",
+        "review_daily": "{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"ÈÕÆÚYYYY-MM-DD£¬Ä¬ÈÏ×îĞÂ½»Ò×ÈÕ\"}}}"
     };
     const tools = Object.entries(ALL_TOOLS).map(([name, t]) => ({
       name, description: t.description,
       inputSchema: TOOL_SCHEMAS[name] ? JSON.parse(TOOL_SCHEMAS[name]) : { type: "object", properties: {} },
     }));
-    return Response.json({ jsonrpc: "2.0", id: msgId, result: { tools } });
+    return corsResponse({ jsonrpc: "2.0", id: msgId, result: { tools } });
   }
 
   if (method === "tools/call") {
     const toolName = (params.name ?? "") as string;
     const toolArgs = (params.arguments ?? {}) as Record<string, unknown>;
     const tool = ALL_TOOLS[toolName];
-    if (!tool) return Response.json({ jsonrpc: "2.0", id: msgId, error: { code: -32601, message: `Unknown tool: ${toolName}` } });
+    if (!tool) return corsResponse({ jsonrpc: "2.0", id: msgId, error: { code: -32601, message: `Unknown tool: ${toolName}` } });
     try {
       const start = performance.now();
       const resultText = await tool.handler({ supabase, args: toolArgs });
       const elapsed = Math.round(performance.now() - start);
       console.log(`${toolName} -> ${elapsed}ms`);
-      return Response.json({ jsonrpc: "2.0", id: msgId, result: { content: [{ type: "text", text: resultText }] } });
+      return corsResponse({ jsonrpc: "2.0", id: msgId, result: { content: [{ type: "text", text: resultText }] } });
     } catch (e) {
       console.error(`${toolName} failed:`, e);
-      return Response.json({ jsonrpc: "2.0", id: msgId, result: { content: [{ type: "text", text: `[${toolName}] error: ${e}` }] } });
+      return corsResponse({ jsonrpc: "2.0", id: msgId, result: { content: [{ type: "text", text: `[${toolName}] error: ${e}` }] } });
     }
   }
 
-  return Response.json({ jsonrpc: "2.0", id: msgId, error: { code: -32601, message: `Unknown method: ${method}` } });
+  return corsResponse({ jsonrpc: "2.0", id: msgId, error: { code: -32601, message: `Unknown method: ${method}` } });
 });
