@@ -7,6 +7,7 @@ import type { NewsItem, KaipanlaItem } from "@infra/types/ai";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { callMCPTool, MCP_FUNCTIONS, type FunctionDef } from "@data/repository/mcp";
 import { fetchFromBridgeTool } from "@data/repository/bridge";
+import { callQuicktinyTool } from "@data/repository/quicktiny";
 
 // ─── 流式回调类型 ──────────────────────────────
 
