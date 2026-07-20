@@ -19,31 +19,10 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     proxy: {
-      // Quicktiny 后端 API 代理
-      "/api/quicktiny": {
-        target: "https://stock.quicktiny.cn",
-        changeOrigin: true,
-        rewrite: (p: string) => p.replace(/^\/api\/quicktiny/, "/api"),
-        headers: { Referer: "https://stock.quicktiny.cn/" },
-      },
-      // 本地桥代理（dev免CORS）
-      "/api/bridge": {
-        target: "http://localhost:8765",
-        changeOrigin: true,
-        rewrite: (p: string) => p.replace(/^\/api\/bridge/, ""),
-      },
-
-      // MCP 代理 → Supabase Edge Function
-      "/api/mcp": {
-        target: "https://qzqpymvboltyvddpmpct.supabase.co",
-        changeOrigin: true,
-        rewrite: (p: string) => p.replace(/^\/api\/mcp/, "/functions/v1/mcp"),
-      },
+      "/api/quicktiny": { target: "https://stock.quicktiny.cn", changeOrigin: true, rewrite: (p) => p.replace(/^\/api\/quicktiny/, "/api"), headers: { Referer: "https://stock.quicktiny.cn/" } },
+      "/api/bridge": { target: "http://localhost:8765", changeOrigin: true, rewrite: (p) => p.replace(/^\/api\/bridge/, "") },
+      "/api/mcp": { target: "https://qzqpymvboltyvddpmpct.supabase.co", changeOrigin: true, rewrite: (p) => p.replace(/^\/api\/mcp/, "/functions/v1/mcp") },
     },
   },
-  test: {
-    globals: true,
-    environment: "jsdom",
-    setupFiles: [],
-  },
+  test: { globals: true, environment: "jsdom", setupFiles: [] },
 });
