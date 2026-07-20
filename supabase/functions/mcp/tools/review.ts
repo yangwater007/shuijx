@@ -19,7 +19,7 @@ export const REVIEW_TOOLS: Record<string, ToolDef> = {
         .from("daily_kline")
         .select("trade_date, change_pct, amount")
         .gte("trade_date", `${dt}::date - interval '${days * 2} days'`)
-        .order("trade_date", { ascending: false });
+        .order("trade_date", { ascending: false });.limit(20000);
 
       if (!data?.length) return "[????] ???";
 

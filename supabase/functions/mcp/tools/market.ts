@@ -28,7 +28,7 @@ export const MARKET_TOOLS: Record<string, ToolDef> = {
       const { data: upDown } = await supabase
         .from("daily_kline")
         .select("change_pct", { count: "exact" })
-        .eq("trade_date", dt);
+        .eq("trade_date", dt).limit(10000);
 
       const up = upDown?.filter((r: any) => r.change_pct > 0).length ?? 0;
       const down = upDown?.filter((r: any) => r.change_pct < 0).length ?? 0;
