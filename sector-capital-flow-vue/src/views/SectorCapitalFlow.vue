@@ -62,7 +62,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import HeaderBar from '../components/HeaderBar.vue';
 import ToolBar from '../components/ToolBar.vue';
 import TabBar from '../components/TabBar.vue';
@@ -73,22 +73,20 @@ import { sectorFlowData } from '../mock/sectorFlow.js';
 
 const mockData = sectorFlowData;
 
-// ??
 const date = ref('2026-07-31');
-const activeCategory = ref('??');
+const activeCategory = ref('精选');
 const searchText = ref('');
 const updateTime = ref('15:00');
-const activeDimension = ref('????');
-const activeTime = ref('????');
-const activeDisplay = ref('???');
+const activeDimension = ref('主力净额');
+const activeTime = ref('当日走势');
+const activeDisplay = ref('时间轴');
 const showIndex = ref(true);
-const activeIndex = ref('??');
-const activeYBase = ref('????');
-const yAxisMode = ref('????');
-const activeRankTab = ref('????');
+const activeIndex = ref('上证');
+const activeYBase = ref('累计净额');
+const yAxisMode = ref('智能尺度');
+const activeRankTab = ref('资金两端');
 const hoveredSector = ref('');
 
-// ??????
 const visibleKeys = ref([
   ...mockData.inflowTop5.map(s => s.name),
   ...mockData.outflowTop5.map(s => s.name),
@@ -104,7 +102,6 @@ function handleToggleVisible(name) {
 }
 
 function handleRefresh() {
-  // ????
   updateTime.value = '15:00';
 }
 

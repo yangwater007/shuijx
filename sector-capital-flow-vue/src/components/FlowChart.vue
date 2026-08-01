@@ -13,9 +13,9 @@ const props = defineProps({
   timePoints: { type: Array, default: () => [] },
   inflowData: { type: Array, default: () => [] },
   outflowData: { type: Array, default: () => [] },
-  indexTrend: { type: Object, default: () => ({ name: '????', data: [] }) },
+  indexTrend: { type: Object, default: () => ({ name: '上证指数', data: [] }) },
   showIndex: { type: Boolean, default: true },
-  activeDimension: { type: String, default: '????' },
+  activeDimension: { type: String, default: '主力净额' },
   visibleKeys: { type: Array, default: () => [] },
 });
 
@@ -28,7 +28,7 @@ let subChart = null;
 function getVisibleSeries() {
   const all = [...props.inflowData, ...props.outflowData];
   if (!props.visibleKeys || props.visibleKeys.length === 0) {
-    return all.map((s, i) => ({ ...s, visible: i < 5 || s.name === '??' }));
+    return all.map((s, i) => ({ ...s, visible: i < 5 || s.name === '银行' }));
   }
   return all.map(s => ({ ...s, visible: props.visibleKeys.includes(s.name) }));
 }
@@ -36,7 +36,6 @@ function getVisibleSeries() {
 function buildMainOption() {
   const series = getVisibleSeries();
   const visible = series.filter(s => s.visible);
-  const colors = [...visible.map(s => s.color)];
 
   return {
     tooltip: {
@@ -54,16 +53,14 @@ function buildMainOption() {
           html += '<div style="display:flex;align-items:center;gap:6px;margin:2px 0">' +
             '<span style="width:8px;height:8px;border-radius:50%;background:' + p.color + '"></span>' +
             '<span>' + p.seriesName + '</span>' +
-            '<span style="color:' + color + ';font-family:Consolas,monospace;margin-left:auto">' + sign + val.toFixed(2) + '?</span>' +
+            '<span style="color:' + color + ';font-family:Consolas,monospace;margin-left:auto">' + sign + val.toFixed(2) + '亿</span>' +
             '</div>';
         });
         return html;
       },
     },
     legend: { show: false },
-    grid: {
-      left: 80, right: visible.length > 0 ? 60 : 20, top: 30, bottom: 40,
-    },
+    grid: { left: 80, right: visible.length > 0 ? 60 : 20, top: 30, bottom: 40 },
     xAxis: {
       type: 'category',
       data: props.timePoints,
@@ -74,18 +71,14 @@ function buildMainOption() {
     },
     yAxis: {
       type: 'value',
-      name: '???????',
+      name: '累计净额·亿元',
       nameTextStyle: { color: '#909399', fontSize: 12, padding: [0, 0, 0, 60] },
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: {
-        color: '#909399',
-        fontSize: 11,
-        formatter: v => v === 0 ? '0.00?' : (v / 100) + '?',
-      },
+      axisLabel: { color: '#909399', fontSize: 11, formatter: v => v === 0 ? '0.00亿' : (v / 100) + '亿' },
       splitLine: { lineStyle: { color: '#f0f0f0', type: 'dashed' } },
     },
-    series: visible.map((s, idx) => ({
+    series: visible.map(s => ({
       name: s.name,
       type: 'line',
       data: s.data,
@@ -98,7 +91,7 @@ function buildMainOption() {
         data: [{
           name: s.name,
           coord: [s.data.length - 1, s.data[s.data.length - 1]],
-          value: s.value.toFixed(1) + '?',
+          value: s.value.toFixed(1) + '亿',
           symbol: 'circle',
           symbolSize: 6,
           itemStyle: { color: s.color },
@@ -130,7 +123,7 @@ function buildSubOption() {
     },
     yAxis: {
       type: 'value',
-      name: '??????' + props.indexTrend.name,
+      name: '指数涨跌幅·' + props.indexTrend.name,
       nameTextStyle: { color: '#909399', fontSize: 11, padding: [0, 0, 0, 60] },
       axisLabel: { color: '#909399', fontSize: 11, formatter: v => v.toFixed(2) + '%' },
       splitLine: { lineStyle: { color: '#f0f0f0', type: 'dashed' } },

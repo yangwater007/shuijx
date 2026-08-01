@@ -1,6 +1,5 @@
 <template>
   <div class="tabbar">
-    <!-- ???? -->
     <div class="tab-group">
       <span
         v-for="d in dataDimensions"
@@ -10,7 +9,6 @@
       >{{ d }}</span>
     </div>
     <span class="group-gap" />
-    <!-- ???? -->
     <div class="tab-group">
       <span
         v-for="d in timeDimensions"
@@ -20,7 +18,6 @@
       >{{ d }}</span>
     </div>
     <span class="group-gap" />
-    <!-- ???? -->
     <div class="tab-group text-group">
       <span
         v-for="d in displayModes"
@@ -30,9 +27,8 @@
       >{{ d }}</span>
     </div>
     <span class="group-gap" />
-    <!-- ???? -->
     <div class="tab-group">
-      <span class="index-label">????</span>
+      <span class="index-label">叠加指数</span>
       <el-switch :model-value="indexOverlay" size="small" @update:model-value="$emit('update:indexOverlay', $event)" />
       <span
         v-for="idx in indexOptions"
@@ -42,7 +38,6 @@
       >{{ idx }}</span>
     </div>
     <span class="group-gap" />
-    <!-- Y??? -->
     <div class="tab-group">
       <span
         v-for="d in yAxisBases"
@@ -59,12 +54,12 @@ import { ref } from 'vue';
 import { dataDimensions, timeDimensions, displayModes, indexOptions, yAxisBases } from '../mock/sectorFlow.js';
 
 const props = defineProps({
-  activeDimension: { type: String, default: '????' },
-  activeTime: { type: String, default: '????' },
-  activeDisplay: { type: String, default: '???' },
+  activeDimension: { type: String, default: '主力净额' },
+  activeTime: { type: String, default: '当日走势' },
+  activeDisplay: { type: String, default: '时间轴' },
   indexOverlay: { type: Boolean, default: true },
-  activeIndex: { type: String, default: '??' },
-  activeYBase: { type: String, default: '????' },
+  activeIndex: { type: String, default: '上证' },
+  activeYBase: { type: String, default: '累计净额' },
 });
 defineEmits(['update:activeDimension', 'update:activeTime', 'update:activeDisplay', 'update:indexOverlay', 'update:activeIndex', 'update:activeYBase']);
 const indexOverlay = ref(props.indexOverlay);

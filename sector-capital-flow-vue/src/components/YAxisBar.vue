@@ -1,6 +1,6 @@
 <template>
   <div class="yaxis-bar">
-    <span class="yaxis-label">??</span>
+    <span class="yaxis-label">纵轴</span>
     <span
       v-for="m in modes"
       :key="m"
@@ -14,7 +14,7 @@
 import { yAxisModes } from '../mock/sectorFlow.js';
 
 defineProps({
-  activeMode: { type: String, default: '????' },
+  activeMode: { type: String, default: '智能尺度' },
 });
 defineEmits(['update:activeMode']);
 

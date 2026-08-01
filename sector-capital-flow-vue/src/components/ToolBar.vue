@@ -1,13 +1,13 @@
 <template>
   <div class="toolbar">
     <div class="toolbar-left">
-      <span class="snapshot-time">?? {{ updateTime }}</span>
+      <span class="snapshot-time">时点 {{ updateTime }}</span>
       <span class="divider">|</span>
-      <span class="sector-count">??? {{ totalSectors }}</span>
+      <span class="sector-count">板块数 {{ totalSectors }}</span>
     </div>
     <div class="toolbar-right">
-      <span class="tray-info">???? {{ selectedCount }}/{{ maxSelect }} ? ?? {{ trayCount }}</span>
-      <span class="clear-tray" @click="$emit('clearTray')">????</span>
+      <span class="tray-info">曲线勾选 {{ selectedCount }}/{{ maxSelect }} · 托盘 {{ trayCount }}</span>
+      <span class="clear-tray" @click="$emit('clearTray')">清空托盘</span>
     </div>
   </div>
 </template>

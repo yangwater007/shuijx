@@ -7,16 +7,10 @@
     <span class="dot" :style="{ background: item.color }" />
     <span class="name">{{ item.name }}</span>
     <div class="bar-wrap">
-      <div
-        class="bar"
-        :style="{
-          width: barWidth + '%',
-          background: barColor,
-        }"
-      />
+      <div class="bar" :style="{ width: barWidth + '%', background: barColor }" />
     </div>
     <span :class="['value', item.value >= 0 ? 'up' : 'down']">
-      {{ item.value >= 0 ? '+' : '' }}{{ item.value.toFixed(1) }}?
+      {{ item.value >= 0 ? '+' : '' }}{{ item.value.toFixed(1) }}亿
     </span>
     <el-checkbox
       :model-value="checked"
@@ -39,9 +33,7 @@ const props = defineProps({
 
 defineEmits(['toggle', 'hover']);
 
-const barWidth = computed(() => {
-  return Math.min((Math.abs(props.item.value) / props.maxAbs) * 100, 100);
-});
+const barWidth = computed(() => Math.min((Math.abs(props.item.value) / props.maxAbs) * 100, 100));
 
 const barColor = computed(() => {
   return props.item.value >= 0

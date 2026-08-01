@@ -1,10 +1,9 @@
 <template>
   <div class="ranking-panel">
-    <!-- ??? -->
     <div class="panel-header">
       <span class="panel-title">
-        ????
-        <el-tooltip content="?????????????" placement="top">
+        资金排行
+        <el-tooltip content="展示资金流入和承压板块排行" placement="top">
           <el-icon :size="14" class="help-icon"><QuestionFilled /></el-icon>
         </el-tooltip>
       </span>
@@ -17,11 +16,10 @@
         >{{ tab }}</span>
       </div>
     </div>
-    <!-- ???? -->
     <div class="section">
       <div class="section-header">
-        <span class="section-title">????</span>
-        <span class="section-count">{{ inflowData.length }}?</span>
+        <span class="section-title">主力流入</span>
+        <span class="section-count">{{ inflowData.length }}个</span>
       </div>
       <RankingItem
         v-for="item in inflowData"
@@ -34,11 +32,10 @@
         @hover="name => $emit('hoverSector', name)"
       />
     </div>
-    <!-- ???? -->
     <div class="section">
       <div class="section-header">
-        <span class="section-title">????</span>
-        <span class="section-count">{{ outflowData.length }}?</span>
+        <span class="section-title">承压方向</span>
+        <span class="section-count">{{ outflowData.length }}个</span>
       </div>
       <RankingItem
         v-for="item in outflowData"
@@ -65,7 +62,7 @@ const props = defineProps({
   outflowData: { type: Array, default: () => [] },
   visibleKeys: { type: Array, default: () => [] },
   hoveredSector: { type: String, default: '' },
-  activeRankTab: { type: String, default: '????' },
+  activeRankTab: { type: String, default: '资金两端' },
 });
 
 defineEmits(['toggleVisible', 'hoverSector', 'update:activeRankTab']);

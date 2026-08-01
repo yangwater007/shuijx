@@ -4,7 +4,7 @@
       <el-date-picker
         :model-value="selectedDate"
         type="date"
-        placeholder="????"
+        placeholder="选择日期"
         format="YYYY-MM-DD"
         value-format="YYYY-MM-DD"
         size="small"
@@ -23,7 +23,7 @@
       <el-button :icon="Refresh" size="small" circle class="refresh-btn" @click="emit('refresh')" />
       <el-input
         :model-value="searchText"
-        placeholder="?????????"
+        placeholder="搜索板块名称或代码"
         :prefix-icon="Search"
         size="small"
         class="search-input"
@@ -36,13 +36,13 @@
         class="follow-check"
         @update:model-value="emit('update:onlyFollowed', $event)"
       >
-        ????
+        只看关注
       </el-checkbox>
     </div>
     <div class="header-right">
       <span class="status-dot" />
-      <span class="status-text">????</span>
-      <span class="update-time">??? {{ updateTime }}</span>
+      <span class="status-text">收盘定稿</span>
+      <span class="update-time">更新于 {{ updateTime }}</span>
     </div>
   </div>
 </template>
@@ -54,7 +54,7 @@ import { sectorCategories } from '../mock/sectorFlow.js';
 
 const props = defineProps({
   date: { type: String, default: '2026-07-31' },
-  activeCategory: { type: String, default: '??' },
+  activeCategory: { type: String, default: '精选' },
   searchText: { type: String, default: '' },
   onlyFollowed: { type: Boolean, default: false },
   updateTime: { type: String, default: '15:00' },
