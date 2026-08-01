@@ -32,6 +32,56 @@ export interface SectorCapitalFlowSnapshot {
   rows: SectorCapitalFlowRow[];
 }
 
+
+/** 板块资金时序数据 */
+export interface SectorCapitalFlowTimelinePoint {
+  time: string;
+  tradeDate: string;
+  snapshotMinute: string;
+  sectorCode: string;
+  sectorName: string;
+  mainNetAmount: number;
+  bigOrderNetAmount: number;
+  strength: number;
+  pctChg: number;
+  relativeInflow: number;
+  floatMarketCap: number;
+}
+
+export interface SectorCapitalFlowTimelineResponse {
+  success: boolean;
+  data: {
+    sectorCode: string;
+    sectorName: string;
+    points: SectorCapitalFlowTimelinePoint[];
+  };
+}
+
+/** 板块成分股 */
+export interface SectorConstituent {
+  stockCode: string;
+  stockName: string;
+  mainNetAmount: number;
+  pctChg: number;
+  floatMarketCap: number;
+  weight: number;
+}
+
+export interface SectorConstituentsResponse {
+  success: boolean;
+  data: {
+    sectorCode: string;
+    sectorName: string;
+    constituents: SectorConstituent[];
+  };
+}
+
+/** 可用日期 */
+export interface SectorCapitalFlowDatesResponse {
+  success: boolean;
+  data: string[];
+}
+
 export interface SectorCapitalFlowResponse {
   success: boolean;
   data: SectorCapitalFlowSnapshot;
