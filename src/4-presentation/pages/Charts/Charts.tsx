@@ -13,6 +13,7 @@ import getLineOption from "@ui/components/charts/ECharts/configs/line.config";
 import type { KLineData, TimesharePoint, VolumeData, PieDataItem, LineData } from "@ui/components/charts/ECharts/configs/types";
 import ThemeEvolution from "./components/ThemeEvolution";
 import CapitalFlowView from "./components/CapitalFlowView";
+import SectorCapitalFlow from "@ui/pages/SectorCapitalFlow";
 
 /** 生成 K线 Mock 数据 */
 function mockKLine(days: number): KLineData[] {
@@ -92,13 +93,14 @@ const MOCK_LINE: LineData = {
   ],
 };
 
-type ChartTab = "kline" | "timeshare" | "fund" | "theme-evo";
+type ChartTab = "kline" | "timeshare" | "fund" | "sector-fund" | "theme-evo";
 
 /** Tab 标签配置 */
 const TAB_CONFIG: { key: ChartTab; label: string }[] = [
   { key: "kline", label: "K线图" },
   { key: "timeshare", label: "分时图" },
   { key: "fund", label: "资金流向" },
+  { key: "sector-fund", label: "板块资金" },
   { key: "theme-evo", label: "题材演化" },
 ];
 
@@ -130,6 +132,7 @@ const Charts: FC = () => {
       case "kline": return "K线图、成交量、技术分析";
       case "timeshare": return "分时走势、实时波动";
       case "fund": return "大盘资金流、板块资金排行、桑基图";
+      case "sector-fund": return "板块主力资金净流入排行";
       case "theme-evo": return "题材发酵路径、桑基图演化";
       default: return "K线、分时、资金流向、板块分析";
     }
@@ -162,9 +165,10 @@ const Charts: FC = () => {
 
       {/* 资金流向 Tab — 全新独立组件 */}
       {tab === "fund" && <CapitalFlowView />}
+      {tab === "sector-fund" && <SectorCapitalFlow />}
 
       {/* K线 / 分时图 Tabs */}
-      {tab !== "theme-evo" && tab !== "fund" && (
+      {tab !== "theme-evo" && tab !== "fund" && tab !== "sector-fund" && (
         <>
           {/* 主图表区 */}
           <div className="mb-6">
