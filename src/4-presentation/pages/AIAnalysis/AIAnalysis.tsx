@@ -3,7 +3,6 @@ import { useState, useRef, useEffect, useCallback, type FC, type KeyboardEvent }
 import useAIChat from "@business/ai/useAIChat";
 import type { ChatMessage } from "@infra/types/ai";
 import { AI_MODELS } from "@infra/types/ai";
-import { getMCPUrl } from "@infra/config";
 
 const C = {
   bg: "#0b0e14", card: "#131a24", border: "#1e2a36",
@@ -115,10 +114,8 @@ const QUICK_ACTIONS = [
 const AIAnalysis: FC = () => {
   const {
     messages, isStreaming, model, setModel,
-    frameworks, toggleFramework,
-    news, hotStocks,
     config, saveConfig,
-    thinkingText, toolCallStatus,
+    toolCallStatus,
     sendMessage, stopStreaming, clearMessages,
   } = useAIChat();
 
