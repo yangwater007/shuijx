@@ -1,0 +1,7 @@
+# Cloudflare Pages configuration for sector-capital-flow-vue
+name = "shui"
+compatibility_date = "2026-08-01"
+pages_build_output_dir = "./dist"
+
+[build]
+command = "npm install && npm run build"
